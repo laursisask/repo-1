@@ -79,7 +79,7 @@
     "@babel/node": "^7.0.0",
     "babel-eslint": "^10.0.1",
     "babel-plugin-istanbul": "^6.0.0",
-    "caniuse-api": "^2.0.0",
+    "caniuse-api": "^3.0.0",
     "chai": "^3.5.0",
     "color": "^1.0.3",
     "core-js": "^2.5.3",

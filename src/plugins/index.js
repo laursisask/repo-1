@@ -1,5 +1,4 @@
 /** @flow */
-/* eslint-disable block-scoped-const */
 
 import type {Config} from '../config';
 

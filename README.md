@@ -71,7 +71,7 @@ import color from 'color';
 
 class Button extends React.Component {
   static propTypes = {
-    kind: PropTypes.oneOf(['primary', 'warning']).isRequired
+    kind: PropTypes.oneOf(['primary', 'warning']).isRequired,
   };
 
   render() {
@@ -99,19 +99,17 @@ var styles = {
     // Adding interactive state couldn't be easier! Add a special key to your
     // style object (:hover, :focus, :active, or @media) with the additional rules.
     ':hover': {
-      background: color('#0074d9')
-        .lighten(0.2)
-        .hexString()
-    }
+      background: color('#0074d9').lighten(0.2).hexString(),
+    },
   },
 
   primary: {
-    background: '#0074D9'
+    background: '#0074D9',
   },
 
   warning: {
-    background: '#FF4136'
-  }
+    background: '#FF4136',
+  },
 };
 ```
 

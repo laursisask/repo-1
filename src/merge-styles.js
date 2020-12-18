@@ -12,7 +12,7 @@ export function isNestedStyle(value) {
 export function mergeStyles(styles) {
   const result = {};
 
-  styles.forEach(style => {
+  styles.forEach((style) => {
     if (!style || typeof style !== 'object') {
       return;
     }
@@ -21,7 +21,7 @@ export function mergeStyles(styles) {
       style = mergeStyles(style);
     }
 
-    Object.keys(style).forEach(key => {
+    Object.keys(style).forEach((key) => {
       // Simple case, nothing nested
       if (!isNestedStyle(style[key]) || !isNestedStyle(result[key])) {
         result[key] = style[key];

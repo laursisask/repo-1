@@ -23,7 +23,7 @@ First, require or import Radium at the top of component file:
 import Radium from 'radium';
 
 // If you want to use the <Style /> component you can do
-import Radium, { Style } from 'radium';
+import Radium, {Style} from 'radium';
 ```
 
 Let's create a fictional `<Button>` component. It will have a set of default styles, will adjust its appearance based on modifiers, and will include hover, focus, and active states.
@@ -31,11 +31,7 @@ Let's create a fictional `<Button>` component. It will have a set of default sty
 ```jsx
 class Button extends React.Component {
   render() {
-    return (
-      <button>
-        {this.props.children}
-      </button>
-    );
+    return <button>{this.props.children}</button>;
   }
 }
 ```
@@ -63,7 +59,7 @@ var baseStyles = {
   border: 0,
   borderRadius: 4,
   color: 'white',
-  padding: '1.5em'
+  padding: '1.5em',
 };
 ```
 
@@ -76,8 +72,8 @@ var styles = {
     border: 0,
     borderRadius: 4,
     color: 'white',
-    padding: '1.5em'
-  }
+    padding: '1.5em',
+  },
 };
 ```
 
@@ -85,11 +81,7 @@ Next, simply pass your styles to the `style` attribute of an element:
 
 ```jsx
 // Inside render
-return (
-  <button style={styles.base}>
-    {this.props.children}
-  </button>
-);
+return <button style={styles.base}>{this.props.children}</button>;
 ```
 
 From there, React will apply our styles to the `button` element. This is not very exciting. In fact, React does this by default, without the extra step of using Radium. Radium becomes useful when you need to do more complex things, like handling modifiers, states, and media queries. But, even without those complex things, Radium will still merge an array of styles and automatically apply vendor prefixes for you.
@@ -99,9 +91,7 @@ From there, React will apply our styles to the `button` element. This is not ver
 Radium provides one shorthand for dealing with styles that are modified by your props or state. You can pass an array of style objects to the `style` attribute, and they will be merged together intelligently (`:hover` states, for instance, will merge instead of overwrite). This works the same way as it does in [React Native](https://facebook.github.io/react-native/docs/style.html#using-styles).
 
 ```jsx
-<Button
-  size="large"
-  block={true}>
+<Button size="large" block={true}>
   Cool Button!
 </Button>
 ```
@@ -115,12 +105,12 @@ var styles = {
     border: 0,
     borderRadius: 4,
     color: 'white',
-    padding: '1.5em'
+    padding: '1.5em',
   },
 
   block: {
-    display: 'block'
-  }
+    display: 'block',
+  },
 };
 ```
 
@@ -129,11 +119,7 @@ Then, include that style object in the array passed to the `style` attribute if 
 ```jsx
 // Inside render
 return (
-  <button
-    style={[
-      styles.base,
-      this.props.block && styles.block
-    ]}>
+  <button style={[styles.base, this.props.block && styles.block]}>
     {this.props.children}
   </button>
 );
@@ -197,15 +183,15 @@ Radium will merge styles for any active states when your component is rendered. 
 
 ## Media queries
 
-Add media queries to your style objects the same way as you would add browser state modifiers like  `:hover`. The key must start with `@media`, and the [syntax](https://developer.mozilla.org/en-US/docs/Web/Guide/CSS/Media_queries) is identical to CSS:
+Add media queries to your style objects the same way as you would add browser state modifiers like `:hover`. The key must start with `@media`, and the [syntax](https://developer.mozilla.org/en-US/docs/Web/Guide/CSS/Media_queries) is identical to CSS:
 
 ```jsx
 var style = {
   width: '25%',
 
   '@media (min-width: 320px)': {
-    width: '100%'
-  }
+    width: '100%',
+  },
 };
 ```
 
@@ -223,9 +209,9 @@ var style = {
     width: '100%',
 
     ':hover': {
-      background: 'white'
-    }
-  }
+      background: 'white',
+    },
+  },
 };
 ```
 
@@ -253,18 +239,18 @@ var styles = {
     background: 'black',
     border: 'solid 1px white',
     height: 100,
-    width: 100
+    width: 100,
   },
   one: {
     ':hover': {
       background: 'blue',
-    }
+    },
   },
   two: {
     ':hover': {
       background: 'red',
-    }
-  }
+    },
+  },
 };
 ```
 
@@ -276,9 +262,11 @@ You can query Radium's state using `Radium.getState`. This allows you to style o
 // Inside render
 return (
   <div>
-    <button key="keyForButton" style={[styles.button]}>Hover me!</button>
+    <button key="keyForButton" style={[styles.button]}>
+      Hover me!
+    </button>
     {Radium.getState(this.state, 'keyForButton', ':hover') ? (
-      <span>{' '}Hovering!</span>
+      <span> Hovering!</span>
     ) : null}
   </div>
 );
@@ -288,8 +276,8 @@ var styles = {
     // Even though we don't have any special styles on the button, we need
     // to add empty :hover styles here to tell Radium to track this element's
     // state.
-    ':hover': {}
-  }
+    ':hover': {},
+  },
 };
 ```
 
@@ -300,8 +288,8 @@ Sometimes you need to provide an additional value for a single CSS property in c
 ```jsx
 var styles = {
   button: {
-    background: ['rgba(255, 255, 255, .5)', '#fff']
-  }
+    background: ['rgba(255, 255, 255, .5)', '#fff'],
+  },
 };
 ```
 
@@ -310,7 +298,7 @@ Is equivalent to the following CSS (note that the order is reversed):
 ```css
 .button {
   background: #fff;
-  background: rgba(255, 255, 255, .5);
+  background: rgba(255, 255, 255, 0.5);
 }
 ```
 

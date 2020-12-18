@@ -47,7 +47,7 @@ const isUnitlessNumber = {
   strokeDashoffset: true,
   strokeMiterlimit: true,
   strokeOpacity: true,
-  strokeWidth: true
+  strokeWidth: true,
 };
 
 export default function appendPxIfNeeded(

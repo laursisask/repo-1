@@ -13,7 +13,7 @@ export const RadiumConfigContext: Context<Config | void> = React.createContext(
 
 export type WithRadiumContextsProps = {
   styleKeeperContext?: StyleKeeper,
-  radiumConfigContext?: Config
+  radiumConfigContext?: Config,
 };
 
 export function withRadiumContexts<P: {}>(
@@ -35,9 +35,9 @@ export function withRadiumContexts<P: {}>(
     }
   );
 
-  WithRadiumContexts.displayName = `withRadiumContexts(${WrappedComponent.displayName ||
-    WrappedComponent.name ||
-    'Component'})`;
+  WithRadiumContexts.displayName = `withRadiumContexts(${
+    WrappedComponent.displayName || WrappedComponent.name || 'Component'
+  })`;
 
   return hoistStatics(WithRadiumContexts, WrappedComponent);
 }

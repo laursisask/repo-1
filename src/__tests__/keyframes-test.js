@@ -73,7 +73,7 @@ describe('keyframes', () => {
     const animation = keyframes(
       {
         from: {left: '-1000px'},
-        to: {left: 0}
+        to: {left: 0},
       },
       'SlideFromLeft'
     );
@@ -107,14 +107,14 @@ describe('keyframes', () => {
     const animation = keyframes(
       {
         from: {left: '-1000px'},
-        to: {left: 0}
+        to: {left: 0},
       },
       'SlideFromLeft'
     );
     const animation2 = keyframes(
       {
         from: {top: '-1000px'},
-        to: {top: 0}
+        to: {top: 0},
       },
       'SlideFromTop'
     );
@@ -156,7 +156,7 @@ describe('keyframes', () => {
     const animation = keyframes(
       {
         from: {left: -1000},
-        to: {left: 10}
+        to: {left: 10},
       },
       'SlideFromLeft'
     );
@@ -190,14 +190,14 @@ describe('keyframes', () => {
     const animation = keyframes(
       {
         from: {left: -1000},
-        to: {left: 10}
+        to: {left: 10},
       },
       'SlideFromLeft'
     );
     const animation2 = keyframes(
       {
         from: {top: -1000},
-        to: {top: 10}
+        to: {top: 10},
       },
       'SlideFromTop'
     );
@@ -239,7 +239,7 @@ describe('keyframes', () => {
     const animation = keyframes(
       {
         from: {left: '-1000px'},
-        to: {left: 0}
+        to: {left: 0},
       },
       'SlideFromLeft'
     );
@@ -284,14 +284,14 @@ describe('keyframes', () => {
     const animation = keyframes(
       {
         from: {left: '-1000px'},
-        to: {left: 0}
+        to: {left: 0},
       },
       'SlideFromLeft'
     );
     const animation2 = keyframes(
       {
         from: {top: -1000},
-        to: {top: 0}
+        to: {top: 0},
       },
       'SlideFromTop'
     );

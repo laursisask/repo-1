@@ -8,12 +8,12 @@ const render = (Component, opts) => {
   return renderToString(
     React.createElement(Component, {
       radiumConfig: {
-        userAgent: opts.userAgent
-      }
+        userAgent: opts.userAgent,
+      },
     })
   );
 };
 
 module.exports = {
-  render
+  render,
 };

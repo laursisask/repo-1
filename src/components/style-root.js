@@ -22,7 +22,7 @@ function getStyleKeeper(
 
 type StyleRootProps = {
   radiumConfig: Config,
-  children: Node
+  children: Node,
 };
 
 const StyleRootInner = Enhancer(({children, ...otherProps}: StyleRootProps) => (

@@ -10,7 +10,7 @@ function _getWindowMatchMedia(ExecutionEnvironment) {
       (!!ExecutionEnvironment.canUseDOM &&
         !!window &&
         !!window.matchMedia &&
-        (mediaQueryString => window.matchMedia(mediaQueryString))) ||
+        ((mediaQueryString) => window.matchMedia(mediaQueryString))) ||
       null;
   }
   return _windowMatchMedia;
@@ -21,7 +21,7 @@ function _filterObject(
   predicate: (value: any, key: string) => boolean
 ): Object {
   return Object.keys(obj)
-    .filter(key => predicate(obj[key], key))
+    .filter((key) => predicate(obj[key], key))
     .reduce((result, key) => {
       result[key] = obj[key];
       return result;
@@ -44,14 +44,14 @@ function _topLevelRulesToCSS({
   hash,
   isNestedStyle,
   style,
-  userAgent
+  userAgent,
 }) {
   let className = '';
   Object.keys(style)
-    .filter(name => name.indexOf('@media') === 0)
-    .map(query => {
+    .filter((name) => name.indexOf('@media') === 0)
+    .map((query) => {
       const topLevelRules = appendImportantToEachValue(
-        _filterObject(style[query], value => !isNestedStyle(value))
+        _filterObject(style[query], (value) => !isNestedStyle(value))
       );
 
       if (!Object.keys(topLevelRules).length) {
@@ -76,7 +76,7 @@ function _subscribeToMediaQuery({
   listenersByQuery,
   matchMedia,
   mediaQueryListsByQuery,
-  query
+  query,
 }) {
   query = query.replace('@media ', '');
 
@@ -91,7 +91,7 @@ function _subscribeToMediaQuery({
     listenersByQuery[query] = {
       remove() {
         mql.removeListener(listener);
-      }
+      },
     };
   }
   return mql;
@@ -110,7 +110,7 @@ export default function resolveMediaQueries({
   mergeStyles,
   props,
   setState,
-  style
+  style,
 }: PluginConfig): PluginResult {
   // eslint-disable-line no-shadow
   let newStyle = _removeMediaQueries(style);
@@ -121,13 +121,13 @@ export default function resolveMediaQueries({
     hash,
     isNestedStyle,
     style,
-    userAgent: config.userAgent
+    userAgent: config.userAgent,
   });
 
   const newProps = mediaQueryClassNames
     ? {
         className:
-          mediaQueryClassNames + (props.className ? ' ' + props.className : '')
+          mediaQueryClassNames + (props.className ? ' ' + props.className : ''),
       }
     : null;
 
@@ -137,18 +137,18 @@ export default function resolveMediaQueries({
   if (!matchMedia) {
     return {
       props: newProps,
-      style: newStyle
+      style: newStyle,
     };
   }
 
   const listenersByQuery = {
-    ...getComponentField('_radiumMediaQueryListenersByQuery')
+    ...getComponentField('_radiumMediaQueryListenersByQuery'),
   };
   const mediaQueryListsByQuery = getGlobalState('mediaQueryListsByQuery') || {};
 
   Object.keys(style)
-    .filter(name => name.indexOf('@media') === 0)
-    .map(query => {
+    .filter((name) => name.indexOf('@media') === 0)
+    .map((query) => {
       const nestedRules = _filterObject(style[query], isNestedStyle);
 
       if (!Object.keys(nestedRules).length) {
@@ -160,7 +160,7 @@ export default function resolveMediaQueries({
         listenersByQuery,
         matchMedia,
         mediaQueryListsByQuery,
-        query
+        query,
       });
 
       // Apply media query states
@@ -171,10 +171,10 @@ export default function resolveMediaQueries({
 
   return {
     componentFields: {
-      _radiumMediaQueryListenersByQuery: listenersByQuery
+      _radiumMediaQueryListenersByQuery: listenersByQuery,
     },
     globalState: {mediaQueryListsByQuery},
     props: newProps,
-    style: newStyle
+    style: newStyle,
   };
 }

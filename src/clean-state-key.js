@@ -1,6 +1,6 @@
 /* flow */
 
-const cleanStateKey = key => {
+const cleanStateKey = (key) => {
   return key === null || typeof key === 'undefined' ? 'main' : key.toString();
 };
 

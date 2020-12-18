@@ -1,5 +1,5 @@
 export const resetListStyle = {
-  listStyle: 'none'
+  listStyle: 'none',
 };
 
 export const resetBoxModel = {
@@ -10,5 +10,5 @@ export const resetBoxModel = {
   paddingTop: 0,
   paddingRight: 0,
   paddingBottom: 0,
-  paddingLeft: 0
+  paddingLeft: 0,
 };

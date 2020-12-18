@@ -14,7 +14,6 @@
 - [StyleRoot Component](#styleroot-component)
 - [TestMode](#testmode)
 
-
 ## Sample Style Object
 
 ```jsx
@@ -30,11 +29,11 @@ var styles = {
     padding: '0.4em 1em',
 
     ':hover': {
-      backgroundColor: '#0088FF'
+      backgroundColor: '#0088FF',
     },
 
     ':focus': {
-      backgroundColor: '#0088FF'
+      backgroundColor: '#0088FF',
     },
 
     ':active': {
@@ -44,7 +43,7 @@ var styles = {
 
     // Media queries must start with @media, and follow the same syntax as CSS
     '@media (min-width: 992px)': {
-      padding: '0.6em 1.2em'
+      padding: '0.6em 1.2em',
     },
 
     '@media (min-width: 1200px)': {
@@ -52,32 +51,33 @@ var styles = {
 
       // Media queries can also have nested :hover, :focus, or :active states
       ':hover': {
-        backgroundColor: '#329FFF'
-      }
-    }
+        backgroundColor: '#329FFF',
+      },
+    },
   },
 
   red: {
     backgroundColor: '#d90000',
 
     ':hover': {
-      backgroundColor: '#FF0000'
+      backgroundColor: '#FF0000',
     },
 
     ':focus': {
-      backgroundColor: '#FF0000'
+      backgroundColor: '#FF0000',
     },
 
     ':active': {
-      backgroundColor: '#990000'
-    }
-  }
+      backgroundColor: '#990000',
+    },
+  },
 };
 ```
 
 ## Radium
 
 `Radium` itself is a higher-order component, whose job is to:
+
 - Provide initial state
 - Process the `style` attribute after `render()`
 - Clean up any resources when the component unmounts
@@ -98,6 +98,7 @@ export default Radium(MyComponent);
 ```
 
 `Radium`'s primary job is to apply interactive or media query styles, but even if you are not using any special styles, the higher order component will still:
+
 - Merge arrays of styles passed as the `style` attribute
 - Automatically vendor prefix the `style` object
 
@@ -147,6 +148,7 @@ Alternatively, if the config value can change every time the component is render
 The config will be passed down via [context](https://facebook.github.io/react/docs/context.html) to all child components. Fields in the `radiumConfig` prop or context will override those passed into the `Radium()` function.
 
 Possible configuration values:
+
 - [`matchMedia`](#configmatchmedia)
 - [`plugins`](#configplugins)
 - [`userAgent`](#configuseragent)
@@ -168,7 +170,7 @@ var ConfiguredRadium = require('./configured-radium');
 var matchMediaMock = require('match-media-mock').create();
 ConfiguredRadium.setMatchMedia(matchMediaMock);
 
-app.get('/app/:width/:height', function(req, res) {
+app.get('/app/:width/:height', function (req, res) {
   matchMediaMock.setConfig({
     type: 'screen',
     width: req.params.width,
@@ -191,7 +193,7 @@ var _matchMedia = null;
 
 function ConfiguredRadium(component) {
   return Radium({
-    matchMedia: _matchMedia
+    matchMedia: _matchMedia,
   })(component);
 }
 
@@ -215,6 +217,7 @@ MyComponent = ConfiguredRadium(MyComponent);
 See [#146](https://github.com/FormidableLabs/radium/pull/146) for more info.
 
 ### config.plugins
+
 **Array&lt;Plugin&gt;**
 
 Replaces all plugins with the provided set. See [Plugins](#plugins) for more information.
@@ -254,6 +257,7 @@ You will typically want to put plugins before the final `checkProps` so that you
 You can of course omit any or all of the built-in plugins, and replace them with your own version. For example, you may want to omit `Radium.Plugins.prefix` entirely if you aren't using vendor prefixes or are using a [compile-time solution](https://github.com/UXtemple/babel-plugin-react-autoprefix) instead.
 
 ### config.userAgent
+
 **string**
 
 Set the user agent passed to [inline-style-prefixer](https://github.com/rofrischmann/inline-style-prefixer) to perform prefixing on style objects. Mainly used during server rendering, passed in via the `radiumConfig` prop. Using express:
@@ -284,7 +288,7 @@ Parameters:
 Usage:
 
 ```jsx
-Radium.getState(this.state, 'button', ':hover')
+Radium.getState(this.state, 'button', ':hover');
 ```
 
 ## keyframes
@@ -297,7 +301,7 @@ Create a keyframes animation for use in an inline style. `keyframes` returns an 
 
 ```jsx
 class Spinner extends React.Component {
-  render () {
+  render() {
     return (
       <div>
         <div style={styles.inner} />
@@ -308,11 +312,14 @@ class Spinner extends React.Component {
 
 Spinner = Radium(Spinner);
 
-var pulseKeyframes = Radium.keyframes({
-  '0%': {width: '10%'},
-  '50%': {width: '50%'},
-  '100%': {width: '10%'},
-}, 'pulse');
+var pulseKeyframes = Radium.keyframes(
+  {
+    '0%': {width: '10%'},
+    '50%': {width: '50%'},
+    '100%': {width: '10%'},
+  },
+  'pulse'
+);
 
 var styles = {
   inner: {
@@ -323,7 +330,7 @@ var styles = {
     background: 'blue',
     height: '4px',
     margin: '0 auto',
-  }
+  },
 };
 ```
 
@@ -334,7 +341,7 @@ can be managed with [traditional css rules for keyframe animations](https://deve
 ```jsx
 @Radium
 class Spinner extends React.Component {
-  render () {
+  render() {
     return (
       <div>
         <div style={styles.inner} />
@@ -349,7 +356,7 @@ const pulseAnimation = Radium.keyframes(
     '50%': {width: '50%'},
     '100%': {width: '10%'},
   },
-  'pulse',
+  'pulse'
 );
 
 const blendAnimation = Radium.keyframes(
@@ -360,7 +367,7 @@ const blendAnimation = Radium.keyframes(
     '75%': {background: 'blue'},
     '100%': {background: 'red'},
   },
-  'blend',
+  'blend'
 );
 
 const styles = {
@@ -390,16 +397,17 @@ Almost everything that Radium does, except iteration, is implemented as a plugin
 
 ### Plugin Interface
 
-All plugins are functions accept a PluginConfig, and return a PluginResult. The annotated flow types follow. A plugin is called once for every *rendered element* that has a `style` attribute, for example the `div` and `span` in `return <div style={...}><span style={...} /></div>;`.
+All plugins are functions accept a PluginConfig, and return a PluginResult. The annotated flow types follow. A plugin is called once for every _rendered element_ that has a `style` attribute, for example the `div` and `span` in `return <div style={...}><span style={...} /></div>;`.
 
 **PluginConfig**
+
 ```jsx
 type PluginConfig = {
   // Adds a chunk of css to the root style sheet
   addCSS: (css: string) => {remove: () => void},
 
   // Helper function when adding CSS
-  appendImportantToEachValue: (style: Object) => Object;
+  appendImportantToEachValue: (style: Object) => Object,
 
   // May not be readable if code has been minified
   componentName: string,
@@ -411,7 +419,7 @@ type PluginConfig = {
   cssRuleSetToString: (
     selector: string,
     rules: Object,
-    userAgent: ?string,
+    userAgent: ?string
   ) => string,
 
   // Retrieve the value of a field on the component
@@ -430,7 +438,7 @@ type PluginConfig = {
   hash: (data: string) => string,
 
   // Returns true if the value is a nested style object
-  isNestedStyle: (value: any) => bool,
+  isNestedStyle: (value: any) => boolean,
 
   // Access to the mergeStyles utility
   mergeStyles: (styles: Array<Object>) => Object,
@@ -451,9 +459,9 @@ type PluginConfig = {
 
   // uses the exenv npm module
   ExecutionEnvironment: {
-    canUseEventListeners: bool,
-    canUseDOM: bool,
-  }
+    canUseEventListeners: boolean,
+    canUseDOM: boolean,
+  },
 };
 ```
 
@@ -491,7 +499,7 @@ If your plugin consumes custom style blocks, it should merge any applicable styl
 
 ```jsx
 {
-  color: 'red'
+  color: 'red';
 }
 ```
 
@@ -509,8 +517,8 @@ If you include a `scopeSelector`, you can include CSS rules that should apply to
   rules={{
     color: 'blue',
     span: {
-      fontFamily: 'Lucida Console, Monaco, monospace'
-    }
+      fontFamily: 'Lucida Console, Monaco, monospace',
+    },
   }}
 />
 ```
@@ -519,12 +527,12 @@ will return:
 
 ```html
 <style>
-.scoping-class {
-  color: 'blue';
-}
-.scoping-class span {
-  font-family: 'Lucida Console, Monaco, monospace';
-}
+  .scoping-class {
+    color: 'blue';
+  }
+  .scoping-class span {
+    font-family: 'Lucida Console, Monaco, monospace';
+  }
 </style>
 ```
 
@@ -538,35 +546,36 @@ An object of CSS rules to render. Each key of the rules object is a CSS selector
 var Radium = require('radium');
 var Style = Radium.Style;
 // or
-import Radium, { Style } from 'radium';
+import Radium, {Style} from 'radium';
 
-<Style rules={{
-  body: {
-    margin: 0,
-    fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif'
-  },
-  html: {
-    background: '#ccc',
-    fontSize: '100%'
-  },
-  mediaQueries: {
-    '(min-width: 550px)': {
-      html:  {
-        fontSize: '120%'
-      }
+<Style
+  rules={{
+    body: {
+      margin: 0,
+      fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
     },
-    '(min-width: 1200px)': {
-      html:  {
-        fontSize: '140%'
-      }
-    }
-  },
-  'h1, h2, h3': {
-    fontWeight: 'bold'
-  }
-}} />
+    html: {
+      background: '#ccc',
+      fontSize: '100%',
+    },
+    mediaQueries: {
+      '(min-width: 550px)': {
+        html: {
+          fontSize: '120%',
+        },
+      },
+      '(min-width: 1200px)': {
+        html: {
+          fontSize: '140%',
+        },
+      },
+    },
+    'h1, h2, h3': {
+      fontWeight: 'bold',
+    },
+  }}
+/>;
 ```
-
 
 #### scopeSelector
 
@@ -578,8 +587,8 @@ A string that any included selectors in `rules` will be appended to. Use to scop
     scopeSelector=".TestClass"
     rules={{
       h1: {
-        fontSize: '2em'
-      }
+        fontSize: '2em',
+      },
     }}
   />
 </div>
@@ -603,16 +612,12 @@ import {StyleRoot} from 'radium';
 
 class App extends React.Component {
   render() {
-    return (
-      <StyleRoot>
-        ... rest of your app ...
-      </StyleRoot>
-    );
+    return <StyleRoot>... rest of your app ...</StyleRoot>;
   }
 }
 ```
 
-**Note:** StyleRoot passes the style-keeper (the object where styles are collected) down to other Radium components via context. Because of this, you cannot use keyframes or media queries in *direct children* of the `<StyleRoot>`, e.g.
+**Note:** StyleRoot passes the style-keeper (the object where styles are collected) down to other Radium components via context. Because of this, you cannot use keyframes or media queries in _direct children_ of the `<StyleRoot>`, e.g.
 
 ```jsx
 // COUNTEREXAMPLE, DOES NOT WORK

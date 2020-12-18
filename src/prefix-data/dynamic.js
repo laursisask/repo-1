@@ -24,7 +24,7 @@ export default {
     imageSet,
     position,
     sizing,
-    transition
+    transition,
   ],
   prefixMap: {
     chrome: {
@@ -91,7 +91,7 @@ export default {
       columns: 49,
       columnSpan: 49,
       columnWidth: 49,
-      writingMode: 47
+      writingMode: 47,
     },
     safari: {
       flex: 8,
@@ -186,7 +186,7 @@ export default {
       columns: 8,
       columnSpan: 8,
       columnWidth: 8,
-      writingMode: 10.1
+      writingMode: 10.1,
     },
     firefox: {
       appearance: 60,
@@ -212,7 +212,7 @@ export default {
       columnRuleWidth: 51,
       columns: 51,
       columnSpan: 51,
-      columnWidth: 51
+      columnWidth: 51,
     },
     opera: {
       flex: 16,
@@ -290,7 +290,7 @@ export default {
       columns: 36,
       columnSpan: 36,
       columnWidth: 36,
-      writingMode: 34
+      writingMode: 34,
     },
     ie: {
       flex: 10,
@@ -337,7 +337,7 @@ export default {
       gridArea: 11,
       gridGap: 11,
       textSizeAdjust: 11,
-      writingMode: 11
+      writingMode: 11,
     },
     edge: {
       userSelect: 17,
@@ -373,7 +373,7 @@ export default {
       gridColumnGap: 15,
       gridRowGap: 15,
       gridArea: 15,
-      gridGap: 15
+      gridGap: 15,
     },
     ios_saf: {
       flex: 8.1,
@@ -465,7 +465,7 @@ export default {
       columns: 8.1,
       columnSpan: 8.1,
       columnWidth: 8.1,
-      writingMode: 10.3
+      writingMode: 10.3,
     },
     android: {
       borderImage: 4.2,
@@ -550,7 +550,7 @@ export default {
       columns: 4.4,
       columnSpan: 4.4,
       columnWidth: 4.4,
-      writingMode: 4.4
+      writingMode: 4.4,
     },
     and_chr: {
       appearance: 62,
@@ -575,7 +575,7 @@ export default {
       maskBorderOutset: 62,
       maskBorderRepeat: 62,
       maskBorder: 62,
-      maskType: 62
+      maskType: 62,
     },
     and_uc: {
       flex: 11.4,
@@ -649,8 +649,8 @@ export default {
       columns: 11.4,
       columnSpan: 11.4,
       columnWidth: 11.4,
-      writingMode: 11.4
+      writingMode: 11.4,
     },
-    op_mini: {}
-  }
+    op_mini: {},
+  },
 };

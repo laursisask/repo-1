@@ -30,7 +30,7 @@ export default {
     imageSet,
     position,
     sizing,
-    transition
+    transition,
   ],
   prefixMap: {
     transform: wms,
@@ -157,6 +157,6 @@ export default {
     borderImageRepeat: w,
     borderImageSlice: w,
     borderImageSource: w,
-    borderImageWidth: w
-  }
+    borderImageWidth: w,
+  },
 };

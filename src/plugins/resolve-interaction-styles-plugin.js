@@ -4,7 +4,7 @@ import type {PluginConfig, PluginResult} from './index';
 
 import MouseUpListener from './mouse-up-listener';
 
-const _isInteractiveStyleField = function(styleFieldName) {
+const _isInteractiveStyleField = function (styleFieldName) {
   return (
     styleFieldName === ':hover' ||
     styleFieldName === ':active' ||
@@ -12,7 +12,7 @@ const _isInteractiveStyleField = function(styleFieldName) {
   );
 };
 
-const resolveInteractionStyles = function(config: PluginConfig): PluginResult {
+const resolveInteractionStyles = function (config: PluginConfig): PluginResult {
   const {
     ExecutionEnvironment,
     getComponentField,
@@ -20,7 +20,7 @@ const resolveInteractionStyles = function(config: PluginConfig): PluginResult {
     mergeStyles,
     props,
     setState,
-    style
+    style,
   } = config;
 
   const newComponentFields = {};
@@ -32,13 +32,13 @@ const resolveInteractionStyles = function(config: PluginConfig): PluginResult {
     // This code, and the very similar ones below, could be abstracted a bit
     // more, but it hurts readability IMO.
     const existingOnMouseEnter = props.onMouseEnter;
-    newProps.onMouseEnter = function(e) {
+    newProps.onMouseEnter = function (e) {
       existingOnMouseEnter && existingOnMouseEnter(e);
       setState(':hover', true);
     };
 
     const existingOnMouseLeave = props.onMouseLeave;
-    newProps.onMouseLeave = function(e) {
+    newProps.onMouseLeave = function (e) {
       existingOnMouseLeave && existingOnMouseLeave(e);
       setState(':hover', false);
     };
@@ -46,14 +46,14 @@ const resolveInteractionStyles = function(config: PluginConfig): PluginResult {
 
   if (style[':active']) {
     const existingOnMouseDown = props.onMouseDown;
-    newProps.onMouseDown = function(e) {
+    newProps.onMouseDown = function (e) {
       existingOnMouseDown && existingOnMouseDown(e);
       newComponentFields._lastMouseDown = Date.now();
       setState(':active', 'viamousedown');
     };
 
     const existingOnKeyDown = props.onKeyDown;
-    newProps.onKeyDown = function(e) {
+    newProps.onKeyDown = function (e) {
       existingOnKeyDown && existingOnKeyDown(e);
       if (e.key === ' ' || e.key === 'Enter') {
         setState(':active', 'viakeydown');
@@ -61,7 +61,7 @@ const resolveInteractionStyles = function(config: PluginConfig): PluginResult {
     };
 
     const existingOnKeyUp = props.onKeyUp;
-    newProps.onKeyUp = function(e) {
+    newProps.onKeyUp = function (e) {
       existingOnKeyUp && existingOnKeyUp(e);
       if (e.key === ' ' || e.key === 'Enter') {
         setState(':active', false);
@@ -71,13 +71,13 @@ const resolveInteractionStyles = function(config: PluginConfig): PluginResult {
 
   if (style[':focus']) {
     const existingOnFocus = props.onFocus;
-    newProps.onFocus = function(e) {
+    newProps.onFocus = function (e) {
       existingOnFocus && existingOnFocus(e);
       setState(':focus', true);
     };
 
     const existingOnBlur = props.onBlur;
-    newProps.onBlur = function(e) {
+    newProps.onBlur = function (e) {
       existingOnBlur && existingOnBlur(e);
       setState(':focus', false);
     };
@@ -91,7 +91,7 @@ const resolveInteractionStyles = function(config: PluginConfig): PluginResult {
     newComponentFields._radiumMouseUpListener = MouseUpListener.subscribe(
       () => {
         Object.keys(getComponentField('state')._radiumStyleState).forEach(
-          key => {
+          (key) => {
             if (getState(':active', key) === 'viamousedown') {
               setState(':active', false, key);
             }
@@ -105,8 +105,8 @@ const resolveInteractionStyles = function(config: PluginConfig): PluginResult {
   const interactionStyles = props.disabled
     ? [style[':disabled']]
     : Object.keys(style)
-        .filter(name => _isInteractiveStyleField(name) && getState(name))
-        .map(name => style[name]);
+        .filter((name) => _isInteractiveStyleField(name) && getState(name))
+        .map((name) => style[name]);
 
   let newStyle = mergeStyles([style].concat(interactionStyles));
 
@@ -121,7 +121,7 @@ const resolveInteractionStyles = function(config: PluginConfig): PluginResult {
   return {
     componentFields: newComponentFields,
     props: newProps,
-    style: newStyle
+    style: newStyle,
   };
 };
 

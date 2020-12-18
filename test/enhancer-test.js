@@ -7,7 +7,7 @@ const createEsClass = require('../lib/test-helpers').createEsClass;
 const render = require('./utils').render;
 
 // Full assertion wrapper
-const assertValidEnhancedComponent = Composed => {
+const assertValidEnhancedComponent = (Composed) => {
   const Enhanced = Enhancer(Composed);
   const rendered = render(Enhanced);
 
@@ -22,7 +22,7 @@ describe('Enhancer', () => {
 
   beforeEach(() => {
     testElement = React.createElement('div', {
-      style: [{background: 'red'}, {color: 'white'}]
+      style: [{background: 'red'}, {color: 'white'}],
     });
   });
 
@@ -33,7 +33,7 @@ describe('Enhancer', () => {
   });
 
   it('handles real functions', () => {
-    const Composed = function() {
+    const Composed = function () {
       return testElement;
     };
 
@@ -68,7 +68,7 @@ describe('Enhancer', () => {
       }
 
       componentWillReceiveProps() {
-        this.setState(state => ({v: state.v + 1}));
+        this.setState((state) => ({v: state.v + 1}));
       }
 
       checkProp() {
@@ -91,7 +91,7 @@ describe('Enhancer', () => {
           ', ',
           String(this.state.v),
           ' == ',
-          String(this.checkState())
+          String(this.checkState()),
         ]);
       }
     }
@@ -121,7 +121,7 @@ describe('Enhancer', () => {
   }).timeout(10000);
 
   it('works with hooks', () => {
-    const Composed = function() {
+    const Composed = function () {
       // eslint-disable-next-line no-unused-vars
       const [counter, setCount] = React.useState(0);
 

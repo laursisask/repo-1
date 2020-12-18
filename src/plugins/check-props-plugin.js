@@ -23,7 +23,7 @@ if (process.env.NODE_ENV !== 'production') {
       'backgroundRepeat',
       'backgroundRepeatX',
       'backgroundRepeatY',
-      'backgroundSize'
+      'backgroundSize',
     ],
     border: [
       'borderBottom',
@@ -44,20 +44,20 @@ if (process.env.NODE_ENV !== 'production') {
       'borderTopColor',
       'borderTopStyle',
       'borderTopWidth',
-      'borderWidth'
+      'borderWidth',
     ],
     borderImage: [
       'borderImageOutset',
       'borderImageRepeat',
       'borderImageSlice',
       'borderImageSource',
-      'borderImageWidth'
+      'borderImageWidth',
     ],
     borderRadius: [
       'borderBottomLeftRadius',
       'borderBottomRightRadius',
       'borderTopLeftRadius',
-      'borderTopRightRadius'
+      'borderTopRightRadius',
     ],
     font: [
       'fontFamily',
@@ -68,7 +68,7 @@ if (process.env.NODE_ENV !== 'production') {
       'fontVariant',
       'fontVariantLigatures',
       'fontWeight',
-      'lineHeight'
+      'lineHeight',
     ],
     listStyle: ['listStyleImage', 'listStylePosition', 'listStyleType'],
     margin: ['marginBottom', 'marginLeft', 'marginRight', 'marginTop'],
@@ -77,22 +77,22 @@ if (process.env.NODE_ENV !== 'production') {
       'transitionDelay',
       'transitionDuration',
       'transitionProperty',
-      'transitionTimingFunction'
-    ]
+      'transitionTimingFunction',
+    ],
   };
 
-  checkProps = function(config: PluginConfig): PluginResult {
+  checkProps = function (config: PluginConfig): PluginResult {
     const {componentName, style} = config;
     if (typeof style !== 'object' || !style) {
       return;
     }
 
     const styleKeys = Object.keys(style);
-    styleKeys.forEach(styleKey => {
+    styleKeys.forEach((styleKey) => {
       if (
         Array.isArray(shorthandPropertyExpansions[styleKey]) &&
         shorthandPropertyExpansions[styleKey].some(
-          sp => styleKeys.indexOf(sp) !== -1
+          (sp) => styleKeys.indexOf(sp) !== -1
         )
       ) {
         if (process.env.NODE_ENV !== 'production') {
@@ -113,7 +113,7 @@ if (process.env.NODE_ENV !== 'production') {
       }
     });
 
-    styleKeys.forEach(k => checkProps({...config, style: style[k]}));
+    styleKeys.forEach((k) => checkProps({...config, style: style[k]}));
     return;
   };
 }

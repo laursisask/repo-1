@@ -1,4 +1,4 @@
-module.exports = function(config) {
+module.exports = function (config) {
   require('./karma.conf.js')(config);
   config.set({
     webpack: {
@@ -10,25 +10,25 @@ module.exports = function(config) {
             use: {
               loader: 'babel-loader',
               options: {
-                plugins: ['istanbul']
-              }
-            }
-          }
-        ])
-      }
+                plugins: ['istanbul'],
+              },
+            },
+          },
+        ]),
+      },
     },
     reporters: config.reporters.concat(['coverage']),
     plugins: config.plugins.concat(['karma-coverage']),
     coverageReporter: {
       reporters: [
         {
-          type: 'text'
+          type: 'text',
         },
         {
           type: 'lcovonly',
-          subdir: '.'
-        }
-      ]
-    }
+          subdir: '.',
+        },
+      ],
+    },
   });
 };

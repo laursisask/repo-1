@@ -7,7 +7,7 @@ import {getPrefixedStyle} from './prefixer';
 
 function createMarkupForStyles(style: Object): string {
   return Object.keys(style)
-    .map(property => {
+    .map((property) => {
       return property + ': ' + style[property] + ';';
     })
     .join('\n');

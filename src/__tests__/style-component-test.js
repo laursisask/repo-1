@@ -80,7 +80,7 @@ describe('<Style> component', () => {
       <Style
         rules={{
           div: {color: 'red'},
-          span: {color: 'blue'}
+          span: {color: 'blue'},
         }}
         scopeSelector=".scope"
       />
@@ -124,8 +124,8 @@ describe('<Style> component', () => {
           backgroundColor: 'white',
           div: {
             color: 'blue',
-            backgroundColor: 'black'
-          }
+            backgroundColor: 'black',
+          },
         }}
         scopeSelector=".scope"
       />

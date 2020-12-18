@@ -85,7 +85,7 @@ function getPrefixer(
   userAgent: ?string
 ): {
   +prefix: (style: Object) => Object,
-  prefixedKeyframes: string
+  prefixedKeyframes: string,
 } {
   const actualUserAgent =
     userAgent || (global && global.navigator && global.navigator.userAgent);
@@ -105,12 +105,13 @@ function getPrefixer(
 
   if (
     process.env.NODE_ENV === 'test' ||
-    (!_cachedPrefixer || actualUserAgent !== _lastUserAgent)
+    !_cachedPrefixer ||
+    actualUserAgent !== _lastUserAgent
   ) {
     if (actualUserAgent === 'all') {
       _cachedPrefixer = {
         prefix: prefixAll,
-        prefixedKeyframes: 'keyframes'
+        prefixedKeyframes: 'keyframes',
       };
     } else {
       _cachedPrefixer = new InlineStylePrefixer({userAgent: actualUserAgent});

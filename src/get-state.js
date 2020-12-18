@@ -2,7 +2,7 @@
 
 import cleanStateKey from './clean-state-key';
 
-const getState = function(
+const getState = function (
   state: {_radiumStyleState: {[key: string]: {[value: string]: boolean}}},
   elementKey: string,
   value: string

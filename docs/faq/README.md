@@ -32,8 +32,8 @@ class CheckForBold extends React.Component {
           checked={this.state.isChecked}
           onChange={this._onChange}
           type="checkbox"
-        />
-      {' '}Check for bold
+        />{' '}
+        Check for bold
       </label>
     );
   }
@@ -43,35 +43,36 @@ class CheckForBold extends React.Component {
 Instead of `:first` and `:last`, change behavior during array iteration. Note that the border property is broken down into parts to avoid complications as in issue [#95](https://github.com/FormidableLabs/radium/issues/95).
 
 ```jsx
-var droids = [
-  'R2-D2',
-  'C-3PO',
-  'Huyang',
-  'Droideka',
-  'Probe Droid'
-];
+var droids = ['R2-D2', 'C-3PO', 'Huyang', 'Droideka', 'Probe Droid'];
 
 class DroidList extends React.Component {
   render() {
     return (
       <ul style={{padding: 0}}>
-        {droids.map((droid, index, arr) =>
-          <li key={index} style={{
-            borderColor: 'black',
-            borderRadius: index === 0 ? '12px 12px 0 0' :
-              index === (arr.length - 1) ? '0 0 12px 12px' : '',
-            borderStyle: 'solid',
-            borderWidth: index === (arr.length - 1) ? '1px' : '1px 1px 0 1px',
-            cursor: 'pointer',
-            listStyle: 'none',
-            padding: 12,
-            ':hover': {
-              background: '#eee'
-            }
-          }}>
-           {droid}
+        {droids.map((droid, index, arr) => (
+          <li
+            key={index}
+            style={{
+              borderColor: 'black',
+              borderRadius:
+                index === 0
+                  ? '12px 12px 0 0'
+                  : index === arr.length - 1
+                  ? '0 0 12px 12px'
+                  : '',
+              borderStyle: 'solid',
+              borderWidth: index === arr.length - 1 ? '1px' : '1px 1px 0 1px',
+              cursor: 'pointer',
+              listStyle: 'none',
+              padding: 12,
+              ':hover': {
+                background: '#eee',
+              },
+            }}
+          >
+            {droid}
           </li>
-        )}
+        ))}
       </ul>
     );
   }
@@ -107,19 +108,19 @@ The example from the main Readme (using regular CSS syntax)
 ```
 
 ```jsx
-import styler from 'react-styling/flat'
+import styler from 'react-styling/flat';
 
 class Button extends React.Component {
   static propTypes = {
-    kind: PropTypes.oneOf(['primary', 'warning']).isRequired
-  }
+    kind: PropTypes.oneOf(['primary', 'warning']).isRequired,
+  };
 
   render() {
     return (
       <button style={style[`button_${this.props.kind}`]}>
         {this.props.children}
       </button>
-    )
+    );
   }
 }
 
@@ -141,7 +142,7 @@ const style = styler`
       background: #FF4136;
     }
   }
-`
+`;
 ```
 
 You can find a more advanced example in the [react-styling readme](https://github.com/halt-hammerzeit/react-styling#radium).
@@ -179,7 +180,10 @@ now and create an issue at https://github.com/rofrischmann/inline-style-prefixer
 This isn't an issue if you run your tests in a browser-like environment such as jsdom or PhantomJS, but if you just run them in Node, there will be no userAgent defined. In your test setup, you can define one:
 
 ```jsx
-global.navigator = {userAgent: 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2454.85 Safari/537.36'};
+global.navigator = {
+  userAgent:
+    'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2454.85 Safari/537.36',
+};
 ```
 
 Make sure it is a real user agent that `inline-style-prefixer` recognizes, or you'll still get the second error. The above UA is [Chrome 49 from the `inline-style-prefixer` tests](https://github.com/rofrischmann/inline-style-prefixer/blob/master/test/prefixer-test.js).
@@ -188,7 +192,7 @@ Make sure it is a real user agent that `inline-style-prefixer` recognizes, or yo
 
 You may see the name "Constructor" instead of your component name, for example: "Warning: Failed propType: Invalid prop `onClick` of type `function` supplied to `Constructor`, expected `string`." or "Warning: Each child in an array or iterator should have a unique "key" prop. Check the render method of `Constructor`."
 
-Your transpiler is probably not able to set the `displayName` property of the component correctly, which can happen if you wrap `React.createClass` immediately with `Radium`, e.g. `var Button = Radium(React.createClass({ ... }));`. Instead, wrap your component afterward, ex. `Button = Radium(Button);`,  or when exporting, ex. `export default Radium(Button);`, or set `displayName` manually.
+Your transpiler is probably not able to set the `displayName` property of the component correctly, which can happen if you wrap `React.createClass` immediately with `Radium`, e.g. `var Button = Radium(React.createClass({ ... }));`. Instead, wrap your component afterward, ex. `Button = Radium(Button);`, or when exporting, ex. `export default Radium(Button);`, or set `displayName` manually.
 
 ## Why does the browser state of a child element not reset after unmounting and remounting?
 

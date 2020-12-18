@@ -18,11 +18,7 @@ import Radium from 'radium';
 @Radium
 class App extends React.Component {
   render() {
-    return (
-      <div>
-        ... rest of your app ...
-      </div>
-    );
+    return <div>... rest of your app ...</div>;
   }
 }
 ```
@@ -35,11 +31,7 @@ import {StyleRoot} from 'radium';
 // No need for @Radium decorator; StyleRoot is already wrapped.
 class App extends React.Component {
   render() {
-    return (
-      <StyleRoot>
-        ... rest of your app ...
-      </StyleRoot>
-    );
+    return <StyleRoot>... rest of your app ...</StyleRoot>;
   }
 }
 ```
@@ -70,9 +62,9 @@ class Spinner extends React.Component {
 }
 
 var pulseKeyframes = Radium.keyframes({
-  '0%': { width: '10%' },
-  '50%': { width: '50%' },
-  '100%': { width: '10%' },
+  '0%': {width: '10%'},
+  '50%': {width: '50%'},
+  '100%': {width: '10%'},
 });
 
 var styles = {
@@ -81,7 +73,7 @@ var styles = {
     background: 'blue',
     height: '4px',
     margin: '0 auto',
-  }
+  },
 };
 ```
 
@@ -92,7 +84,7 @@ import Radium from 'radium';
 
 @Radium
 class Spinner extends React.Component {
-  render () {
+  render() {
     return (
       <div>
         <div style={styles.inner} />
@@ -101,11 +93,14 @@ class Spinner extends React.Component {
   }
 }
 
-var pulseKeyframes = Radium.keyframes({
-  '0%': { width: '10%' },
-  '50%': { width: '50%' },
-  '100%': { width: '10%' },
-}, 'pulse');
+var pulseKeyframes = Radium.keyframes(
+  {
+    '0%': {width: '10%'},
+    '50%': {width: '50%'},
+    '100%': {width: '10%'},
+  },
+  'pulse'
+);
 
 var styles = {
   inner: {
@@ -116,7 +111,7 @@ var styles = {
     background: 'blue',
     height: '4px',
     margin: '0 auto',
-  }
+  },
 };
 ```
 
@@ -136,14 +131,16 @@ import {PrintStyleSheet} from 'radium';
 @Radium
 class MyComponent extends React.Component {
   static printStyles = {
-    wrapper: { background: 'white' },
-    text: { color: 'black' }
+    wrapper: {background: 'white'},
+    text: {color: 'black'},
   };
 
   render() {
     return (
       <div className={this.printStyleClass.wrapper}>
-        <p className={this.printStyleClass.text}>Prints as black text on white background</p>
+        <p className={this.printStyleClass.text}>
+          Prints as black text on white background
+        </p>
       </div>
     );
   }
@@ -154,7 +151,7 @@ class App extends React.Component {
     return (
       <div>
         <PrintStyleSheet />
-        <MyComponent/>
+        <MyComponent />
       </div>
     );
   }
@@ -170,8 +167,10 @@ import {StyleRoot} from 'radium';
 class MyComponent extends React.Component {
   render() {
     return (
-      <div style={{'@media print': { color: white }}}>
-        <p style={{'@media print': { color: black }}}>Prints as black text on white background</p>
+      <div style={{'@media print': {color: white}}}>
+        <p style={{'@media print': {color: black}}}>
+          Prints as black text on white background
+        </p>
       </div>
     );
   }
@@ -181,7 +180,7 @@ class App extends React.Component {
   render() {
     return (
       <StyleRoot>
-        <MyComponent/>
+        <MyComponent />
       </StyleRoot>
     );
   }

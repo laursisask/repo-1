@@ -58,7 +58,7 @@ class StyleSheet extends Component<WithRadiumContextsProps> {
     return (
       <style
         dangerouslySetInnerHTML={{__html: this._css}}
-        ref={c => {
+        ref={(c) => {
           this._root = c;
         }}
       />

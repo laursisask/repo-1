@@ -4,12 +4,12 @@ const _callbacks = [];
 let _mouseUpListenerIsActive = false;
 
 function _handleMouseUp() {
-  _callbacks.forEach(callback => {
+  _callbacks.forEach((callback) => {
     callback();
   });
 }
 
-const subscribe = function(callback: () => void): {remove: () => void} {
+const subscribe = function (callback: () => void): {remove: () => void} {
   if (_callbacks.indexOf(callback) === -1) {
     _callbacks.push(callback);
   }
@@ -20,7 +20,7 @@ const subscribe = function(callback: () => void): {remove: () => void} {
   }
 
   return {
-    remove: function() {
+    remove: function () {
       const index = _callbacks.indexOf(callback);
       _callbacks.splice(index, 1);
 
@@ -28,11 +28,11 @@ const subscribe = function(callback: () => void): {remove: () => void} {
         window.removeEventListener('mouseup', _handleMouseUp);
         _mouseUpListenerIsActive = false;
       }
-    }
+    },
   };
 };
 
 export default {
   subscribe: subscribe,
-  __triggerForTests: _handleMouseUp
+  __triggerForTests: _handleMouseUp,
 };

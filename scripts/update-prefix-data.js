@@ -20,10 +20,10 @@ const browserList = {
   opera: 13,
   op_mini: 5,
   and_uc: 9,
-  and_chr: 30
+  and_chr: 30,
 };
 
 generateData(browserList, {
   staticPath: path.join(__dirname, '../src/prefix-data/static.js'),
-  dynamicPath: path.join(__dirname, '../src/prefix-data/dynamic.js')
+  dynamicPath: path.join(__dirname, '../src/prefix-data/dynamic.js'),
 });

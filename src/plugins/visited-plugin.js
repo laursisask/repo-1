@@ -9,7 +9,7 @@ export default function visited({
   cssRuleSetToString,
   hash,
   props,
-  style
+  style,
 }: PluginConfig): PluginResult {
   // eslint-disable-line no-shadow
   let className = props.className;
@@ -33,6 +33,6 @@ export default function visited({
 
   return {
     props: className === props.className ? null : {className},
-    style: newStyle
+    style: newStyle,
   };
 }

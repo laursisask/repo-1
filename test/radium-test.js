@@ -14,8 +14,8 @@ describe('Radium blackbox SSR tests', () => {
         render() {
           return React.createElement('div', {
             style: {
-              display: 'flex'
-            }
+              display: 'flex',
+            },
           });
         }
       }
@@ -35,7 +35,7 @@ describe('Radium blackbox SSR tests', () => {
     // Regression test: https://github.com/FormidableLabs/radium/issues/958
     it('handles non-matching user agent', () => {
       const rendered = render(Wrapped, {
-        userAgent: 'testy-mctestface'
+        userAgent: 'testy-mctestface',
       });
       expect(rendered).to.contain(
         'style="display:-webkit-box;display:-moz-box;display:-ms-flexbox;' +
@@ -47,7 +47,7 @@ describe('Radium blackbox SSR tests', () => {
       const rendered = render(Wrapped, {
         userAgent:
           'Mozilla/5.0 (iPad; CPU OS 8_0_0 like Mac OS X) AppleWebKit/600.1.4' +
-          ' (KHTML, like Gecko) CriOS/47.0.2526.107 Mobile/12H321 Safari/600.1.4'
+          ' (KHTML, like Gecko) CriOS/47.0.2526.107 Mobile/12H321 Safari/600.1.4',
       });
       expect(rendered).to.contain('style="display:-webkit-flex"');
     });
@@ -61,7 +61,7 @@ describe('Radium blackbox SSR tests', () => {
         {
           '0%': {width: '10%'},
           '50%': {width: '50%'},
-          '100%': {width: '10%'}
+          '100%': {width: '10%'},
         },
         'test'
       );
@@ -69,17 +69,17 @@ describe('Radium blackbox SSR tests', () => {
       const style = {
         animation: 'x 3s ease 0s infinite',
         animationName: testKeyFrames,
-        background: 'blue'
+        background: 'blue',
       };
 
-      getComponent = radiumConfig => {
+      getComponent = (radiumConfig) => {
         class Component extends React.Component {
           render() {
             return React.createElement(
               Radium.StyleRoot,
               {radiumConfig},
               React.createElement('div', {
-                style
+                style,
               })
             );
           }
@@ -99,7 +99,7 @@ describe('Radium blackbox SSR tests', () => {
     it('handles non-matching user agent', () => {
       const rendered = render(
         getComponent({
-          userAgent: 'testy-mctestface'
+          userAgent: 'testy-mctestface',
         })
       );
 
@@ -111,7 +111,7 @@ describe('Radium blackbox SSR tests', () => {
         getComponent({
           userAgent:
             'Mozilla/5.0 (iPad; CPU OS 8_0_0 like Mac OS X) AppleWebKit/600.1.4' +
-            ' (KHTML, like Gecko) CriOS/47.0.2526.107 Mobile/12H321 Safari/600.1.4'
+            ' (KHTML, like Gecko) CriOS/47.0.2526.107 Mobile/12H321 Safari/600.1.4',
         })
       );
       expect(rendered).to.contain(
@@ -129,15 +129,15 @@ describe('Radium blackbox SSR tests', () => {
             React.createElement('div', {
               key: 0,
               style: {
-                color: 'blue'
-              }
+                color: 'blue',
+              },
             }),
             React.createElement('div', {
               key: 1,
               style: {
-                color: 'red'
-              }
-            })
+                color: 'red',
+              },
+            }),
           ];
         }
       }
@@ -157,16 +157,16 @@ describe('Radium blackbox SSR tests', () => {
               React.createElement('div', {
                 key: 0,
                 style: {
-                  color: 'blue'
-                }
+                  color: 'blue',
+                },
               }),
               React.createElement('div', {
                 key: 1,
                 style: {
-                  color: 'red'
-                }
-              })
-            ]
+                  color: 'red',
+                },
+              }),
+            ],
           });
         }
       }

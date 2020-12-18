@@ -2,21 +2,21 @@ import React from 'react';
 import MouseUpListener from 'plugins/mouse-up-listener';
 import objectAssign from 'object-assign';
 const resolveStyles = require('inject-loader!resolve-styles')({
-  exenv: require('__mocks__/exenv')
+  exenv: require('__mocks__/exenv'),
 }).default;
 
-const genComponent = function(initialState = {}) {
+const genComponent = function (initialState = {}) {
   return {
-    setState: sinon.spy(function(newState) {
+    setState: sinon.spy(function (newState) {
       objectAssign(this.state, newState);
     }),
     state: initialState,
-    _radiumIsMounted: true
+    _radiumIsMounted: true,
   };
 };
 
 // http://stackoverflow.com/a/25395068/13932
-const permutate = function(arr) {
+const permutate = function (arr) {
   const permutations = [];
   if (arr.length === 1) {
     return [arr];
@@ -33,9 +33,9 @@ const permutate = function(arr) {
   return permutations;
 };
 
-const getChildrenArray = function(children) {
+const getChildrenArray = function (children) {
   const childrenArray = [];
-  React.Children.forEach(children, function(child) {
+  React.Children.forEach(children, function (child) {
     childrenArray.push(child);
   });
   return childrenArray;
@@ -108,8 +108,8 @@ describe('resolveStyles', () => {
       // JSX won't let this through, so do it with a plain object instead
       const renderedElement = {
         props: {
-          children: [null]
-        }
+          children: [null],
+        },
       };
 
       const result = resolveStyles(component, renderedElement).element;
@@ -131,7 +131,7 @@ describe('resolveStyles', () => {
 
       expect(result.props.style).to.deep.equal({
         background: 'white',
-        color: 'blue'
+        color: 'blue',
       });
 
       expect(React.cloneElement).to.have.been.calledOnce;
@@ -151,7 +151,7 @@ describe('resolveStyles', () => {
 
       expect(result.props.style).to.deep.equal({
         background: 'white',
-        color: 'blue'
+        color: 'blue',
       });
     });
 
@@ -166,7 +166,7 @@ describe('resolveStyles', () => {
             ''.someUndefinedVar,
             '',
             [1, 2, 3],
-            {color: 'blue'}
+            {color: 'blue'},
           ]}
         />
       );
@@ -175,7 +175,7 @@ describe('resolveStyles', () => {
 
       expect(result.props.style).to.deep.equal({
         background: 'white',
-        color: 'blue'
+        color: 'blue',
       });
     });
 
@@ -188,7 +188,7 @@ describe('resolveStyles', () => {
       const result = resolveStyles(component, renderedElement).element;
 
       expect(result.props.style).to.deep.equal({
-        background: 'blue'
+        background: 'blue',
       });
     });
 
@@ -198,7 +198,7 @@ describe('resolveStyles', () => {
         <div
           style={[
             {':hover': {background: 'white'}},
-            {':hover': {color: 'blue'}}
+            {':hover': {color: 'blue'}},
           ]}
         />
       );
@@ -209,12 +209,12 @@ describe('resolveStyles', () => {
 
       expect(result.props.style).to.deep.equal({
         background: 'white',
-        color: 'blue'
+        color: 'blue',
       });
     });
   });
 
-  const createPseduoStyleTests = function(
+  const createPseduoStyleTests = function (
     pseudo,
     onHandlerName,
     offHandlerName
@@ -420,7 +420,7 @@ describe('resolveStyles', () => {
       const component = genComponent();
       const style = {
         background: 'blue',
-        ':active': {background: 'red'}
+        ':active': {background: 'red'},
       };
       const renderedElement = <div style={style} />;
 
@@ -437,7 +437,7 @@ describe('resolveStyles', () => {
       const component = genComponent();
       const style = {
         background: 'blue',
-        ':active': {background: 'red'}
+        ':active': {background: 'red'},
       };
       const renderedElement = <div style={style} />;
 
@@ -459,7 +459,7 @@ describe('resolveStyles', () => {
       const component = genComponent();
       const style = {
         background: 'blue',
-        ':active': {background: 'red'}
+        ':active': {background: 'red'},
       };
       const renderedElement = <div style={style} />;
 
@@ -479,7 +479,7 @@ describe('resolveStyles', () => {
       const component = genComponent();
       const style = {
         background: 'blue',
-        ':active': {background: 'red'}
+        ':active': {background: 'red'},
       };
       const originalOnMouseDown = sinon.spy();
       const renderedElement = (
@@ -503,30 +503,30 @@ describe('resolveStyles', () => {
       const stylePermutations = permutate([
         {name: ':active', style: {background: 'red'}},
         {name: ':focus', style: {background: 'yellow'}},
-        {name: ':hover', style: {background: 'blue'}}
+        {name: ':hover', style: {background: 'blue'}},
       ]);
       const onHandlerPermutations = permutate([
         'onFocus',
         'onMouseDown',
-        'onMouseEnter'
+        'onMouseEnter',
       ]);
 
-      const createMultiPseudoTest = function(pseudoStyles, onHandlers) {
+      const createMultiPseudoTest = function (pseudoStyles, onHandlers) {
         const name =
           'applies pseudo styles in the defined order: ' +
-          pseudoStyles.map(pseudo => pseudo.name).join(', ') +
+          pseudoStyles.map((pseudo) => pseudo.name).join(', ') +
           ' when handlers called in order: ' +
           onHandlers.join(', ');
         it(name, () => {
           const style = {};
-          pseudoStyles.forEach(pseudo => {
+          pseudoStyles.forEach((pseudo) => {
             style[pseudo.name] = pseudo.style;
           });
           const renderedElement = <div style={style} />;
 
           let result = resolveStyles(component, renderedElement).element;
 
-          onHandlers.forEach(onHandler => {
+          onHandlers.forEach((onHandler) => {
             result.props[onHandler]();
           });
 
@@ -538,8 +538,8 @@ describe('resolveStyles', () => {
         });
       };
 
-      stylePermutations.forEach(pseudoStyles => {
-        onHandlerPermutations.forEach(onHandlers => {
+      stylePermutations.forEach((pseudoStyles) => {
+        onHandlerPermutations.forEach((onHandlers) => {
           createMultiPseudoTest(pseudoStyles, onHandlers);
         });
       });
@@ -551,8 +551,8 @@ describe('resolveStyles', () => {
       const initialState = {
         _radiumStyleState: {
           mountedDiv: {},
-          unmountedDiv: {}
-        }
+          unmountedDiv: {},
+        },
       };
       const component = genComponent(initialState);
       const renderedElement = (
@@ -620,7 +620,7 @@ describe('resolveStyles', () => {
       const result = resolveStyles(component, renderedElement).element;
       expect(result.props.style).to.deep.equal({
         background: 'white',
-        color: 'blue'
+        color: 'blue',
       });
 
       const children = getChildrenArray(result.props.children);
@@ -629,7 +629,7 @@ describe('resolveStyles', () => {
       const componentChildren = getChildrenArray(children[0].props.children);
       expect(componentChildren[0].props.style).to.deep.equal({
         background: 'white',
-        color: 'blue'
+        color: 'blue',
       });
     });
   });
@@ -704,7 +704,7 @@ describe('resolveStyles', () => {
         <div
           style={{
             border: '1px solid black',
-            borderWidth: '0 1px 1px 1px'
+            borderWidth: '0 1px 1px 1px',
           }}
         />
       );
@@ -724,8 +724,8 @@ describe('resolveStyles', () => {
           style={{
             ':hover': {
               border: '1px solid black',
-              borderWidth: '0 1px 1px 1px'
-            }
+              borderWidth: '0 1px 1px 1px',
+            },
           }}
         />
       );
@@ -744,7 +744,7 @@ describe('resolveStyles', () => {
         <div
           style={{
             border: '1px solid black',
-            borderRadius: '5px'
+            borderRadius: '5px',
           }}
         />
       );

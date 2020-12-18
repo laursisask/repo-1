@@ -6,7 +6,7 @@ import {getPrefixedKeyframes} from './prefixer';
 
 export type Keyframes = {
   __radiumKeyframes: boolean,
-  __process(userAgent?: string): {animationName: string, css: string}
+  __process(userAgent?: string): {animationName: string, css: string},
 };
 
 export default function keyframes(
@@ -18,7 +18,7 @@ export default function keyframes(
     __process(userAgent) {
       const keyframesPrefixed = getPrefixedKeyframes(userAgent);
       const rules = Object.keys(keyframeRules)
-        .map(percentage =>
+        .map((percentage) =>
           cssRuleSetToString(percentage, keyframeRules[percentage], userAgent)
         )
         .join('\n');
@@ -33,6 +33,6 @@ export default function keyframes(
         rules +
         '\n}\n';
       return {css, animationName};
-    }
+    },
   };
 }

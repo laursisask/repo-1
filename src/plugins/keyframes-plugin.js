@@ -6,7 +6,7 @@ import type {Keyframes} from '../keyframes';
 export default function keyframesPlugin(
   {addCSS, config, style}: PluginConfig // eslint-disable-line no-shadow
 ): PluginResult {
-  const processKeyframeStyle = value => {
+  const processKeyframeStyle = (value) => {
     const keyframesValue = (value: Keyframes);
     const {animationName, css} = keyframesValue.__process(config.userAgent);
     addCSS(css);

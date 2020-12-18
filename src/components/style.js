@@ -11,18 +11,18 @@ type StyleProps = {
   radiumConfig: Config,
   radiumConfigContext?: Config,
   rules: {},
-  scopeSelector: string
+  scopeSelector: string,
 };
 
 class Style extends PureComponent<StyleProps> {
   static propTypes = {
     radiumConfig: PropTypes.object,
     rules: PropTypes.object,
-    scopeSelector: PropTypes.string
+    scopeSelector: PropTypes.string,
   };
 
   static defaultProps: {scopeSelector: string} = {
-    scopeSelector: ''
+    scopeSelector: '',
   };
 
   _buildStyles(styles: Object): string {
@@ -54,7 +54,7 @@ class Style extends PureComponent<StyleProps> {
           const completeSelector = scopeSelector
             ? selector
                 .split(',')
-                .map(part => scopeSelector + ' ' + part.trim())
+                .map((part) => scopeSelector + ' ' + part.trim())
                 .join(',')
             : selector;
 
@@ -67,11 +67,11 @@ class Style extends PureComponent<StyleProps> {
   }
 
   _buildMediaQueryString(stylesByMediaQuery: {
-    [mediaQuery: string]: Object
+    [mediaQuery: string]: Object,
   }): string {
     let mediaQueryString = '';
 
-    Object.keys(stylesByMediaQuery).forEach(query => {
+    Object.keys(stylesByMediaQuery).forEach((query) => {
       mediaQueryString +=
         '@media ' +
         query +

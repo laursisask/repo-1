@@ -3,11 +3,7 @@
   "homepage": "https://github.com/FormidableLabs/radium",
   "description": "A set of tools to manage inline styles on React elements",
   "main": "dist/radium.js",
-  "keywords": [
-    "react",
-    "style",
-    "inline"
-  ],
+  "keywords": ["react", "style", "inline"],
   "license": "MIT",
   "ignore": [
     "**/.*",

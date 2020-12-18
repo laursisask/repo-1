@@ -26,7 +26,7 @@ if (process.env.NODE_ENV !== 'production') {
   Radium.TestMode = {
     clearState: resolveStyles.__clearStateForTests,
     disable: resolveStyles.__setTestMode.bind(null, false),
-    enable: resolveStyles.__setTestMode.bind(null, true)
+    enable: resolveStyles.__setTestMode.bind(null, true),
   };
 }
 

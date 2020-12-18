@@ -81,7 +81,7 @@ class MultiSpinner extends React.Component {
         <div
           style={[
             multiAnimationStyles.inner,
-            {'@media print': {height: '10px'}}
+            {'@media print': {height: '10px'}},
           ]}
         />
       </div>
@@ -105,7 +105,7 @@ class App extends React.Component {
     this.setState({shouldRenderNull: true});
 
     setTimeout(
-      function() {
+      function () {
         this.setState({shouldRenderNull: false});
       }.bind(this),
       100
@@ -146,14 +146,14 @@ class App extends React.Component {
         <Button
           style={{
             fontSize: '1.5em',
-            borderRadius: 3
+            borderRadius: 3,
           }}
         >
           Button
         </Button>
 
         <div style={{margin: '20px 0', width: 220}}>
-          {Array.apply(null, Array(100)).map(function(_, i) {
+          {Array.apply(null, Array(100)).map(function (_, i) {
             return <div key={'tile' + i} style={tileStyle} />;
           })}
           <div style={{clear: 'both'}} />
@@ -169,23 +169,23 @@ class App extends React.Component {
           rules={{
             body: {
               margin: 0,
-              fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif'
+              fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
             },
             mediaQueries: {
               '(max-width: 600px)': {
                 body: {
-                  background: 'gray'
-                }
+                  background: 'gray',
+                },
               },
               '(max-width: 500px)': {
                 body: {
-                  background: 'blue'
+                  background: 'blue',
                 },
                 'p, h1': {
-                  color: 'white'
-                }
-              }
-            }
+                  color: 'white',
+                },
+              },
+            },
           }}
         />
 
@@ -195,9 +195,9 @@ class App extends React.Component {
           <Style
             rules={{
               span: {
-                fontFamily: 'Lucida Console, Monaco, monospace'
+                fontFamily: 'Lucida Console, Monaco, monospace',
               },
-              color: 'blue'
+              color: 'blue',
             }}
             scopeSelector=".scoping-class"
           />
@@ -216,26 +216,26 @@ const squareStyles = {
     border: 'solid 1px white',
     float: 'left',
     height: 100,
-    width: 100
+    width: 100,
   },
   one: {
     ':hover': {
-      background: 'blue'
-    }
+      background: 'blue',
+    },
   },
   two: {
     ':hover': {
-      background: 'red'
-    }
+      background: 'red',
+    },
   },
   three: {
     ':hover': {
-      background: 'yellow'
+      background: 'yellow',
     },
     ':disabled': {
-      background: 'red'
-    }
-  }
+      background: 'red',
+    },
+  },
 };
 
 const tileStyle = {
@@ -249,15 +249,15 @@ const tileStyle = {
   cursor: 'pointer',
 
   ':hover': {
-    background: '#999'
-  }
+    background: '#999',
+  },
 };
 
 const pulseAnimation = keyframes(
   {
     '0%': {width: '10%'},
     '50%': {width: '50%'},
-    '100%': {width: '10%'}
+    '100%': {width: '10%'},
   },
   'pulse'
 );
@@ -268,7 +268,7 @@ const blendAnimation = Radium.keyframes(
     '25%': {background: 'yellow'},
     '50%': {background: 'green'},
     '75%': {background: 'blue'},
-    '100%': {background: 'red'}
+    '100%': {background: 'red'},
   },
   'blend'
 );
@@ -279,8 +279,8 @@ const spinnerStyles = {
     animationName: pulseAnimation,
     background: 'blue',
     height: '4px',
-    margin: '0 auto'
-  }
+    margin: '0 auto',
+  },
 };
 
 const multiAnimationStyles = {
@@ -290,8 +290,8 @@ const multiAnimationStyles = {
     animationIterationCount: 'infinite, infinite',
     animationTimingFunction: 'linear, cubic-bezier(0.1, 0.7, 1.0, 0.1)',
     height: '4px',
-    margin: '0 auto'
-  }
+    margin: '0 auto',
+  },
 };
 
 const listStyle = {
@@ -300,7 +300,7 @@ const listStyle = {
   marginTop: 15,
   marginBottom: 15,
   marginLeft: 15,
-  marginRight: 15
+  marginRight: 15,
 };
 
 export default App;

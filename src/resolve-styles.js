@@ -26,8 +26,8 @@ const DEFAULT_CONFIG = {
     Plugins.visited,
     Plugins.removeNestedStyles,
     Plugins.prefix,
-    Plugins.checkProps
-  ]
+    Plugins.checkProps,
+  ],
 };
 
 // Gross
@@ -40,18 +40,18 @@ export type EnhancerApi = {
   state: Object,
   setState: Function,
   _radiumMediaQueryListenersByQuery?: {
-    [query: string]: {remove: () => void}
+    [query: string]: {remove: () => void},
   },
   _radiumMouseUpListener?: {remove: () => void},
   _radiumIsMounted: boolean,
   _lastRadiumState: Object,
   _extraRadiumStateKeys: any,
-  _radiumStyleKeeper?: StyleKeeper
+  _radiumStyleKeeper?: StyleKeeper,
 };
 
 type ResolvedStyles = {
   extraStateKeyMap: {[key: string]: boolean},
-  element: any
+  element: any,
 };
 
 // Declare early for recursive helpers.
@@ -64,16 +64,16 @@ let resolveStyles = ((null: any): (
   extraStateKeyMap?: {[key: string]: boolean}
 ) => ResolvedStyles);
 
-const _shouldResolveStyles = function(component) {
+const _shouldResolveStyles = function (component) {
   return component.type && !component.type._isRadiumEnhanced;
 };
 
-const _resolveChildren = function({
+const _resolveChildren = function ({
   children,
   component,
   config,
   existingKeyMap,
-  extraStateKeyMap
+  extraStateKeyMap,
 }) {
   if (!children) {
     return children;
@@ -88,7 +88,7 @@ const _resolveChildren = function({
 
   if (childrenType === 'function') {
     // Wrap the function, resolving styles on the result
-    return function() {
+    return function () {
       const result = children.apply(this, arguments);
 
       if (React.isValidElement(result)) {
@@ -126,7 +126,7 @@ const _resolveChildren = function({
     return element;
   }
 
-  return React.Children.map(children, function(child) {
+  return React.Children.map(children, function (child) {
     if (React.isValidElement(child)) {
       const key = getStateKey(child);
       delete extraStateKeyMap[key];
@@ -146,16 +146,16 @@ const _resolveChildren = function({
 };
 
 // Recurse over props, just like children
-const _resolveProps = function({
+const _resolveProps = function ({
   component,
   config,
   existingKeyMap,
   props,
-  extraStateKeyMap
+  extraStateKeyMap,
 }) {
   let newProps = props;
 
-  Object.keys(props).forEach(prop => {
+  Object.keys(props).forEach((prop) => {
     // We already recurse over children above
     if (prop === 'children') {
       return;
@@ -181,10 +181,10 @@ const _resolveProps = function({
   return newProps;
 };
 
-const _buildGetKey = function({
+const _buildGetKey = function ({
   componentName,
   existingKeyMap,
-  renderedElement
+  renderedElement,
 }) {
   // We need a unique key to correlate state changes due to user interaction
   // with the rendered element, so we know to apply the proper interactive
@@ -193,7 +193,7 @@ const _buildGetKey = function({
   const key = cleanStateKey(originalKey);
 
   let alreadyGotKey = false;
-  const getKey = function() {
+  const getKey = function () {
     if (alreadyGotKey) {
       return key;
     }
@@ -232,7 +232,7 @@ const _buildGetKey = function({
   return getKey;
 };
 
-const _setStyleState = function(component, key, stateKey, value) {
+const _setStyleState = function (component, key, stateKey, value) {
   if (!component._radiumIsMounted) {
     return;
   }
@@ -247,12 +247,12 @@ const _setStyleState = function(component, key, stateKey, value) {
   component.setState(state);
 };
 
-const _runPlugins = function({
+const _runPlugins = function ({
   component,
   config,
   existingKeyMap,
   props,
-  renderedElement
+  renderedElement,
 }) {
   // Don't run plugins if renderedElement is not a simple ReactDOMElement or has
   // no style.
@@ -273,16 +273,16 @@ const _runPlugins = function({
   const getKey = _buildGetKey({
     renderedElement,
     existingKeyMap,
-    componentName
+    componentName,
   });
-  const getComponentField = key => component[key];
-  const getGlobalState = key => globalState[key];
+  const getComponentField = (key) => component[key];
+  const getGlobalState = (key) => globalState[key];
   const componentGetState = (stateKey, elementKey) =>
     getState(component.state, elementKey || getKey(), stateKey);
   const setState = (stateKey, value, elementKey) =>
     _setStyleState(component, elementKey || getKey(), stateKey, value);
 
-  const addCSS = css => {
+  const addCSS = (css) => {
     const styleKeeper = component._radiumStyleKeeper;
     if (!styleKeeper) {
       if (__isTestModeEnabled) {
@@ -303,7 +303,7 @@ const _runPlugins = function({
 
   let newStyle = props.style;
 
-  plugins.forEach(plugin => {
+  plugins.forEach((plugin) => {
     const result =
       plugin({
         ExecutionEnvironment,
@@ -320,7 +320,7 @@ const _runPlugins = function({
         props: newProps,
         setState,
         isNestedStyle,
-        style: newStyle
+        style: newStyle,
       }) || {};
 
     newStyle = result.style || newStyle;
@@ -331,12 +331,12 @@ const _runPlugins = function({
         : newProps;
 
     const newComponentFields = result.componentFields || {};
-    Object.keys(newComponentFields).forEach(fieldName => {
+    Object.keys(newComponentFields).forEach((fieldName) => {
       component[fieldName] = newComponentFields[fieldName];
     });
 
     const newGlobalState = result.globalState || {};
-    Object.keys(newGlobalState).forEach(key => {
+    Object.keys(newGlobalState).forEach((key) => {
       globalState[key] = newGlobalState[key];
     });
   });
@@ -351,7 +351,7 @@ const _runPlugins = function({
 // Wrapper around React.cloneElement. To avoid processing the same element
 // twice, whenever we clone an element add a special prop to make sure we don't
 // process this element again.
-const _cloneElement = function(renderedElement, newProps, newChildren) {
+const _cloneElement = function (renderedElement, newProps, newChildren) {
   // Only add flag if this is a normal DOM element
   if (typeof renderedElement.type === 'string') {
     newProps = {...newProps, 'data-radium': true};
@@ -368,7 +368,7 @@ const _cloneElement = function(renderedElement, newProps, newChildren) {
 // adds in the various interaction styles (e.g. :hover).
 //
 /* eslint-disable max-params */
-resolveStyles = function(
+resolveStyles = function (
   component: EnhancerApi,
   renderedElement: any, // ReactElement
   config: Config = DEFAULT_CONFIG,
@@ -394,7 +394,7 @@ resolveStyles = function(
   }
 
   if (Array.isArray(renderedElement) && !renderedElement.props) {
-    const elements = renderedElement.map(element => {
+    const elements = renderedElement.map((element) => {
       // element is in-use, so remove from the extraStateKeyMap
       if (extraStateKeyMap) {
         const key = getStateKey(element);
@@ -414,7 +414,7 @@ resolveStyles = function(
     });
     return {
       extraStateKeyMap,
-      element: elements
+      element: elements,
     };
   }
 
@@ -439,7 +439,7 @@ resolveStyles = function(
     component,
     config,
     existingKeyMap,
-    extraStateKeyMap
+    extraStateKeyMap,
   });
 
   let newProps = _resolveProps({
@@ -447,7 +447,7 @@ resolveStyles = function(
     config,
     existingKeyMap,
     extraStateKeyMap,
-    props: renderedElement.props
+    props: renderedElement.props,
   });
 
   newProps = _runPlugins({
@@ -455,7 +455,7 @@ resolveStyles = function(
     config,
     existingKeyMap,
     props: newProps,
-    renderedElement
+    renderedElement,
   });
 
   // If nothing changed, don't bother cloning the element. Might be a bit
@@ -477,10 +477,10 @@ resolveStyles = function(
 
 // Only for use by tests
 if (process.env.NODE_ENV !== 'production') {
-  resolveStyles.__clearStateForTests = function() {
+  resolveStyles.__clearStateForTests = function () {
     globalState = {};
   };
-  resolveStyles.__setTestMode = function(isEnabled) {
+  resolveStyles.__setTestMode = function (isEnabled) {
     __isTestModeEnabled = isEnabled;
   };
 }

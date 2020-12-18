@@ -6,7 +6,7 @@ import React, {
   useRef,
   useEffect,
   memo,
-  forwardRef
+  forwardRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import hoistStatics from 'hoist-non-react-statics';
@@ -24,14 +24,14 @@ const KEYS_TO_IGNORE_WHEN_COPYING_PROPERTIES = [
   'length',
   'name',
   'prototype',
-  'type'
+  'type',
 ];
 
 let RADIUM_PROTO: Object;
 let RADIUM_METHODS;
 
 function copyProperties(source, target) {
-  Object.getOwnPropertyNames(source).forEach(key => {
+  Object.getOwnPropertyNames(source).forEach((key) => {
     if (
       KEYS_TO_IGNORE_WHEN_COPYING_PROPERTIES.indexOf(key) < 0 &&
       !target.hasOwnProperty(key)
@@ -85,7 +85,7 @@ function isNativeClass(component: Function): boolean {
 // (Using a copy of the class).
 // See: https://github.com/FormidableLabs/radium/issues/738
 function copyArrowFuncs(enhancedSelf: Object, ComposedComponent: constructor) {
-  RADIUM_METHODS.forEach(name => {
+  RADIUM_METHODS.forEach((name) => {
     const thisDesc = Object.getOwnPropertyDescriptor(enhancedSelf, name);
     const thisMethod = (thisDesc || {}).value;
     // Only care if have instance method.
@@ -139,7 +139,7 @@ function cleanUpEnhancer(enhancer: EnhancerApi) {
   }
 
   if (_radiumMediaQueryListenersByQuery) {
-    Object.keys(_radiumMediaQueryListenersByQuery).forEach(query => {
+    Object.keys(_radiumMediaQueryListenersByQuery).forEach((query) => {
       _radiumMediaQueryListenersByQuery[query].remove();
     }, enhancer);
   }
@@ -155,7 +155,7 @@ function resolveConfig(
   if (hocConfig && config !== hocConfig) {
     config = {
       ...hocConfig,
-      ...config
+      ...config,
     };
   }
 
@@ -212,32 +212,26 @@ function createEnhancedFunctionComponent(
       _radiumIsMounted: true,
       _lastRadiumState: undefined,
       _extraRadiumStateKeys: undefined,
-      _radiumStyleKeeper: styleKeeperContext
+      _radiumStyleKeeper: styleKeeperContext,
     }).current;
 
     // result of useRef is never recreated and is designed to be mutable
     // we need to make sure the latest state is attached to it
     enhancerApi.state = state;
 
-    useEffect(
-      () => {
-        return () => {
-          cleanUpEnhancer(enhancerApi);
-        };
-      },
-      [enhancerApi]
-    );
+    useEffect(() => {
+      return () => {
+        cleanUpEnhancer(enhancerApi);
+      };
+    }, [enhancerApi]);
 
     const hasExtraStateKeys =
       enhancerApi._extraRadiumStateKeys &&
       enhancerApi._extraRadiumStateKeys.length > 0;
 
-    useEffect(
-      () => {
-        trimRadiumState(enhancerApi);
-      },
-      [hasExtraStateKeys, enhancerApi]
-    );
+    useEffect(() => {
+      trimRadiumState(enhancerApi);
+    }, [hasExtraStateKeys, enhancerApi]);
 
     const renderedElement = renderMethod(otherProps, ref);
 
@@ -287,7 +281,7 @@ function createEnhancedClassComponent(
     // need to assign the following methods to this.xxx as
     // tests attempt to set this on the original component
     _radiumMediaQueryListenersByQuery: {
-      [query: string]: {remove: () => void}
+      [query: string]: {remove: () => void},
     } | void = this._radiumMediaQueryListenersByQuery;
     _radiumMouseUpListener: {remove: () => void} | void = this
       ._radiumMouseUpListener;
@@ -342,7 +336,7 @@ function createEnhancedClassComponent(
   // Lazy infer the method names of the Enhancer.
   RADIUM_PROTO = RadiumEnhancer.prototype;
   RADIUM_METHODS = Object.getOwnPropertyNames(RADIUM_PROTO).filter(
-    n => n !== 'constructor' && typeof RADIUM_PROTO[n] === 'function'
+    (n) => n !== 'constructor' && typeof RADIUM_PROTO[n] === 'function'
   );
 
   // Class inheritance uses Object.create and because of __proto__ issues
@@ -362,7 +356,7 @@ function createEnhancedClassComponent(
   if (RadiumEnhancer.propTypes && RadiumEnhancer.propTypes.style) {
     RadiumEnhancer.propTypes = {
       ...RadiumEnhancer.propTypes,
-      style: PropTypes.oneOfType([PropTypes.array, PropTypes.object])
+      style: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
     };
   }
 
@@ -374,7 +368,7 @@ function createEnhancedClassComponent(
 }
 
 function createComposedFromNativeClass(ComposedComponent: constructor) {
-  ComposedComponent = (function(OrigComponent): constructor {
+  ComposedComponent = (function (OrigComponent): constructor {
     function NewComponent() {
       // Use Reflect.construct to simulate 'new'
       const obj = Reflect.construct(OrigComponent, arguments, this.constructor);
@@ -433,7 +427,7 @@ function createFactoryFromConfig(
   configOrComposedComponent: Object
 ) {
   const newConfig = {...config, ...configOrComposedComponent};
-  return function(configOrComponent) {
+  return function (configOrComponent) {
     return enhanceWithRadium(configOrComponent, newConfig);
   };
 }

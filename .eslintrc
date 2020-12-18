@@ -223,7 +223,11 @@ rules:
     spaced-comment: 2         # require or disallow a space immediately following
                                    #    the // in a line comment
     wrap-regex: 0                  # require regex literals to be wrapped in parentheses
-    space-before-function-paren: [2, "never"]
+    space-before-function-paren: [2, {
+      anonymous: "always",
+      named: "never",
+      asyncArrow: "never",
+    }]
 
     ###########################################################################
     #                                                                         #
@@ -284,7 +288,7 @@ rules:
       {
         "bracketSpacing": false,
         "singleQuote": true,
-        "parser": "babylon"
+        "parser": "babel"
       }
     ]
 

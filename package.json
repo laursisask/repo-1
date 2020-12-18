@@ -63,7 +63,7 @@
     "@babel/preset-flow": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
     "babel-loader": "^8.0.0",
-    "builder": "^3.2.3",
+    "builder": "^5.0.0",
     "exenv": "^1.2.1",
     "hoist-non-react-statics": "3.3.2",
     "inline-style-prefixer": "^4.0.0",

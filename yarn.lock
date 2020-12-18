@@ -1461,7 +1461,7 @@ babel-code-frame@^6.26.0:
     esutils "^2.0.2"
     js-tokens "^3.0.2"
 
-babel-core@^6.0.0, babel-core@^6.26.0, babel-core@~6:
+babel-core@^6.26.0, babel-core@~6:
   version "6.26.0"
   resolved "https://registry.yarnpkg.com/babel-core/-/babel-core-6.26.0.tgz#af32f78b31a6fcef119c87b0fd8d9753f03a0bb8"
   integrity sha1-rzL3izGm/O8RnIew/Y2XU/A6C7g=
@@ -5122,12 +5122,10 @@ jsprim@^1.2.2:
     array-includes "^3.1.2"
     object.assign "^4.1.2"
 
-karma-babel-preprocessor@^6.0.1:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/karma-babel-preprocessor/-/karma-babel-preprocessor-6.0.1.tgz#7ae1d3e64950dbe11f421b74040ab08fb5a66c21"
-  integrity sha1-euHT5klQ2+EfQht0BAqwj7WmbCE=
-  dependencies:
-    babel-core "^6.0.0"
+karma-babel-preprocessor@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/karma-babel-preprocessor/-/karma-babel-preprocessor-8.0.1.tgz#63b33cc7b5b3b5c7815ec453f7df58fb88345af1"
+  integrity sha512-5upyawNi3c7Gg6tPH1FWRVTmUijGf3v1GV4ScLM/2jKdDP18SlaKlUpu8eJrRI3STO8qK1bkqFcdgAA364nLYQ==
 
 karma-chrome-launcher@^3.1.0:
   version "3.1.0"

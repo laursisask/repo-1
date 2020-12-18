@@ -7307,9 +7307,9 @@ simple-swizzle@^0.2.2:
     is-arrayish "^0.3.1"
 
 sinon-chai@^2.8.0:
-  version "2.9.0"
-  resolved "https://registry.yarnpkg.com/sinon-chai/-/sinon-chai-2.9.0.tgz#34d820042bc9661a14527130d401eb462c49bb84"
-  integrity sha1-NNggBCvJZhoUUnEw1AHrRixJu4Q=
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/sinon-chai/-/sinon-chai-2.14.0.tgz#da7dd4cc83cd6a260b67cca0f7a9fdae26a1205d"
+  integrity sha512-9stIF1utB0ywNHNT7RgiXbdmen8QDCRsrTjw+G9TgKt1Yexjiv8TOWZ6WHsTPz57Yky3DIswZvEqX8fpuHNDtQ==
 
 sinon@^1.17.7:
   version "1.17.7"

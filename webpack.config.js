@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = {
+  mode: 'development',
   cache: true,
   entry: path.join(__dirname, 'src/index.js'),
   externals: [

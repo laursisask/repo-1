@@ -695,7 +695,6 @@ describe('resolveStyles', () => {
 
     afterEach(() => {
       console.warn.restore();
-      process.env.NODE_ENV = null;
     });
 
     it('warns when mixing longhand and shorthand properties', () => {

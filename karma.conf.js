@@ -11,6 +11,7 @@ module.exports = function (config) {
       'src/__tests__/**/*.js': ['webpack'],
     },
     webpack: {
+      mode: 'none',
       cache: true,
       module: {
         rules: [

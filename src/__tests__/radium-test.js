@@ -9,14 +9,8 @@ import TestUtils from 'react-dom/test-utils';
 import {getElement, getElements, renderFcIntoDocument} from 'test-helpers';
 
 describe('Radium blackbox tests', () => {
-  let sandbox;
-
-  beforeEach(() => {
-    sandbox = sinon.sandbox.create();
-  });
-
   afterEach(() => {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it('merges styles', () => {
@@ -409,9 +403,8 @@ describe('Radium blackbox tests', () => {
 
     TestUtils.Simulate.click(button);
     spans = getElements(output, 'span');
-    expect(spans)
-      .to.have.length(1)
-      .and.to.have.deep.property('[0].style.color', 'blue');
+    expect(spans).to.have.length(1);
+    expect(spans[0].style.color).to.equal('blue');
   });
 
   it('resolves styles on multiple elements nested far down, Issue #307', () => {
@@ -797,8 +790,8 @@ describe('Radium blackbox tests', () => {
 
   /* eslint-disable no-console */
   it("doesn't try to setState if not mounted", () => {
-    sandbox.stub(console, 'error');
-    sandbox.stub(console, 'warn');
+    sinon.stub(console, 'error');
+    sinon.stub(console, 'warn');
 
     let setStateCaptured;
     const plugin = function ({setState}) {
@@ -1001,8 +994,8 @@ describe('Radium blackbox tests', () => {
 
   /* eslint-disable no-console */
   it('replaces style propType with array or object', () => {
-    sandbox.stub(console, 'error');
-    sandbox.stub(console, 'warn');
+    sinon.stub(console, 'error');
+    sinon.stub(console, 'warn');
 
     class TestComponent extends Component {
       render() {

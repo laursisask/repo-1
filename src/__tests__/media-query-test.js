@@ -16,11 +16,9 @@ import {
 const origWindowOnerror = window.onerror;
 
 describe('Media query tests', () => {
-  let sandbox;
   let errorSpy;
 
   beforeEach(() => {
-    sandbox = sinon.sandbox.create();
     errorSpy = sinon.spy();
     window.addEventListener('error', errorSpy);
 
@@ -28,7 +26,7 @@ describe('Media query tests', () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    sinon.restore();
     window.removeEventListener('error', errorSpy);
     window.onerror = origWindowOnerror;
 
@@ -386,7 +384,7 @@ describe('Media query tests', () => {
     // In DEV (aka our tests), need to silence global error handlers and such.
     // https://github.com/facebook/react/issues/10474#issuecomment-322909303
     window.onerror = sinon.stub();
-    sandbox.stub(console, 'error');
+    sinon.stub(console, 'error');
 
     renderFcIntoDocument(<TestComponent />);
 
@@ -406,8 +404,8 @@ describe('Media query tests', () => {
   });
 
   it("doesn't try to setState if not mounted", () => {
-    sandbox.stub(console, 'error');
-    sandbox.stub(console, 'warn');
+    sinon.stub(console, 'error');
+    sinon.stub(console, 'warn');
 
     const addListener = sinon.spy();
     const mockMatchMedia = function () {

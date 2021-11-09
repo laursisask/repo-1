@@ -752,8 +752,10 @@ func resourceServiceRead(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[ERR] Error setting placement_constraints for (%s): %s", d.Id(), err)
 	}
 
-	if err := d.Set("network_configuration", flattenEcsNetworkConfiguration(service.NetworkConfiguration)); err != nil {
-		return fmt.Errorf("error setting network_configuration for (%s): %w", d.Id(), err)
+	if service.DeploymentController == nil || aws.StringValue(service.DeploymentController.Type) != ecs.DeploymentControllerTypeExternal {
+		if err := d.Set("network_configuration", flattenEcsNetworkConfiguration(service.NetworkConfiguration)); err != nil {
+			return fmt.Errorf("error setting network_configuration for (%s): %w", d.Id(), err)
+		}
 	}
 
 	if err := d.Set("service_registries", flattenServiceRegistries(service.ServiceRegistries)); err != nil {

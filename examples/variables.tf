@@ -6,7 +6,7 @@ variable "bool-3" {
 
 variable "bool-2" {
   description = "It's bool number two."
-  default = false
+  default     = false
 }
 
 // It's bool number one.
@@ -26,6 +26,10 @@ variable "string-2" {
 // It's string number one.
 variable "string-1" {
   default = "bar"
+}
+
+variable "string-special-chars" {
+  default = "\\.<>[]{}_-"
 }
 
 variable "number-3" {
@@ -102,7 +106,7 @@ default     = [
 ]
 ```
 EOD
-  default     = [
+  default = [
     "name rack:location"
   ]
 }
@@ -143,4 +147,38 @@ variable "no-escape-default-value" {
 variable "with-url" {
   description = "The description contains url. https://www.domain.com/foo/bar_baz.html"
   default     = ""
+}
+
+variable "string_default_empty" {
+  type    = string
+  default = ""
+}
+
+variable "string_default_null" {
+  type    = string
+  default = null
+}
+
+variable "string_no_default" {
+  type = string
+}
+
+variable "number_default_zero" {
+  type    = number
+  default = 0
+}
+
+variable "bool_default_false" {
+  type    = bool
+  default = false
+}
+
+variable "list_default_empty" {
+  type    = list(string)
+  default = []
+}
+
+variable "object_default_empty" {
+  type    = object({})
+  default = {}
 }

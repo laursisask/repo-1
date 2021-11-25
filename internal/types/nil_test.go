@@ -43,7 +43,7 @@ func TestNil(t *testing.T) {
 		},
 		{
 			name:   "value nil and type map",
-			values: nil,
+			values: nils,
 			types:  "map",
 			expected: expected{
 				typeName:   "map",
@@ -72,6 +72,24 @@ func TestNil(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestNilLength(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected int
+	}{
+		{
+			name:     "nil length",
+			expected: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			assert.Equal(tt.expected, new(Nil).Length())
+		})
+	}
 }
 
 func TestNilMarshalJSON(t *testing.T) {

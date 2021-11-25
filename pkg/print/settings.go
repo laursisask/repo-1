@@ -10,9 +10,9 @@ type Settings struct {
 	// scope: Markdown
 	EscapePipe bool
 
-	// MarkdownIndent control the indentation of Markdown headers [available: 1, 2, 3, 4, 5] (default: 2)
-	// scope: Markdown
-	MarkdownIndent int
+	// IndentLevel control the indentation of AsciiDoc and Markdown headers [available: 1, 2, 3, 4, 5] (default: 2)
+	// scope: Asciidoc, Markdown
+	IndentLevel int
 
 	// OutputValues ailrghaekrgj
 	// scope: Global
@@ -57,14 +57,18 @@ type Settings struct {
 	// SortByRequired sort items (inputs, providers) by name and prints required ones first (default: false)
 	// scope: Global
 	SortByRequired bool
+
+	// SortByType sort items (inputs, outputs) by type alphabetically (default: false)
+	// scope: Global
+	SortByType bool
 }
 
-//NewSettings returns new instance of Settings
+// NewSettings returns new instance of Settings
 func NewSettings() *Settings {
 	return &Settings{
 		EscapeCharacters: true,
 		EscapePipe:       true,
-		MarkdownIndent:   2,
+		IndentLevel:      2,
 		OutputValues:     false,
 		ShowColor:        true,
 		ShowHeader:       true,
@@ -76,5 +80,6 @@ func NewSettings() *Settings {
 		ShowRequirements: true,
 		SortByName:       true,
 		SortByRequired:   false,
+		SortByType:       false,
 	}
 }

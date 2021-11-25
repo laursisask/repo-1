@@ -5,26 +5,26 @@ import (
 	"encoding/json"
 	"encoding/xml"
 
-	"github.com/segmentio/terraform-docs/internal/types"
+	"github.com/terraform-docs/terraform-docs/internal/types"
 )
 
 // Output represents a Terraform output.
 type Output struct {
-	Name        string       `json:"name" xml:"name" yaml:"name"`
-	Description types.String `json:"description" xml:"description" yaml:"description"`
-	Value       types.Value  `json:"value,omitempty" xml:"value,omitempty" yaml:"value,omitempty"`
-	Sensitive   bool         `json:"sensitive,omitempty" xml:"sensitive,omitempty" yaml:"sensitive,omitempty"`
-	Position    Position     `json:"-" xml:"-" yaml:"-"`
-	ShowValue   bool         `json:"-" xml:"-" yaml:"-"`
+	Name        string       `json:"name" toml:"name" xml:"name" yaml:"name"`
+	Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
+	Value       types.Value  `json:"value,omitempty" toml:"value,omitempty" xml:"value,omitempty" yaml:"value,omitempty"`
+	Sensitive   bool         `json:"sensitive,omitempty" toml:"sensitive,omitempty" xml:"sensitive,omitempty" yaml:"sensitive,omitempty"`
+	Position    Position     `json:"-" toml:"-" xml:"-" yaml:"-"`
+	ShowValue   bool         `json:"-" toml:"-" xml:"-" yaml:"-"`
 }
 
 type withvalue struct {
-	Name        string       `json:"name" xml:"name" yaml:"name"`
-	Description types.String `json:"description" xml:"description" yaml:"description"`
-	Value       types.Value  `json:"value" xml:"value" yaml:"value"`
-	Sensitive   bool         `json:"sensitive" xml:"sensitive" yaml:"sensitive"`
-	Position    Position     `json:"-" xml:"-" yaml:"-"`
-	ShowValue   bool         `json:"-" xml:"-" yaml:"-"`
+	Name        string       `json:"name" toml:"name" xml:"name" yaml:"name"`
+	Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
+	Value       types.Value  `json:"value" toml:"value" xml:"value" yaml:"value"`
+	Sensitive   bool         `json:"sensitive" toml:"sensitive" xml:"sensitive" yaml:"sensitive"`
+	Position    Position     `json:"-" toml:"-" xml:"-" yaml:"-"`
+	ShowValue   bool         `json:"-" toml:"-" xml:"-" yaml:"-"`
 }
 
 // GetValue returns JSON representation of the 'Value', which is an 'interface'.
@@ -38,10 +38,11 @@ func (o *Output) GetValue() string {
 	if err != nil {
 		panic(err)
 	}
-	if value := string(marshaled); value != "null" {
-		return value
+	value := string(marshaled)
+	if value == `null` {
+		return "" // types.Nil
 	}
-	return ""
+	return value // everything else
 }
 
 // HasDefault indicates if a Terraform output has a default value set.
@@ -71,9 +72,8 @@ func (o *Output) MarshalJSON() ([]byte, error) {
 	if o.ShowValue {
 		return fn(withvalue(*o))
 	}
-	// explicitly make these empty
-	o.Value = nil
-	o.Sensitive = false
+	o.Value = nil       // explicitly make empty
+	o.Sensitive = false // explicitly make empty
 	return fn(*o)
 }
 
@@ -110,8 +110,7 @@ func (o *Output) MarshalYAML() (interface{}, error) {
 	if o.ShowValue {
 		return withvalue(*o), nil
 	}
-	// explicitly make these empty
-	o.Value = nil
-	o.Sensitive = false
-	return o, nil
+	o.Value = nil       // explicitly make empty
+	o.Sensitive = false // explicitly make empty
+	return *o, nil
 }

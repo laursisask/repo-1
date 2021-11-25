@@ -3,10 +3,11 @@ package format
 import (
 	"testing"
 
-	"github.com/segmentio/terraform-docs/internal/module"
-	"github.com/segmentio/terraform-docs/internal/testutil"
-	"github.com/segmentio/terraform-docs/pkg/print"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/terraform-docs/terraform-docs/internal/module"
+	"github.com/terraform-docs/terraform-docs/internal/testutil"
+	"github.com/terraform-docs/terraform-docs/pkg/print"
 )
 
 func TestPretty(t *testing.T) {
@@ -67,6 +68,32 @@ func TestPrettySortByRequired(t *testing.T) {
 		SortBy: &module.SortBy{
 			Name:     true,
 			Required: true,
+		},
+	})
+	assert.Nil(err)
+
+	module, err := testutil.GetModule(options)
+	assert.Nil(err)
+
+	printer := NewPretty(settings)
+	actual, err := printer.Print(module, settings)
+
+	assert.Nil(err)
+	assert.Equal(expected, actual)
+}
+
+func TestPrettySortByType(t *testing.T) {
+	assert := assert.New(t)
+	settings := testutil.Settings().WithSections().WithColor().With(&print.Settings{
+		SortByType: true,
+	}).Build()
+
+	expected, err := testutil.GetExpected("pretty", "pretty-SortByType")
+	assert.Nil(err)
+
+	options, err := module.NewOptions().With(&module.Options{
+		SortBy: &module.SortBy{
+			Type: true,
 		},
 	})
 	assert.Nil(err)
@@ -367,25 +394,55 @@ func TestPrettyOutputValues(t *testing.T) {
 }
 
 func TestPrettyHeaderFromFile(t *testing.T) {
-	assert := assert.New(t)
-	settings := testutil.Settings().WithSections().WithColor().Build()
+	tests := []struct {
+		name   string
+		golden string
+		file   string
+	}{
+		{
+			name:   "load module header from .adoc",
+			golden: "pretty-HeaderFromADOCFile",
+			file:   "doc.adoc",
+		},
+		{
+			name:   "load module header from .md",
+			golden: "pretty-HeaderFromMDFile",
+			file:   "doc.md",
+		},
+		{
+			name:   "load module header from .tf",
+			golden: "pretty-HeaderFromTFFile",
+			file:   "doc.tf",
+		},
+		{
+			name:   "load module header from .txt",
+			golden: "pretty-HeaderFromTXTFile",
+			file:   "doc.txt",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			settings := testutil.Settings().WithSections().WithColor().Build()
 
-	expected, err := testutil.GetExpected("pretty", "pretty-HeaderFromFile")
-	assert.Nil(err)
+			expected, err := testutil.GetExpected("pretty", tt.golden)
+			assert.Nil(err)
 
-	options, err := module.NewOptions().WithOverwrite(&module.Options{
-		HeaderFromFile: "doc.tf",
-	})
-	assert.Nil(err)
+			options, err := module.NewOptions().WithOverwrite(&module.Options{
+				HeaderFromFile: tt.file,
+			})
+			assert.Nil(err)
 
-	module, err := testutil.GetModule(options)
-	assert.Nil(err)
+			module, err := testutil.GetModule(options)
+			assert.Nil(err)
 
-	printer := NewPretty(settings)
-	actual, err := printer.Print(module, settings)
+			printer := NewPretty(settings)
+			actual, err := printer.Print(module, settings)
 
-	assert.Nil(err)
-	assert.Equal(expected, actual)
+			assert.Nil(err)
+			assert.Equal(expected, actual)
+		})
+	}
 }
 
 func TestPrettyEmpty(t *testing.T) {

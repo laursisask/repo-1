@@ -3,107 +3,92 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/segmentio/terraform-docs/internal/module"
-	"github.com/segmentio/terraform-docs/internal/version"
-	"github.com/segmentio/terraform-docs/pkg/print"
 	"github.com/spf13/cobra"
+
+	"github.com/terraform-docs/terraform-docs/cmd/asciidoc"
+	"github.com/terraform-docs/terraform-docs/cmd/completion"
+	"github.com/terraform-docs/terraform-docs/cmd/json"
+	"github.com/terraform-docs/terraform-docs/cmd/markdown"
+	"github.com/terraform-docs/terraform-docs/cmd/pretty"
+	"github.com/terraform-docs/terraform-docs/cmd/tfvars"
+	"github.com/terraform-docs/terraform-docs/cmd/toml"
+	"github.com/terraform-docs/terraform-docs/cmd/version"
+	"github.com/terraform-docs/terraform-docs/cmd/xml"
+	"github.com/terraform-docs/terraform-docs/cmd/yaml"
+	"github.com/terraform-docs/terraform-docs/internal/cli"
 )
-
-var settings = print.NewSettings()
-var options = module.NewOptions()
-
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Args:    cobra.NoArgs,
-	Use:     "terraform-docs",
-	Short:   "A utility to generate documentation from Terraform modules in various output formats",
-	Long:    "A utility to generate documentation from Terraform modules in various output formats",
-	Version: version.Version(),
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		oppositeBool := func(name string) bool {
-			val, _ := cmd.Flags().GetBool(name)
-			return !val
-		}
-		settings.ShowHeader = oppositeBool("no-header")
-		options.ShowHeader = settings.ShowHeader
-
-		settings.ShowInputs = oppositeBool("no-inputs")
-		settings.ShowOutputs = oppositeBool("no-outputs")
-		settings.ShowProviders = oppositeBool("no-providers")
-		settings.ShowRequirements = oppositeBool("no-requirements")
-
-		settings.OutputValues = options.OutputValues
-
-		settings.ShowColor = oppositeBool("no-color")
-		settings.SortByName = oppositeBool("no-sort")
-		settings.ShowRequired = oppositeBool("no-required")
-		settings.EscapeCharacters = oppositeBool("no-escape")
-		settings.ShowSensitivity = oppositeBool("no-sensitive")
-	},
-}
-
-func init() {
-	rootCmd.PersistentFlags().BoolVar(new(bool), "no-header", false, "do not show module header")
-	rootCmd.PersistentFlags().BoolVar(new(bool), "no-inputs", false, "do not show inputs")
-	rootCmd.PersistentFlags().BoolVar(new(bool), "no-outputs", false, "do not show outputs")
-	rootCmd.PersistentFlags().BoolVar(new(bool), "no-providers", false, "do not show providers")
-	rootCmd.PersistentFlags().BoolVar(new(bool), "no-requirements", false, "do not show module requirements")
-
-	rootCmd.PersistentFlags().BoolVar(new(bool), "no-sort", false, "do no sort items")
-	rootCmd.PersistentFlags().BoolVar(&settings.SortByRequired, "sort-by-required", false, "sort items by name and print required ones first")
-
-	rootCmd.PersistentFlags().StringVar(&options.HeaderFromFile, "header-from", "main.tf", "relative path of a file to read header from")
-
-	rootCmd.PersistentFlags().BoolVar(&options.OutputValues, "output-values", false, "inject output values into outputs")
-	rootCmd.PersistentFlags().StringVar(&options.OutputValuesPath, "output-values-from", "", "inject output values from file into outputs")
-
-	//-----------------------------
-	// deprecated - will be removed
-	//-----------------------------
-	rootCmd.PersistentFlags().BoolVar(&settings.SortByRequired, "sort-inputs-by-required", false, "[deprecated] use '--sort-by-required' instead")
-	rootCmd.PersistentFlags().BoolVar(new(bool), "with-aggregate-type-defaults", false, "[deprecated] print default values of aggregate types")
-	//-----------------------------
-}
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
-	return rootCmd.Execute()
-}
-
-// FormatterCmds returns list of available formatter
-// commands (e.g. markdown, json, yaml) and ignores
-// the other commands (e.g. completion, version, help)
-func FormatterCmds() []*cobra.Command {
-	return []*cobra.Command{
-		jsonCmd,
-		prettyCmd,
-		mdDocumentCmd,
-		mdTableCmd,
-		xmlCmd,
-		yamlCmd,
-	}
-}
-
-func doPrint(path string, printer print.Format) error {
-	_, err := options.With(&module.Options{
-		Path: path,
-		SortBy: &module.SortBy{
-			Name:     settings.SortByName,
-			Required: settings.SortByRequired,
-		},
-	})
-	if err != nil {
+	if err := NewCommand().Execute(); err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
 		return err
 	}
-	tfmodule, err := module.LoadWithOptions(options)
-	if err != nil {
-		return err
-	}
-	output, err := printer.Print(tfmodule, settings)
-	if err != nil {
-		return err
-	}
-	fmt.Println(output)
 	return nil
+}
+
+// NewCommand returns a new cobra.Command for 'root' command
+func NewCommand() *cobra.Command {
+	config := cli.DefaultConfig()
+	cmd := &cobra.Command{
+		Args:          cobra.MaximumNArgs(1),
+		Use:           "terraform-docs [PATH]",
+		Short:         "A utility to generate documentation from Terraform modules in various output formats",
+		Long:          "A utility to generate documentation from Terraform modules in various output formats",
+		Version:       version.Full(),
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		Annotations:   cli.Annotations("root"),
+		PreRunE:       cli.PreRunEFunc(config),
+		RunE:          cli.RunEFunc(config),
+	}
+
+	// flags
+	cmd.PersistentFlags().StringVarP(&config.File, "config", "c", ".terraform-docs.yml", "config file name")
+
+	cmd.PersistentFlags().StringSliceVar(&config.Sections.Show, "show", []string{}, "show section [header, inputs, outputs, providers, requirements]")
+	cmd.PersistentFlags().StringSliceVar(&config.Sections.Hide, "hide", []string{}, "hide section [header, inputs, outputs, providers, requirements]")
+	cmd.PersistentFlags().BoolVar(&config.Sections.ShowAll, "show-all", true, "show all sections")
+	cmd.PersistentFlags().BoolVar(&config.Sections.HideAll, "hide-all", false, "hide all sections (default false)")
+
+	cmd.PersistentFlags().BoolVar(&config.Sort.Enabled, "sort", true, "sort items")
+	cmd.PersistentFlags().BoolVar(&config.Sort.By.Required, "sort-by-required", false, "sort items by name and print required ones first (default false)")
+	cmd.PersistentFlags().BoolVar(&config.Sort.By.Type, "sort-by-type", false, "sort items by type of them (default false)")
+
+	cmd.PersistentFlags().StringVar(&config.HeaderFrom, "header-from", "main.tf", "relative path of a file to read header from")
+
+	cmd.PersistentFlags().BoolVar(&config.OutputValues.Enabled, "output-values", false, "inject output values into outputs (default false)")
+	cmd.PersistentFlags().StringVar(&config.OutputValues.From, "output-values-from", "", "inject output values from file into outputs (default \"\")")
+
+	// deprecation
+	cmd.PersistentFlags().BoolVar(&config.Sections.Deprecated.NoHeader, "no-header", false, "do not show module header")
+	cmd.PersistentFlags().BoolVar(&config.Sections.Deprecated.NoInputs, "no-inputs", false, "do not show inputs")
+	cmd.PersistentFlags().BoolVar(&config.Sections.Deprecated.NoOutputs, "no-outputs", false, "do not show outputs")
+	cmd.PersistentFlags().BoolVar(&config.Sections.Deprecated.NoProviders, "no-providers", false, "do not show providers")
+	cmd.PersistentFlags().BoolVar(&config.Sections.Deprecated.NoRequirements, "no-requirements", false, "do not show module requirements")
+	cmd.PersistentFlags().BoolVar(&config.Sort.Deprecated.NoSort, "no-sort", false, "do no sort items")
+
+	cmd.PersistentFlags().MarkDeprecated("no-header", "use '--hide header' instead")             //nolint:errcheck
+	cmd.PersistentFlags().MarkDeprecated("no-inputs", "use '--hide inputs' instead")             //nolint:errcheck
+	cmd.PersistentFlags().MarkDeprecated("no-outputs", "use '--hide outputs' instead")           //nolint:errcheck
+	cmd.PersistentFlags().MarkDeprecated("no-providers", "use '--hide providers' instead")       //nolint:errcheck
+	cmd.PersistentFlags().MarkDeprecated("no-requirements", "use '--hide requirements' instead") //nolint:errcheck
+	cmd.PersistentFlags().MarkDeprecated("no-sort", "use '--sort=false' instead")                //nolint:errcheck
+
+	// formatter subcommands
+	cmd.AddCommand(asciidoc.NewCommand(config))
+	cmd.AddCommand(json.NewCommand(config))
+	cmd.AddCommand(markdown.NewCommand(config))
+	cmd.AddCommand(pretty.NewCommand(config))
+	cmd.AddCommand(tfvars.NewCommand(config))
+	cmd.AddCommand(toml.NewCommand(config))
+	cmd.AddCommand(xml.NewCommand(config))
+	cmd.AddCommand(yaml.NewCommand(config))
+
+	// other subcommands
+	cmd.AddCommand(completion.NewCommand())
+	cmd.AddCommand(version.NewCommand())
+
+	return cmd
 }

@@ -19,18 +19,17 @@ terraform-docs xml [PATH] [flags]
 ### Options inherited from parent commands
 
 ```
-      --header-from string             relative path of a file to read header from (default "main.tf")
-      --no-header                      do not show module header
-      --no-inputs                      do not show inputs
-      --no-outputs                     do not show outputs
-      --no-providers                   do not show providers
-      --no-requirements                do not show module requirements
-      --no-sort                        do no sort items
-      --output-values                  inject output values into outputs
-      --output-values-from string      inject output values from file into outputs
-      --sort-by-required               sort items by name and print required ones first
-      --sort-inputs-by-required        [deprecated] use '--sort-by-required' instead
-      --with-aggregate-type-defaults   [deprecated] print default values of aggregate types
+  -c, --config string               config file name (default ".terraform-docs.yml")
+      --header-from string          relative path of a file to read header from (default "main.tf")
+      --hide strings                hide section [header, inputs, outputs, providers, requirements]
+      --hide-all                    hide all sections (default false)
+      --output-values               inject output values into outputs (default false)
+      --output-values-from string   inject output values from file into outputs (default "")
+      --show strings                show section [header, inputs, outputs, providers, requirements]
+      --show-all                    show all sections (default true)
+      --sort                        sort items (default true)
+      --sort-by-required            sort items by name and print required ones first (default false)
+      --sort-by-type                sort items by type of them (default false)
 ```
 
 ### Example
@@ -51,18 +50,28 @@ generates the following output:
           <type>bool</type>
           <description>It&#39;s bool number one.</description>
           <default>true</default>
+          <required>false</required>
         </input>
         <input>
           <name>bool-2</name>
           <type>bool</type>
           <description>It&#39;s bool number two.</description>
           <default>false</default>
+          <required>false</required>
         </input>
         <input>
           <name>bool-3</name>
           <type>bool</type>
           <description xsi:nil="true"></description>
           <default>true</default>
+          <required>false</required>
+        </input>
+        <input>
+          <name>bool_default_false</name>
+          <type>bool</type>
+          <description xsi:nil="true"></description>
+          <default>false</default>
+          <required>false</required>
         </input>
         <input>
           <name>input-with-code-block</name>
@@ -71,18 +80,21 @@ generates the following output:
           <default>
             <item>name rack:location</item>
           </default>
+          <required>false</required>
         </input>
         <input>
           <name>input-with-pipe</name>
           <type>string</type>
           <description>It includes v1 | v2 | v3</description>
           <default>v1</default>
+          <required>false</required>
         </input>
         <input>
           <name>input_with_underscores</name>
           <type>any</type>
           <description>A variable with underscores.</description>
           <default xsi:nil="true"></default>
+          <required>true</required>
         </input>
         <input>
           <name>list-1</name>
@@ -93,18 +105,28 @@ generates the following output:
             <item>b</item>
             <item>c</item>
           </default>
+          <required>false</required>
         </input>
         <input>
           <name>list-2</name>
           <type>list</type>
           <description>It&#39;s list number two.</description>
           <default xsi:nil="true"></default>
+          <required>true</required>
         </input>
         <input>
           <name>list-3</name>
           <type>list</type>
           <description xsi:nil="true"></description>
           <default></default>
+          <required>false</required>
+        </input>
+        <input>
+          <name>list_default_empty</name>
+          <type>list(string)</type>
+          <description xsi:nil="true"></description>
+          <default></default>
+          <required>false</required>
         </input>
         <input>
           <name>long_type</name>
@@ -126,6 +148,7 @@ generates the following output:
             </foo>
             <name>hello</name>
           </default>
+          <required>false</required>
         </input>
         <input>
           <name>map-1</name>
@@ -136,78 +159,133 @@ generates the following output:
             <b>2</b>
             <c>3</c>
           </default>
+          <required>false</required>
         </input>
         <input>
           <name>map-2</name>
           <type>map</type>
           <description>It&#39;s map number two.</description>
           <default xsi:nil="true"></default>
+          <required>true</required>
         </input>
         <input>
           <name>map-3</name>
           <type>map</type>
           <description xsi:nil="true"></description>
           <default></default>
+          <required>false</required>
         </input>
         <input>
           <name>no-escape-default-value</name>
           <type>string</type>
           <description>The description contains `something_with_underscore`. Defaults to &#39;VALUE_WITH_UNDERSCORE&#39;.</description>
           <default>VALUE_WITH_UNDERSCORE</default>
+          <required>false</required>
         </input>
         <input>
           <name>number-1</name>
           <type>number</type>
           <description>It&#39;s number number one.</description>
           <default>42</default>
+          <required>false</required>
         </input>
         <input>
           <name>number-2</name>
           <type>number</type>
           <description>It&#39;s number number two.</description>
           <default xsi:nil="true"></default>
+          <required>true</required>
         </input>
         <input>
           <name>number-3</name>
           <type>number</type>
           <description xsi:nil="true"></description>
           <default>19</default>
+          <required>false</required>
         </input>
         <input>
           <name>number-4</name>
           <type>number</type>
           <description xsi:nil="true"></description>
           <default>15.75</default>
+          <required>false</required>
+        </input>
+        <input>
+          <name>number_default_zero</name>
+          <type>number</type>
+          <description xsi:nil="true"></description>
+          <default>0</default>
+          <required>false</required>
+        </input>
+        <input>
+          <name>object_default_empty</name>
+          <type>object({})</type>
+          <description xsi:nil="true"></description>
+          <default></default>
+          <required>false</required>
         </input>
         <input>
           <name>string-1</name>
           <type>string</type>
           <description>It&#39;s string number one.</description>
           <default>bar</default>
+          <required>false</required>
         </input>
         <input>
           <name>string-2</name>
           <type>string</type>
           <description>It&#39;s string number two.</description>
           <default xsi:nil="true"></default>
+          <required>true</required>
         </input>
         <input>
           <name>string-3</name>
           <type>string</type>
           <description xsi:nil="true"></description>
           <default></default>
+          <required>false</required>
+        </input>
+        <input>
+          <name>string-special-chars</name>
+          <type>string</type>
+          <description xsi:nil="true"></description>
+          <default>\.&lt;&gt;[]{}_-</default>
+          <required>false</required>
+        </input>
+        <input>
+          <name>string_default_empty</name>
+          <type>string</type>
+          <description xsi:nil="true"></description>
+          <default></default>
+          <required>false</required>
+        </input>
+        <input>
+          <name>string_default_null</name>
+          <type>string</type>
+          <description xsi:nil="true"></description>
+          <default xsi:nil="true"></default>
+          <required>false</required>
+        </input>
+        <input>
+          <name>string_no_default</name>
+          <type>string</type>
+          <description xsi:nil="true"></description>
+          <default xsi:nil="true"></default>
+          <required>true</required>
         </input>
         <input>
           <name>unquoted</name>
           <type>any</type>
           <description xsi:nil="true"></description>
           <default xsi:nil="true"></default>
+          <required>true</required>
         </input>
         <input>
           <name>with-url</name>
           <type>string</type>
           <description>The description contains url. https://www.domain.com/foo/bar_baz.html</description>
           <default></default>
+          <required>false</required>
         </input>
       </inputs>
       <outputs>
@@ -259,8 +337,11 @@ generates the following output:
           <name>aws</name>
           <version>&gt;= 2.15.0</version>
         </requirement>
+        <requirement>
+          <name>random</name>
+          <version>&gt;= 2.2.0</version>
+        </requirement>
       </requirements>
     </module>
 
-
-###### Auto generated by spf13/cobra on 22-Mar-2020
+###### Auto generated by spf13/cobra on 25-Nov-2020

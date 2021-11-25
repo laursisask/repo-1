@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/xml"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,12 +11,12 @@ import (
 
 func TestList(t *testing.T) {
 	values := []List{
-		List{"foo", "bar", "baz"},
-		List{"1", "2", "3"},
-		List{true, false, true},
-		List{10, float64(1000), int8(42)},
+		{"foo", "bar", "baz"},
+		{"1", "2", "3"},
+		{true, false, true},
+		{10, float64(1000), int8(42)},
 	}
-	testList(t, []testlist{
+	tests := []testlist{
 		{
 			name:   "value not nil and type list",
 			values: values,
@@ -36,7 +37,61 @@ func TestList(t *testing.T) {
 				hasDefault: true,
 			},
 		},
-	})
+	}
+	for _, tt := range tests {
+		for _, tv := range tt.values {
+			t.Run(tt.name, func(t *testing.T) {
+				assert := assert.New(t)
+
+				actualValue := ValueOf(tv.Underlying())
+				actualType := TypeOf(tt.types, tv.Underlying())
+
+				assert.Equal(tt.expected.typeName, string(actualType))
+				assert.Equal(tt.expected.valueKind, reflect.TypeOf(actualValue).String())
+				assert.Equal(tt.expected.hasDefault, actualValue.HasDefault())
+			})
+		}
+	}
+}
+
+func TestListLength(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    []interface{}
+		expected int
+	}{
+		{
+			name:     "list length",
+			value:    List{"foo", "bar", "baz"},
+			expected: 3,
+		},
+		{
+			name:     "list length",
+			value:    List{"1", "2", "3"},
+			expected: 3,
+		},
+		{
+			name:     "list length",
+			value:    List{true, false, true},
+			expected: 3,
+		},
+		{
+			name:     "list length",
+			value:    List{10, float64(1000), int8(42)},
+			expected: 3,
+		},
+		{
+			name:     "list length",
+			value:    List{},
+			expected: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			assert.Equal(tt.expected, List(tt.value).Length())
+		})
+	}
 }
 
 func TestListUnderlying(t *testing.T) {

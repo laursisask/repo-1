@@ -8,7 +8,7 @@ import (
 )
 
 // current version
-const dev = "v0.9.0-alpha"
+const dev = "v0.10.2-alpha"
 
 // Provisioned by ldflags
 var (
@@ -17,9 +17,12 @@ var (
 	buildDate  string
 )
 
+// Load defaults for info variables
 func init() {
-	// Load defaults for info variables
 	if version == "" {
+		version = dev
+	}
+	if version == "v0.0.0-" { // building in a directory which is not a git repository
 		version = dev
 	}
 	if commitHash == "" {
@@ -30,8 +33,8 @@ func init() {
 	}
 }
 
-// Version return the full version of the binary including commit hash and build date
-func Version() string {
+// Full return the full version of the binary including commit hash and build date
+func Full() string {
 	if !strings.HasSuffix(version, commitHash) {
 		version += " " + commitHash
 	}

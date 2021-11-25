@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/terraform-config-inspect/tfconfig"
-	"github.com/segmentio/terraform-docs/internal/reader"
-	"github.com/segmentio/terraform-docs/internal/types"
-	"github.com/segmentio/terraform-docs/pkg/tfconf"
+	"github.com/terraform-docs/terraform-docs/internal/reader"
+	"github.com/terraform-docs/terraform-docs/internal/tfconfig"
+	"github.com/terraform-docs/terraform-docs/internal/types"
+	"github.com/terraform-docs/terraform-docs/pkg/tfconf"
 )
 
 // LoadWithOptions returns new instance of Module with all the inputs and
@@ -64,15 +65,47 @@ func loadModuleItems(tfmodule *tfconfig.Module, options *Options) (*tfconf.Modul
 	}, nil
 }
 
+func getFileFormat(filename string) string {
+	if filename == "" {
+		return ""
+	}
+	last := strings.LastIndex(filename, ".")
+	if last == -1 {
+		return ""
+	}
+	return filename[last:]
+}
+func isFileFormatSupported(filename string) (bool, error) {
+	if filename == "" {
+		return false, fmt.Errorf("--header-from value is missing")
+	}
+	switch getFileFormat(filename) {
+	case ".adoc", ".md", ".tf", ".txt":
+		return true, nil
+	}
+	return false, fmt.Errorf("only .adoc, .md, .tf and .txt formats are supported to read header from")
+}
+
 func loadHeader(options *Options) (string, error) {
 	if !options.ShowHeader {
 		return "", nil
 	}
-
-	filename := filepath.Join(options.Path, options.HeaderFromFile)
-	_, err := ioutil.ReadFile(filename)
-	if err != nil {
+	if ok, err := isFileFormatSupported(options.HeaderFromFile); !ok {
 		return "", err
+	}
+	filename := filepath.Join(options.Path, options.HeaderFromFile)
+	if info, err := os.Stat(filename); os.IsNotExist(err) || info.IsDir() {
+		if options.HeaderFromFile != "main.tf" {
+			return "", err // user explicitly asked for a file which doesn't exist
+		}
+		return "", nil // absorb the error to not break workflow of users who don't have 'main.tf at all
+	}
+	if getFileFormat(options.HeaderFromFile) != ".tf" {
+		content, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return "", err
+		}
+		return string(content), nil
 	}
 	lines := reader.Lines{
 		FileName: filename,
@@ -106,7 +139,8 @@ func loadInputs(tfmodule *tfconfig.Module) ([]*tfconf.Input, []*tfconf.Input, []
 	var optional = make([]*tfconf.Input, 0, len(tfmodule.Variables))
 
 	for _, input := range tfmodule.Variables {
-		inputDescription := input.Description
+		// convert CRLF to LF early on (https://github.com/terraform-docs/terraform-docs/issues/305)
+		inputDescription := strings.Replace(input.Description, "\r\n", "\n", -1)
 		if inputDescription == "" {
 			inputDescription = loadComments(input.Pos.Filename, input.Pos.Line)
 		}
@@ -116,6 +150,7 @@ func loadInputs(tfmodule *tfconfig.Module) ([]*tfconf.Input, []*tfconf.Input, []
 			Type:        types.TypeOf(input.Type, input.Default),
 			Description: types.String(inputDescription),
 			Default:     types.ValueOf(input.Default),
+			Required:    input.Required,
 			Position: tfconf.Position{
 				Filename: input.Pos.Filename,
 				Line:     input.Pos.Line,
@@ -134,7 +169,7 @@ func loadInputs(tfmodule *tfconfig.Module) ([]*tfconf.Input, []*tfconf.Input, []
 
 func loadOutputs(tfmodule *tfconfig.Module, options *Options) ([]*tfconf.Output, error) {
 	outputs := make([]*tfconf.Output, 0, len(tfmodule.Outputs))
-	values := make(map[string]*TerraformOutput, 0)
+	values := make(map[string]*TerraformOutput)
 	if options.OutputValues {
 		var err error
 		values, err = loadOutputValues(options)
@@ -220,15 +255,20 @@ func loadProviders(tfmodule *tfconfig.Module) []*tfconf.Provider {
 }
 
 func loadRequirements(tfmodule *tfconfig.Module) []*tfconf.Requirement {
-	var requirements = make([]*tfconf.Requirement, 0, len(tfmodule.Variables))
+	var requirements = make([]*tfconf.Requirement, 0)
 	for _, core := range tfmodule.RequiredCore {
 		requirements = append(requirements, &tfconf.Requirement{
 			Name:    "terraform",
 			Version: types.String(core),
 		})
 	}
-	for name, provider := range tfmodule.RequiredProviders {
-		for _, version := range provider.VersionConstraints {
+	names := make([]string, 0, len(tfmodule.RequiredProviders))
+	for n := range tfmodule.RequiredProviders {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		for _, version := range tfmodule.RequiredProviders[name].VersionConstraints {
 			requirements = append(requirements, &tfconf.Requirement{
 				Name:    name,
 				Version: types.String(version),
@@ -261,13 +301,11 @@ func loadComments(filename string, lineNum int) string {
 }
 
 func sortItems(tfmodule *tfconf.Module, sortby *SortBy) {
-	if sortby.Name {
-		sort.Sort(providersSortedByName(tfmodule.Providers))
-	} else {
-		sort.Sort(providersSortedByPosition(tfmodule.Providers))
-	}
-
-	if sortby.Name {
+	if sortby.Type {
+		sort.Sort(inputsSortedByType(tfmodule.Inputs))
+		sort.Sort(inputsSortedByType(tfmodule.RequiredInputs))
+		sort.Sort(inputsSortedByType(tfmodule.OptionalInputs))
+	} else if sortby.Name {
 		if sortby.Required {
 			sort.Sort(inputsSortedByRequired(tfmodule.Inputs))
 			sort.Sort(inputsSortedByRequired(tfmodule.RequiredInputs))
@@ -283,9 +321,15 @@ func sortItems(tfmodule *tfconf.Module, sortby *SortBy) {
 		sort.Sort(inputsSortedByPosition(tfmodule.OptionalInputs))
 	}
 
-	if sortby.Name {
+	if sortby.Name || sortby.Type {
 		sort.Sort(outputsSortedByName(tfmodule.Outputs))
 	} else {
 		sort.Sort(outputsSortedByPosition(tfmodule.Outputs))
+	}
+
+	if sortby.Name || sortby.Type {
+		sort.Sort(providersSortedByName(tfmodule.Providers))
+	} else {
+		sort.Sort(providersSortedByPosition(tfmodule.Providers))
 	}
 }

@@ -5,9 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/segmentio/terraform-docs/internal/testutil"
-	"github.com/segmentio/terraform-docs/pkg/print"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/terraform-docs/terraform-docs/internal/testutil"
+	"github.com/terraform-docs/terraform-docs/pkg/print"
 )
 
 func TestSanitizeName(t *testing.T) {
@@ -149,7 +150,6 @@ func TestSanitizeItemForTable(t *testing.T) {
 		name        string
 		filename    string
 		escapeChars bool
-		escapePipe  bool
 	}{
 		{
 			name:        "sanitize table item empty",
@@ -180,6 +180,48 @@ func TestSanitizeItemForTable(t *testing.T) {
 			actual := sanitizeItemForTable(string(bytes), settings)
 
 			expected, err := ioutil.ReadFile(filepath.Join("testdata", "table", tt.filename+".expected"))
+			assert.Nil(err)
+
+			assert.Equal(string(expected), actual)
+		})
+	}
+}
+
+func TestSanitizeItemForAsciidocTable(t *testing.T) {
+	tests := []struct {
+		name        string
+		filename    string
+		escapeChars bool
+	}{
+		{
+			name:        "sanitize table item empty",
+			filename:    "empty",
+			escapeChars: false,
+		},
+		{
+			name:        "sanitize table item complex",
+			filename:    "complex",
+			escapeChars: false,
+		},
+		{
+			name:        "sanitize table item codeblock",
+			filename:    "codeblock",
+			escapeChars: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			settings := testutil.Settings().With(&print.Settings{
+				EscapeCharacters: tt.escapeChars,
+			}).Build()
+
+			bytes, err := ioutil.ReadFile(filepath.Join("testdata", "table", tt.filename+".golden"))
+			assert.Nil(err)
+
+			actual := sanitizeItemForAsciidocTable(string(bytes), settings)
+
+			expected, err := ioutil.ReadFile(filepath.Join("testdata", "table", tt.filename+".asciidoc.expected"))
 			assert.Nil(err)
 
 			assert.Equal(string(expected), actual)
@@ -516,9 +558,9 @@ func TestGenerateIndentation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			assert := assert.New(t)
 			settings := testutil.Settings().With(&print.Settings{
-				MarkdownIndent: tt.base,
+				IndentLevel: tt.base,
 			}).Build()
-			actual := generateIndentation(tt.extra, settings)
+			actual := generateIndentation(tt.extra, "#", settings)
 
 			assert.Equal(tt.expected, actual)
 		})

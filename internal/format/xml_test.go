@@ -3,10 +3,11 @@ package format
 import (
 	"testing"
 
-	"github.com/segmentio/terraform-docs/internal/module"
-	"github.com/segmentio/terraform-docs/internal/testutil"
-	"github.com/segmentio/terraform-docs/pkg/print"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/terraform-docs/terraform-docs/internal/module"
+	"github.com/terraform-docs/terraform-docs/internal/testutil"
+	"github.com/terraform-docs/terraform-docs/pkg/print"
 )
 
 func TestXml(t *testing.T) {
@@ -67,6 +68,32 @@ func TestXmlSortByRequired(t *testing.T) {
 		SortBy: &module.SortBy{
 			Name:     true,
 			Required: true,
+		},
+	})
+	assert.Nil(err)
+
+	module, err := testutil.GetModule(options)
+	assert.Nil(err)
+
+	printer := NewXML(settings)
+	actual, err := printer.Print(module, settings)
+
+	assert.Nil(err)
+	assert.Equal(expected, actual)
+}
+
+func TestXmlSortByType(t *testing.T) {
+	assert := assert.New(t)
+	settings := testutil.Settings().WithSections().With(&print.Settings{
+		SortByType: true,
+	}).Build()
+
+	expected, err := testutil.GetExpected("xml", "xml-SortByType")
+	assert.Nil(err)
+
+	options, err := module.NewOptions().With(&module.Options{
+		SortBy: &module.SortBy{
+			Type: true,
 		},
 	})
 	assert.Nil(err)
@@ -347,25 +374,55 @@ func TestXmlOutputValues(t *testing.T) {
 }
 
 func TestXmlHeaderFromFile(t *testing.T) {
-	assert := assert.New(t)
-	settings := testutil.Settings().WithSections().Build()
+	tests := []struct {
+		name   string
+		golden string
+		file   string
+	}{
+		{
+			name:   "load module header from .adoc",
+			golden: "xml-HeaderFromADOCFile",
+			file:   "doc.adoc",
+		},
+		{
+			name:   "load module header from .md",
+			golden: "xml-HeaderFromMDFile",
+			file:   "doc.md",
+		},
+		{
+			name:   "load module header from .tf",
+			golden: "xml-HeaderFromTFFile",
+			file:   "doc.tf",
+		},
+		{
+			name:   "load module header from .txt",
+			golden: "xml-HeaderFromTXTFile",
+			file:   "doc.txt",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			settings := testutil.Settings().WithSections().Build()
 
-	expected, err := testutil.GetExpected("xml", "xml-HeaderFromFile")
-	assert.Nil(err)
+			expected, err := testutil.GetExpected("xml", tt.golden)
+			assert.Nil(err)
 
-	options, err := module.NewOptions().WithOverwrite(&module.Options{
-		HeaderFromFile: "doc.tf",
-	})
-	assert.Nil(err)
+			options, err := module.NewOptions().WithOverwrite(&module.Options{
+				HeaderFromFile: tt.file,
+			})
+			assert.Nil(err)
 
-	module, err := testutil.GetModule(options)
-	assert.Nil(err)
+			module, err := testutil.GetModule(options)
+			assert.Nil(err)
 
-	printer := NewXML(settings)
-	actual, err := printer.Print(module, settings)
+			printer := NewXML(settings)
+			actual, err := printer.Print(module, settings)
 
-	assert.Nil(err)
-	assert.Equal(expected, actual)
+			assert.Nil(err)
+			assert.Equal(expected, actual)
+		})
+	}
 }
 
 func TestXmlEmpty(t *testing.T) {

@@ -2,11 +2,11 @@ package types
 
 import (
 	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"go/types"
 	"reflect"
 	"sort"
-	"strings"
 )
 
 // Value is a default value of an input or output.
@@ -21,6 +21,7 @@ import (
 // - Map
 type Value interface {
 	HasDefault() bool
+	Length() int
 }
 
 // ValueOf returns actual value of a variable casted to 'Default' interface.
@@ -82,6 +83,11 @@ func (n Nil) HasDefault() bool {
 	return false
 }
 
+// Length returns the length of underlying item
+func (n Nil) Length() int {
+	return 0
+}
+
 // MarshalJSON custom marshal function which sets the value to literal `null`
 func (n Nil) MarshalJSON() ([]byte, error) {
 	return []byte(`null`), nil
@@ -102,11 +108,6 @@ func (n Nil) MarshalYAML() (interface{}, error) {
 // String represents a 'string' value which is marshaled to `null` when empty for JSON and YAML
 type String string
 
-// String returns s as an actual string value
-func (s String) String() string {
-	return string(s)
-}
-
 // nolint
 func (s String) underlying() string {
 	return string(s)
@@ -117,16 +118,23 @@ func (s String) HasDefault() bool {
 	return true
 }
 
+// Length returns the length of underlying item
+func (s String) Length() int {
+	return len(s.underlying())
+}
+
 // MarshalJSON custom marshal function which sets the value to literal `null` when empty
 func (s String) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
-	if len(s.String()) == 0 {
+	if len(string(s)) == 0 {
 		buf.WriteString(`null`)
 	} else {
-		normalize := s.String()
-		normalize = strings.Replace(normalize, "\n", "\\n", -1)
-		normalize = strings.Replace(normalize, "\"", "\\\"", -1)
-		buf.WriteString(`"` + normalize + `"`) // add double quation mark as json format required
+		encoder := json.NewEncoder(&buf)
+		encoder.SetEscapeHTML(false)
+		if err := encoder.Encode(string(s)); err != nil {
+			return nil, err
+		}
+		buf.Truncate(buf.Len() - 1) // The json encoder adds a newline, this is not configurable
 	}
 	return buf.Bytes(), nil
 }
@@ -143,10 +151,10 @@ func (s String) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 
 // MarshalYAML custom marshal function which sets the value to literal `null` when empty
 func (s String) MarshalYAML() (interface{}, error) {
-	if len(s.String()) == 0 {
+	if len(string(s)) == 0 || string(s) == `""` {
 		return nil, nil
 	}
-	return s, nil
+	return string(s), nil
 }
 
 // Empty represents an empty 'string' which is marshaled to `""` in JSON and YAML
@@ -160,6 +168,11 @@ func (e Empty) underlying() string {
 // HasDefault indicates a Terraform variable has a default value set.
 func (e Empty) HasDefault() bool {
 	return true
+}
+
+// Length returns the length of underlying item
+func (e Empty) Length() int {
+	return len(e.underlying())
 }
 
 // MarshalJSON custom marshal function which sets the value to `""`
@@ -180,6 +193,11 @@ func (n Number) HasDefault() bool {
 	return true
 }
 
+// Length returns the length of underlying item
+func (n Number) Length() int {
+	return 0
+}
+
 // Bool represents a 'bool' value
 type Bool bool
 
@@ -191,6 +209,11 @@ func (b Bool) underlying() bool {
 // HasDefault indicates a Terraform variable has a default value set.
 func (b Bool) HasDefault() bool {
 	return true
+}
+
+// Length returns the length of underlying item
+func (b Bool) Length() int {
+	return 0
 }
 
 // List represents a 'list' of values
@@ -208,6 +231,11 @@ func (l List) Underlying() []interface{} {
 // HasDefault indicates a Terraform variable has a default value set.
 func (l List) HasDefault() bool {
 	return true
+}
+
+// Length returns the length of underlying item
+func (l List) Length() int {
+	return len(l)
 }
 
 type xmllistentry struct {
@@ -236,7 +264,7 @@ type Map map[string]interface{}
 
 // Underlying returns the underlying elements in the form of 'map[string]interface {}'
 func (m Map) Underlying() map[string]interface{} {
-	r := make(map[string]interface{}, 0)
+	r := make(map[string]interface{})
 	for k, e := range m {
 		r[k] = e
 	}
@@ -246,6 +274,11 @@ func (m Map) Underlying() map[string]interface{} {
 // HasDefault indicates a Terraform variable has a default value set.
 func (m Map) HasDefault() bool {
 	return true
+}
+
+// Length returns the length of underlying item
+func (m Map) Length() int {
+	return len(m)
 }
 
 type xmlmapentry struct {

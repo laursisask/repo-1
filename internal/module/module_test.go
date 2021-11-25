@@ -53,6 +53,118 @@ func TestLoadModule(t *testing.T) {
 	}
 }
 
+func TestGetFileFormat(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		expected string
+	}{
+		{
+			name:     "get file format",
+			filename: "main.tf",
+			expected: ".tf",
+		},
+		{
+			name:     "get file format",
+			filename: "main.file.tf",
+			expected: ".tf",
+		},
+		{
+			name:     "get file format",
+			filename: "main_file.tf",
+			expected: ".tf",
+		},
+		{
+			name:     "get file format",
+			filename: "main.file_tf",
+			expected: ".file_tf",
+		},
+		{
+			name:     "get file format",
+			filename: "main_file_tf",
+			expected: "",
+		},
+		{
+			name:     "get file format",
+			filename: "",
+			expected: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			actual := getFileFormat(tt.filename)
+			assert.Equal(tt.expected, actual)
+		})
+	}
+}
+
+func TestIsFileFormatSupported(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		expected bool
+		wantErr  bool
+		errText  string
+	}{
+		{
+			name:     "is file format supported",
+			filename: "main.adoc",
+			expected: true,
+			wantErr:  false,
+			errText:  "",
+		},
+		{
+			name:     "is file format supported",
+			filename: "main.md",
+			expected: true,
+			wantErr:  false,
+			errText:  "",
+		},
+		{
+			name:     "is file format supported",
+			filename: "main.tf",
+			expected: true,
+			wantErr:  false,
+			errText:  "",
+		},
+		{
+			name:     "is file format supported",
+			filename: "main.txt",
+			expected: true,
+			wantErr:  false,
+			errText:  "",
+		},
+		{
+			name:     "is file format supported",
+			filename: "main.doc",
+			expected: false,
+			wantErr:  true,
+			errText:  "only .adoc, .md, .tf and .txt formats are supported to read header from",
+		},
+		{
+			name:     "is file format supported",
+			filename: "",
+			expected: false,
+			wantErr:  true,
+			errText:  "--header-from value is missing",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			actual, err := isFileFormatSupported(tt.filename)
+			if tt.wantErr {
+				assert.NotNil(err)
+				assert.Equal(tt.errText, err.Error())
+			} else {
+				assert.Nil(err)
+				assert.Equal(tt.expected, actual)
+			}
+		})
+	}
+}
+
 func TestLoadHeader(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -60,6 +172,7 @@ func TestLoadHeader(t *testing.T) {
 		header   string
 		expected string
 		wantErr  bool
+		errText  string
 	}{
 		{
 			name:     "load module header from path",
@@ -67,6 +180,7 @@ func TestLoadHeader(t *testing.T) {
 			header:   "main.tf",
 			expected: "Example of 'foo_bar' module in `foo_bar.tf`.\n\n- list item 1\n- list item 2\n\nEven inline **formatting** in _here_ is possible.\nand some [link](https://domain.com/)",
 			wantErr:  false,
+			errText:  "",
 		},
 		{
 			name:     "load module header from path",
@@ -74,6 +188,39 @@ func TestLoadHeader(t *testing.T) {
 			header:   "doc.tf",
 			expected: "Custom Header:\n\nExample of 'foo_bar' module in `foo_bar.tf`.\n\n- list item 1\n- list item 2",
 			wantErr:  false,
+			errText:  "",
+		},
+		{
+			name:     "load module header from path",
+			path:     "full-example",
+			header:   "doc.md",
+			expected: "# Custom Header\n\nExample of 'foo_bar' module in `foo_bar.tf`.\n\n- list item 1\n- list item 2\n",
+			wantErr:  false,
+			errText:  "",
+		},
+		{
+			name:     "load module header from path",
+			path:     "full-example",
+			header:   "doc.adoc",
+			expected: "= Custom Header\n\nExample of 'foo_bar' module in `foo_bar.tf`.\n\n- list item 1\n- list item 2\n",
+			wantErr:  false,
+			errText:  "",
+		},
+		{
+			name:     "load module header from path",
+			path:     "full-example",
+			header:   "doc.txt",
+			expected: "# Custom Header\n\nExample of 'foo_bar' module in `foo_bar.tf`.\n\n- list item 1\n- list item 2\n",
+			wantErr:  false,
+			errText:  "",
+		},
+		{
+			name:     "load module header from path",
+			path:     "no-inputs",
+			header:   "main.tf",
+			expected: "",
+			wantErr:  false,
+			errText:  "",
 		},
 		{
 			name:     "load module header from path",
@@ -81,6 +228,15 @@ func TestLoadHeader(t *testing.T) {
 			header:   "non-existent.tf",
 			expected: "",
 			wantErr:  true,
+			errText:  "stat testdata/full-example/non-existent.tf: no such file or directory",
+		},
+		{
+			name:     "load module header from path",
+			path:     "full-example",
+			header:   "wrong-formate.docx",
+			expected: "",
+			wantErr:  true,
+			errText:  "only .adoc, .md, .tf and .txt formats are supported to read header from",
 		},
 		{
 			name:     "load module header from path",
@@ -88,6 +244,7 @@ func TestLoadHeader(t *testing.T) {
 			header:   "",
 			expected: "",
 			wantErr:  true,
+			errText:  "--header-from value is missing",
 		},
 		{
 			name:     "load module header from path",
@@ -95,6 +252,7 @@ func TestLoadHeader(t *testing.T) {
 			header:   "",
 			expected: "",
 			wantErr:  true,
+			errText:  "--header-from value is missing",
 		},
 		{
 			name:     "load module header from path",
@@ -102,6 +260,7 @@ func TestLoadHeader(t *testing.T) {
 			header:   "",
 			expected: "",
 			wantErr:  true,
+			errText:  "--header-from value is missing",
 		},
 	}
 	for _, tt := range tests {
@@ -111,6 +270,7 @@ func TestLoadHeader(t *testing.T) {
 			actual, err := loadHeader(options)
 			if tt.wantErr {
 				assert.NotNil(err)
+				assert.Equal(tt.errText, err.Error())
 			} else {
 				assert.Nil(err)
 				assert.Equal(tt.expected, actual)
@@ -134,9 +294,9 @@ func TestLoadInputs(t *testing.T) {
 			name: "load module inputs from path",
 			path: "full-example",
 			expected: expected{
-				inputs:    6,
+				inputs:    7,
 				requireds: 2,
-				optionals: 4,
+				optionals: 5,
 			},
 		},
 		{
@@ -176,6 +336,35 @@ func TestLoadInputs(t *testing.T) {
 			assert.Equal(tt.expected.inputs, len(inputs))
 			assert.Equal(tt.expected.requireds, len(requireds))
 			assert.Equal(tt.expected.optionals, len(optionals))
+		})
+	}
+}
+
+func TestLoadInputsLineEnding(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected string
+	}{
+		{
+			name:     "load module inputs from file with lf line ending",
+			path:     "inputs-lf",
+			expected: "The quick brown fox jumps\nover the lazy dog\n",
+		},
+		{
+			name:     "load module inputs from file with crlf line ending",
+			path:     "inputs-crlf",
+			expected: "The quick brown fox jumps\nover the lazy dog\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			module, _ := loadModule(filepath.Join("testdata", tt.path))
+			inputs, _, _ := loadInputs(module)
+
+			assert.Equal(1, len(inputs))
+			assert.Equal(tt.expected, string(inputs[0].Description))
 		})
 	}
 }
@@ -385,11 +574,11 @@ func TestSortItems(t *testing.T) {
 		{
 			name: "sort module items",
 			path: "full-example",
-			sort: &SortBy{Name: false, Required: false},
+			sort: &SortBy{Name: false, Required: false, Type: false},
 			expected: expected{
-				inputs:    []string{"D", "B", "E", "A", "C", "F"},
+				inputs:    []string{"D", "B", "E", "A", "C", "F", "G"},
 				required:  []string{"A", "F"},
-				optional:  []string{"D", "B", "E", "C"},
+				optional:  []string{"D", "B", "E", "C", "G"},
 				outputs:   []string{"C", "A", "B"},
 				providers: []string{"tls", "aws", "null"},
 			},
@@ -397,11 +586,11 @@ func TestSortItems(t *testing.T) {
 		{
 			name: "sort module items",
 			path: "full-example",
-			sort: &SortBy{Name: true, Required: false},
+			sort: &SortBy{Name: true, Required: false, Type: false},
 			expected: expected{
-				inputs:    []string{"A", "B", "C", "D", "E", "F"},
+				inputs:    []string{"A", "B", "C", "D", "E", "F", "G"},
 				required:  []string{"A", "F"},
-				optional:  []string{"B", "C", "D", "E"},
+				optional:  []string{"B", "C", "D", "E", "G"},
 				outputs:   []string{"A", "B", "C"},
 				providers: []string{"aws", "null", "tls"},
 			},
@@ -409,11 +598,11 @@ func TestSortItems(t *testing.T) {
 		{
 			name: "sort module items",
 			path: "full-example",
-			sort: &SortBy{Name: false, Required: true},
+			sort: &SortBy{Name: false, Required: true, Type: false},
 			expected: expected{
-				inputs:    []string{"D", "B", "E", "A", "C", "F"},
+				inputs:    []string{"D", "B", "E", "A", "C", "F", "G"},
 				required:  []string{"A", "F"},
-				optional:  []string{"D", "B", "E", "C"},
+				optional:  []string{"D", "B", "E", "C", "G"},
 				outputs:   []string{"C", "A", "B"},
 				providers: []string{"tls", "aws", "null"},
 			},
@@ -421,11 +610,59 @@ func TestSortItems(t *testing.T) {
 		{
 			name: "sort module items",
 			path: "full-example",
-			sort: &SortBy{Name: true, Required: true},
+			sort: &SortBy{Name: false, Required: false, Type: true},
 			expected: expected{
-				inputs:    []string{"A", "F", "B", "C", "D", "E"},
+				inputs:    []string{"A", "F", "G", "B", "C", "D", "E"},
 				required:  []string{"A", "F"},
-				optional:  []string{"B", "C", "D", "E"},
+				optional:  []string{"G", "B", "C", "D", "E"},
+				outputs:   []string{"A", "B", "C"},
+				providers: []string{"aws", "null", "tls"},
+			},
+		},
+		{
+			name: "sort module items",
+			path: "full-example",
+			sort: &SortBy{Name: true, Required: true, Type: false},
+			expected: expected{
+				inputs:    []string{"A", "F", "B", "C", "D", "E", "G"},
+				required:  []string{"A", "F"},
+				optional:  []string{"B", "C", "D", "E", "G"},
+				outputs:   []string{"A", "B", "C"},
+				providers: []string{"aws", "null", "tls"},
+			},
+		},
+		{
+			name: "sort module items",
+			path: "full-example",
+			sort: &SortBy{Name: true, Required: false, Type: true},
+			expected: expected{
+				inputs:    []string{"A", "F", "G", "B", "C", "D", "E"},
+				required:  []string{"A", "F"},
+				optional:  []string{"G", "B", "C", "D", "E"},
+				outputs:   []string{"A", "B", "C"},
+				providers: []string{"aws", "null", "tls"},
+			},
+		},
+		{
+			name: "sort module items",
+			path: "full-example",
+			sort: &SortBy{Name: false, Required: true, Type: true},
+			expected: expected{
+				inputs:    []string{"A", "F", "G", "B", "C", "D", "E"},
+				required:  []string{"A", "F"},
+				optional:  []string{"G", "B", "C", "D", "E"},
+				outputs:   []string{"A", "B", "C"},
+				providers: []string{"aws", "null", "tls"},
+			},
+		},
+		{
+			name: "sort module items",
+			path: "full-example",
+			sort: &SortBy{Name: true, Required: true, Type: true},
+			expected: expected{
+				inputs:    []string{"A", "F", "G", "B", "C", "D", "E"},
+				required:  []string{"A", "F"},
+				optional:  []string{"G", "B", "C", "D", "E"},
 				outputs:   []string{"A", "B", "C"},
 				providers: []string{"aws", "null", "tls"},
 			},

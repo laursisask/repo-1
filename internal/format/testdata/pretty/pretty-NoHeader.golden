@@ -1,19 +1,12 @@
-
-
 [36mrequirement.terraform[0m (>= 0.12)
-
 [36mrequirement.aws[0m (>= 2.15.0)
-
+[36mrequirement.random[0m (>= 2.2.0)
 
 
 [36mprovider.tls[0m
-
 [36mprovider.aws[0m (>= 2.15.0)
-
 [36mprovider.aws.ident[0m (>= 2.15.0)
-
 [36mprovider.null[0m
-
 
 
 [36minput.unquoted[0m (required)
@@ -36,6 +29,9 @@
 
 [36minput.string-1[0m ("bar")
 [90mIt's string number one.[0m
+
+[36minput.string-special-chars[0m ("\\.<>[]{}_-")
+[90mn/a[0m
 
 [36minput.number-3[0m ("19")
 [90mn/a[0m
@@ -118,6 +114,26 @@ It spans over multiple lines.[0m
 [36minput.with-url[0m ("")
 [90mThe description contains url. https://www.domain.com/foo/bar_baz.html[0m
 
+[36minput.string_default_empty[0m ("")
+[90mn/a[0m
+
+[36minput.string_default_null[0m (null)
+[90mn/a[0m
+
+[36minput.string_no_default[0m (required)
+[90mn/a[0m
+
+[36minput.number_default_zero[0m (0)
+[90mn/a[0m
+
+[36minput.bool_default_false[0m (false)
+[90mn/a[0m
+
+[36minput.list_default_empty[0m ([])
+[90mn/a[0m
+
+[36minput.object_default_empty[0m ({})
+[90mn/a[0m
 
 
 [36moutput.unquoted[0m
@@ -131,4 +147,3 @@ It spans over multiple lines.[0m
 
 [36moutput.output-0.12[0m
 [90mterraform 0.12 only[0m
-

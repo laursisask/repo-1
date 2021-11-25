@@ -3,10 +3,11 @@ package format
 import (
 	"testing"
 
-	"github.com/segmentio/terraform-docs/internal/module"
-	"github.com/segmentio/terraform-docs/internal/testutil"
-	"github.com/segmentio/terraform-docs/pkg/print"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/terraform-docs/terraform-docs/internal/module"
+	"github.com/terraform-docs/terraform-docs/internal/testutil"
+	"github.com/terraform-docs/terraform-docs/pkg/print"
 )
 
 func TestJson(t *testing.T) {
@@ -67,6 +68,32 @@ func TestJsonSortByRequired(t *testing.T) {
 		SortBy: &module.SortBy{
 			Name:     true,
 			Required: true,
+		},
+	})
+	assert.Nil(err)
+
+	module, err := testutil.GetModule(options)
+	assert.Nil(err)
+
+	printer := NewJSON(settings)
+	actual, err := printer.Print(module, settings)
+
+	assert.Nil(err)
+	assert.Equal(expected, actual)
+}
+
+func TestJsonSortByType(t *testing.T) {
+	assert := assert.New(t)
+	settings := testutil.Settings().WithSections().With(&print.Settings{
+		SortByType: true,
+	}).Build()
+
+	expected, err := testutil.GetExpected("json", "json-SortByType")
+	assert.Nil(err)
+
+	options, err := module.NewOptions().With(&module.Options{
+		SortBy: &module.SortBy{
+			Type: true,
 		},
 	})
 	assert.Nil(err)
@@ -367,25 +394,55 @@ func TestJsonOutputValues(t *testing.T) {
 }
 
 func TestJsonHeaderFromFile(t *testing.T) {
-	assert := assert.New(t)
-	settings := testutil.Settings().WithSections().Build()
+	tests := []struct {
+		name   string
+		golden string
+		file   string
+	}{
+		{
+			name:   "load module header from .adoc",
+			golden: "json-HeaderFromADOCFile",
+			file:   "doc.adoc",
+		},
+		{
+			name:   "load module header from .md",
+			golden: "json-HeaderFromMDFile",
+			file:   "doc.md",
+		},
+		{
+			name:   "load module header from .tf",
+			golden: "json-HeaderFromTFFile",
+			file:   "doc.tf",
+		},
+		{
+			name:   "load module header from .txt",
+			golden: "json-HeaderFromTXTFile",
+			file:   "doc.txt",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			settings := testutil.Settings().WithSections().Build()
 
-	expected, err := testutil.GetExpected("json", "json-HeaderFromFile")
-	assert.Nil(err)
+			expected, err := testutil.GetExpected("json", tt.golden)
+			assert.Nil(err)
 
-	options, err := module.NewOptions().WithOverwrite(&module.Options{
-		HeaderFromFile: "doc.tf",
-	})
-	assert.Nil(err)
+			options, err := module.NewOptions().WithOverwrite(&module.Options{
+				HeaderFromFile: tt.file,
+			})
+			assert.Nil(err)
 
-	module, err := testutil.GetModule(options)
-	assert.Nil(err)
+			module, err := testutil.GetModule(options)
+			assert.Nil(err)
 
-	printer := NewJSON(settings)
-	actual, err := printer.Print(module, settings)
+			printer := NewJSON(settings)
+			actual, err := printer.Print(module, settings)
 
-	assert.Nil(err)
-	assert.Equal(expected, actual)
+			assert.Nil(err)
+			assert.Equal(expected, actual)
+		})
+	}
 }
 
 func TestJsonEmpty(t *testing.T) {

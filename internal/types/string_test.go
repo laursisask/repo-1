@@ -34,6 +34,46 @@ func TestString(t *testing.T) {
 	})
 }
 
+func TestStringLength(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    string
+		expected int
+	}{
+		{
+			name:     "string length",
+			value:    "foo",
+			expected: 3,
+		},
+		{
+			name:     "string length",
+			value:    "42",
+			expected: 2,
+		},
+		{
+			name:     "string length",
+			value:    "false",
+			expected: 5,
+		},
+		{
+			name:     "string length",
+			value:    "true",
+			expected: 4,
+		},
+		{
+			name:     "string length",
+			value:    "",
+			expected: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
+			assert.Equal(tt.expected, String(tt.value).Length())
+		})
+	}
+}
+
 func TestStringUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -84,6 +124,11 @@ func TestStringMarshalJSON(t *testing.T) {
 			name:     "string marshal JSON",
 			value:    "lorem ipsum\ndolor",
 			expected: "\"lorem ipsum\\ndolor\"",
+		},
+		{
+			name:     "string marshal a regex",
+			value:    "\\.<>[]{}_-",
+			expected: "\"\\\\.<>[]{}_-\"",
 		},
 		{
 			name:     "string marshal JSON",
@@ -151,12 +196,12 @@ func TestStringMarshalYAML(t *testing.T) {
 		{
 			name:     "string marshal YAML",
 			value:    "foo",
-			expected: String("foo"),
+			expected: "foo",
 		},
 		{
 			name:     "string marshal YAML",
 			value:    "lorem ipsum",
-			expected: String("lorem ipsum"),
+			expected: "lorem ipsum",
 		},
 		{
 			name:     "string marshal YAML",

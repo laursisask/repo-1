@@ -2,7 +2,7 @@ style: github
 template: CHANGELOG-full-history.tpl.md
 info:
   title: CHANGELOG
-  repository_url: https://github.com/segmentio/terraform-docs
+  repository_url: https://github.com/terraform-docs/terraform-docs
 options:
   commits:
     filters:
@@ -11,16 +11,21 @@ options:
         - enhance
         - feat
         - fix
-        - perf
         - refactor
   commit_groups:
+    sort_by: Custom
+    title_order:
+      - feat
+      - fix
+      - enhance
+      - refactor
+      - docs
     title_maps:
       docs: Documentation
       enhance: Enhancements
       feat: Features
       fix: Bug Fixes
-      perf: Performance Improvements
-      refactor: Code Refactoring
+      refactor: Refactoring
   header:
     pattern: "^(\\w*)?\\:\\s(.*)$"
     pattern_maps:

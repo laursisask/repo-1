@@ -8,10 +8,11 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/segmentio/terraform-docs/internal/types"
-	"github.com/segmentio/terraform-docs/pkg/print"
-	"github.com/segmentio/terraform-docs/pkg/tfconf"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/terraform-docs/terraform-docs/internal/types"
+	"github.com/terraform-docs/terraform-docs/pkg/print"
+	"github.com/terraform-docs/terraform-docs/pkg/tfconf"
 )
 
 func TestTemplateRender(t *testing.T) {
@@ -37,10 +38,10 @@ func TestTemplateRender(t *testing.T) {
 		{
 			name: "template render with custom functions",
 			items: []*Item{
-				&Item{
+				{
 					Name: "all",
 					Text: `{{- template "section" . -}}`,
-				}, &Item{
+				}, {
 					Name: "section",
 					Text: sectionTpl,
 				},
@@ -307,7 +308,7 @@ func TestBuiltinFunc(t *testing.T) {
 		{
 			name:       "template builtin functions indent",
 			funcName:   "indent",
-			funcArgs:   []string{`0`},
+			funcArgs:   []string{`0`, `"#"`},
 			escapeChar: true,
 			escapePipe: true,
 			expected:   "##",
@@ -315,7 +316,7 @@ func TestBuiltinFunc(t *testing.T) {
 		{
 			name:       "template builtin functions indent",
 			funcName:   "indent",
-			funcArgs:   []string{`1`},
+			funcArgs:   []string{`1`, `"#"`},
 			escapeChar: true,
 			escapePipe: true,
 			expected:   "###",
@@ -323,7 +324,7 @@ func TestBuiltinFunc(t *testing.T) {
 		{
 			name:       "template builtin functions indent",
 			funcName:   "indent",
-			funcArgs:   []string{`2`},
+			funcArgs:   []string{`2`, `"#"`},
 			escapeChar: true,
 			escapePipe: true,
 			expected:   "####",
@@ -331,7 +332,7 @@ func TestBuiltinFunc(t *testing.T) {
 		{
 			name:       "template builtin functions indent",
 			funcName:   "indent",
-			funcArgs:   []string{`3`},
+			funcArgs:   []string{`3`, `"#"`},
 			escapeChar: true,
 			escapePipe: true,
 			expected:   "#####",

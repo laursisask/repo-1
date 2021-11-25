@@ -1,11 +1,13 @@
 package format
 
 import (
+	"bytes"
 	"strings"
 
-	"github.com/segmentio/terraform-docs/pkg/print"
-	"github.com/segmentio/terraform-docs/pkg/tfconf"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
+
+	"github.com/terraform-docs/terraform-docs/pkg/print"
+	"github.com/terraform-docs/terraform-docs/pkg/tfconf"
 )
 
 // YAML represents YAML format.
@@ -42,10 +44,15 @@ func (y *YAML) Print(module *tfconf.Module, settings *print.Settings) (string, e
 		copy.Requirements = module.Requirements
 	}
 
-	out, err := yaml.Marshal(copy)
+	buffer := new(bytes.Buffer)
+
+	encoder := yaml.NewEncoder(buffer)
+	encoder.SetIndent(2)
+
+	err := encoder.Encode(copy)
 	if err != nil {
 		return "", err
 	}
 
-	return strings.TrimSuffix(string(out), "\n"), nil
+	return strings.TrimSuffix(buffer.String(), "\n"), nil
 }

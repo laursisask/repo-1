@@ -1,8 +1,7 @@
 # Project variables
 NAME        := terraform-docs
-VENDOR      := segmentio
-DESCRIPTION := Generate docs from Terraform modules
-MAINTAINER  := Martin Etmajer <metmajer@getcloudnative.io>
+VENDOR      := terraform-docs
+DESCRIPTION := generate documentation from Terraform modules in various output formats
 URL         := https://github.com/$(VENDOR)/$(NAME)
 LICENSE     := MIT
 
@@ -14,15 +13,11 @@ BUILD_DIR    := bin
 COMMIT_HASH  ?= $(shell git rev-parse --short HEAD 2>/dev/null)
 BUILD_DATE   ?= $(shell date +%FT%T%z)
 VERSION      ?= $(shell git describe --tags --exact-match 2>/dev/null || git describe --tags 2>/dev/null || echo "v0.0.0-$(COMMIT_HASH)")
-COVERAGE_OUT := coverage.txt
+COVERAGE_OUT := coverage.out
 
 # Go variables
-GOCMD       := GO111MODULE=on go
 GOOS        ?= $(shell go env GOOS)
 GOARCH      ?= $(shell go env GOARCH)
-GOFILES     ?= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
-GOPKGS      ?= $(shell $(GOCMD) list $(MODVENDOR) ./... | grep -v /vendor)
-MODVENDOR   := -mod=vendor
 
 GOLDFLAGS   :="
 GOLDFLAGS   += -X $(PACKAGE)/internal/version.version=$(VERSION)
@@ -30,11 +25,17 @@ GOLDFLAGS   += -X $(PACKAGE)/internal/version.commitHash=$(COMMIT_HASH)
 GOLDFLAGS   += -X $(PACKAGE)/internal/version.buildDate=$(BUILD_DATE)
 GOLDFLAGS   +="
 
-GOBUILD     ?= CGO_ENABLED=0 $(GOCMD) build $(MODVENDOR) -ldflags $(GOLDFLAGS)
-GORUN       ?= GOOS=$(GOOS) GOARCH=$(GOARCH) $(GOCMD) run $(MODVENDOR)
+GOBUILD     ?= CGO_ENABLED=0 go build -ldflags $(GOLDFLAGS)
+GORUN       ?= GOOS=$(GOOS) GOARCH=$(GOARCH) go run
+
+GOIMPORTS_LOCAL_ARG := -local github.com/terraform-docs/terraform-docs
+
+# Docker variables
+DEFAULT_TAG  ?= $(shell echo "$(VERSION)" | tr -d 'v')
+DOCKER_IMAGE := quay.io/$(VENDOR)/$(NAME)
+DOCKER_TAG   ?= $(DEFAULT_TAG)
 
 # Binary versions
-GITCHGLOG_VERSION := 0.9.1
 GOLANGCI_VERSION  := v1.23.7
 
 .PHONY: all
@@ -44,45 +45,44 @@ all: clean verify checkfmt lint test build
 ## Development targets ##
 #########################
 .PHONY: checkfmt
-checkfmt: RESULT = $(shell goimports -l $(GOFILES) | tee >(if [ "$$(wc -l)" = 0 ]; then echo "OK"; fi))
-checkfmt: SHELL := /usr/bin/env bash
 checkfmt: ## Check formatting of all go files
 	@ $(MAKE) --no-print-directory log-$@
-	@ echo "$(RESULT)"
-	@ if [ "$(RESULT)" != "OK" ]; then exit 1; fi
+	@ goimports -l $(GOIMPORTS_LOCAL_ARG) main.go cmd/ internal/ pkg/ scripts/docs/ && echo "OK"
 
 .PHONY: clean
 clean: ## Clean workspace
 	@ $(MAKE) --no-print-directory log-$@
 	rm -rf ./$(BUILD_DIR) ./$(COVERAGE_OUT)
 
-.PHONY: deps
-deps: vendor ## Install dependencies
-
 .PHONY: fmt
 fmt: ## Format all go files
 	@ $(MAKE) --no-print-directory log-$@
-	goimports -w $(GOFILES)
+	goimports -w $(GOIMPORTS_LOCAL_ARG) main.go cmd/ internal/ pkg/ scripts/docs/
 
 .PHONY: lint
 lint: ## Run linter
 	@ $(MAKE) --no-print-directory log-$@
-	GO111MODULE=on golangci-lint run ./...
+	golangci-lint run ./...
+
+.PHONY: staticcheck
+staticcheck: ## Run staticcheck
+	@ $(MAKE) --no-print-directory log-$@
+	go run honnef.co/go/tools/cmd/staticcheck -- ./...
 
 .PHONY: test
 test: ## Run tests
 	@ $(MAKE) --no-print-directory log-$@
-	$(GOCMD) test -race -coverprofile=$(COVERAGE_OUT) -covermode=atomic $(MODVENDOR) -v $(GOPKGS)
-
-.PHONY: vendor
-vendor: ## Install 'vendor' dependencies
-	@ $(MAKE) --no-print-directory log-$@
-	$(GOCMD) mod vendor
+	go test -coverprofile=$(COVERAGE_OUT) -covermode=atomic -v ./...
 
 .PHONY: verify
 verify: ## Verify 'vendor' dependencies
 	@ $(MAKE) --no-print-directory log-$@
-	$(GOCMD) mod verify
+	go mod verify
+
+# removed and gitignoreed 'vendor/', not needed anymore #
+.PHONY: vendor deps
+vendor:
+deps:
 
 ###################
 ## Build targets ##
@@ -98,6 +98,16 @@ build-all: GOARCH = amd64 arm
 build-all: clean ## Build binary for all OS/ARCH
 	@ $(MAKE) --no-print-directory log-$@
 	@ ./scripts/build/build-all-osarch.sh "$(BUILD_DIR)" "$(NAME)" "$(VERSION)" "$(GOOS)" "$(GOARCH)" $(GOLDFLAGS)
+
+.PHONY: docker
+docker: ## Build Docker image
+	@ $(MAKE) --no-print-directory log-$@
+	docker build --pull --tag $(DOCKER_IMAGE):$(DOCKER_TAG) --file Dockerfile .
+
+.PHONY: push
+push: ## Push Docker image
+	@ $(MAKE) --no-print-directory log-$@
+	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
 
 .PHONY: docs
 docs: ## Generate document of formatter commands
@@ -149,7 +159,7 @@ changelog: ## Generate Changelog
 .PHONY: git-chglog
 git-chglog:
 ifeq (, $(shell which git-chglog))
-	curl -sfL https://github.com/git-chglog/git-chglog/releases/download/$(GITCHGLOG_VERSION)/git-chglog_$(shell go env GOOS)_$(shell go env GOARCH) -o $(shell go env GOPATH)/bin/git-chglog && chmod +x $(shell go env GOPATH)/bin/git-chglog
+	GO111MODULE=off go get -u github.com/terraform-docs/git-chglog/cmd/git-chglog
 endif
 
 .PHONY: goimports

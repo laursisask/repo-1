@@ -6,9 +6,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/segmentio/terraform-docs/internal/types"
-	"github.com/segmentio/terraform-docs/pkg/print"
-	"github.com/segmentio/terraform-docs/pkg/tfconf"
+	"github.com/terraform-docs/terraform-docs/internal/types"
+	"github.com/terraform-docs/terraform-docs/pkg/print"
+	"github.com/terraform-docs/terraform-docs/pkg/tfconf"
 )
 
 // Item represents a named templated which can reference
@@ -142,9 +142,8 @@ func builtinFuncs(settings *print.Settings) template.FuncMap {
 			}
 			return s
 		},
-
-		"indent": func(l int) string {
-			return generateIndentation(l, settings)
+		"indent": func(l int, char string) string {
+			return generateIndentation(l, char, settings)
 		},
 		"name": func(n string) string {
 			return sanitizeName(n, settings)
@@ -161,6 +160,12 @@ func builtinFuncs(settings *print.Settings) template.FuncMap {
 		"sanitizeTbl": func(s string) string {
 			settings.EscapePipe = true
 			s = sanitizeItemForTable(s, settings)
+			settings.EscapePipe = false
+			return s
+		},
+		"sanitizeAsciidocTbl": func(s string) string {
+			settings.EscapePipe = true
+			s = sanitizeItemForAsciidocTable(s, settings)
 			settings.EscapePipe = false
 			return s
 		},

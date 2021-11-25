@@ -3,8 +3,9 @@ package tfconf
 import (
 	"testing"
 
-	"github.com/segmentio/terraform-docs/internal/types"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/terraform-docs/terraform-docs/internal/types"
 )
 
 func TestProviderNameWithoutAlias(t *testing.T) {

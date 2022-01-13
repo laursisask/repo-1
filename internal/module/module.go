@@ -192,11 +192,15 @@ func loadOutputs(tfmodule *tfconfig.Module, options *Options) ([]*tfconf.Output,
 			ShowValue: options.OutputValues,
 		}
 		if options.OutputValues {
-			output.Sensitive = values[output.Name].Sensitive
-			if values[output.Name].Sensitive {
-				output.Value = types.ValueOf(`<sensitive>`)
+			if value, ok := values[output.Name]; ok {
+				output.Sensitive = value.Sensitive
+				if value.Sensitive {
+					output.Value = types.ValueOf(`<sensitive>`)
+				} else {
+					output.Value = types.ValueOf(value.Value)
+				}
 			} else {
-				output.Value = types.ValueOf(values[output.Name].Value)
+				return nil, fmt.Errorf("value from output %s is undefined (this can happen when you have an output that is evaluated to null by Terraform)", output.Name)
 			}
 		}
 		outputs = append(outputs, output)

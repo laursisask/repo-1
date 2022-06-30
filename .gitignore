@@ -1,3 +1,6 @@
+# output of `go build`
+contrast-go-installer
+
 # Binaries for programs and plugins
 *~
 *.tmp

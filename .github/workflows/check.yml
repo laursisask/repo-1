@@ -1,0 +1,35 @@
+name: check
+
+on:
+  schedule:
+    # 7AM EST (11AM UTC) Mon-Fri
+    - cron: "0 11 * * 1-5"
+  pull_request:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest]
+        version: [1.17, 1.18]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: check out repository code
+        uses: actions/checkout@v3
+
+      - name: set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.version }}
+          cache: true
+
+      - name: build
+        run: go build ./...
+
+      - name: run tests and benchmarks
+        run: go test -race -bench=. -benchtime=1x ./...

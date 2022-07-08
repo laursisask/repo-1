@@ -8,13 +8,12 @@ import (
 )
 
 const (
-	baseURL      = "https://pkg.contrastsecurity.com/go-agent-release"
 	artifactPath = "/%s/%s-%s/contrast-go"
 )
 
 // Install attempts to download a release of contrast-go matching version, os,
 // and arch into path and chmod it to an executable.
-func Install(version, os, arch, path string) error {
+func Install(baseURL, version, os, arch, path string) error {
 	return install(baseURL, version, os, arch, path)
 }
 

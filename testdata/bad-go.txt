@@ -1,0 +1,9 @@
+# we want LookPath to find the dummy file below when looking for go
+chmod 777 $WORK/go
+env PATH=$WORK:$PATH
+
+! contrast-go-installer -u :8080 latest
+stderr 'unable to run ''go env'''
+
+-- go --
+bad file

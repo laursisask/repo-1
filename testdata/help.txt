@@ -1,0 +1,23 @@
+contrast-go-installer -h
+! stdout . 
+stderr ^'usage:'
+stderr 'contrast-go-installer is a utility for downloading and installing contrast-go'
+stderr 'Examples:'
+
+contrast-go-installer --help
+! stdout . 
+stderr ^'usage:'
+stderr 'contrast-go-installer is a utility for downloading and installing contrast-go'
+stderr 'Examples:'
+
+! contrast-go-installer
+! stdout . 
+stderr ^'usage:'
+stderr 'contrast-go-installer is a utility for downloading and installing contrast-go'
+stderr 'Examples:'
+
+! contrast-go-installer -badflag
+! stdout . 
+stderr 'flag provided but not defined: -badflag'
+stderr ^'usage:'
+stderr 'contrast-go-installer is a utility for downloading and installing contrast-go'

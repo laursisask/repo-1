@@ -1,0 +1,6 @@
+# negating run-test-server tells it to return 404s
+! run-test-server
+
+! contrast-go-installer -u $baseURL latest
+stderr 'no ''latest'' release found'
+! exists $GOBIN/contrast-go

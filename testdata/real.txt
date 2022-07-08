@@ -1,0 +1,17 @@
+[!real] skip 'tests with real hostname are disabled'
+[!net] skip
+[short] skip
+
+contrast-go-installer latest
+! stdout .
+
+exec $GOBIN/contrast-go -h
+stderr 'Usage: contrast-go'
+
+contrast-go-installer 2.8.0
+exec $GOBIN/contrast-go -version
+stdout '2.8.0'
+
+env GOOS=windows
+! contrast-go-installer latest
+stderr ^'no ''latest'' release found for windows/'$GOARCH

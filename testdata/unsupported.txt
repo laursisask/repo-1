@@ -2,5 +2,5 @@
 ! run-test-server
 
 ! contrast-go-installer -u $baseURL latest
-stderr 'no ''latest'' release found'
+stderr 'Version "latest" does not exist. For a full list of versions, see'
 ! exists $GOBIN/contrast-go

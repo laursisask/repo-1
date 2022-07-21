@@ -10,28 +10,28 @@ import (
 	"testing"
 )
 
-func Test_install(t *testing.T) {
+const dlsite = "https://pkg.contrastsecurity.com/go-agent-release"
+
+func Test_download(t *testing.T) {
 	var tests = map[string]struct {
 		handler http.Handler
+
 		// if non-nil, is called to configure the server
 		server func(*httptest.Server) *httptest.Server
-		// if the handler lets the file download, save it to this path in a tmp
-		// dir; defaults to "contrast-go"
-		dst string
 
 		// if non-empty, expect an error containing the string
 		expectErr string
 	}{
 		"simple": {
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("some data"))
+				_, _ = w.Write([]byte("some data"))
 			}),
 		},
 		"404": {
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(404)
 			}),
-			expectErr: "no 'v' release found for os/arch",
+			expectErr: `Version "v" does not exist. For a full list of versions, see`,
 		},
 		"500": {
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -39,24 +39,17 @@ func Test_install(t *testing.T) {
 			}),
 			expectErr: "server did not return 200",
 		},
-		"EOF from content-length mistach": {
+		"EOF from content-length mismatch": {
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Length", "1000")
 				w.WriteHeader(200)
-				w.Write([]byte("not 1000 bytes"))
+				_, _ = w.Write([]byte("not 1000 bytes"))
 			}),
 			expectErr: "couldn't download file",
 		},
-		"unwriteable dir": {
-			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("some data"))
-			}),
-			dst:       filepath.Join("dir", "contrast-go"),
-			expectErr: "rename",
-		},
 		"bad connection": {
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("some data"))
+				_, _ = w.Write([]byte("some data"))
 			}),
 			server: func(s *httptest.Server) *httptest.Server {
 				s.Close()
@@ -66,7 +59,7 @@ func Test_install(t *testing.T) {
 		},
 		"untrusted cert": {
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("some data"))
+				_, _ = w.Write([]byte("some data"))
 			}),
 			server: func(s *httptest.Server) *httptest.Server {
 				return httptest.NewTLSServer(s.Config.Handler)
@@ -79,7 +72,7 @@ func Test_install(t *testing.T) {
 					http.Redirect(w, r, "/redirect", http.StatusMovedPermanently)
 					return
 				}
-				w.Write([]byte("some data"))
+				_, _ = w.Write([]byte("some data"))
 			}),
 		},
 		"follows redirect to error": {
@@ -90,16 +83,26 @@ func Test_install(t *testing.T) {
 				}
 				w.WriteHeader(404)
 			}),
-			expectErr: "no 'v' release found for os/arch",
+			expectErr: `Version "v" does not exist. For a full list of versions, see`,
 		},
 		"url is correctly formatted": {
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.RequestURI == "/v/os-arch/contrast-go" {
-					w.Write([]byte("ok"))
+					_, _ = w.Write([]byte("ok"))
 					return
 				}
 				w.WriteHeader(404)
 			}),
+		},
+		"lists available versions when given version is not available": {
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if strings.Contains(r.RequestURI, "/v") {
+					w.WriteHeader(404)
+					return
+				}
+				_, _ = w.Write([]byte(`<html><body><a href="0.1.2/">0.1.2</a><a href="1.2.3/">1.2.3</a><a href="latest/">latest</a></body></html>`))
+			}),
+			expectErr: "\"v\" does not exist. Available versions include\n\tlatest, 1.2.3, 0.1.2",
 		},
 	}
 
@@ -110,13 +113,14 @@ func Test_install(t *testing.T) {
 				s = test.server(s)
 			}
 			t.Cleanup(s.Close)
-
-			if test.dst == "" {
-				test.dst = "contrast-go"
+			id := installData{
+				baseURL: s.URL,
+				version: "v",
+				os:      "os",
+				arch:    "arch",
+				tmpdir:  t.TempDir(),
 			}
-			dst := filepath.Join(t.TempDir(), test.dst)
-
-			err := install(s.URL, "v", "os", "arch", dst)
+			_, err := id.download()
 			switch {
 			case (test.expectErr == "") != (err == nil):
 				t.Fatalf("unexpected err: %v", err)
@@ -129,8 +133,60 @@ func Test_install(t *testing.T) {
 					)
 				}
 			}
+		})
+	}
+}
 
-			fi, err := os.Stat(dst)
+func Test_install(t *testing.T) {
+	var tests = map[string]struct {
+		tmpPresent bool
+
+		// if the handler lets the file download, save it to this path in a tmp
+		// dir; defaults to "contrast-go"
+		dst string
+
+		expectErr string
+	}{
+		"basic": {
+			tmpPresent: true,
+		},
+		"missing": {
+			tmpPresent: false,
+			expectErr:  "no such file",
+		},
+		"unwriteable dir": {
+			dst:       filepath.Join("dir", "contrast-go"),
+			expectErr: "rename",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			tmp := t.TempDir() + "/tmpfile"
+			id := installData{
+				dst: test.dst,
+			}
+			if len(id.dst) == 0 {
+				id.dst = t.TempDir() + "/contrast-go"
+			}
+			if test.tmpPresent {
+				if err := os.WriteFile(tmp, []byte(t.Name()), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			err := id.install(tmp)
+			switch {
+			case (test.expectErr == "") != (err == nil):
+				t.Fatalf("unexpected err: %v", err)
+
+			case test.expectErr != "":
+				if !strings.Contains(err.Error(), test.expectErr) {
+					t.Fatalf(
+						"error did not contain expected string %q:\n%v",
+						test.expectErr, err,
+					)
+				}
+			}
+			fi, err := os.Stat(id.dst)
 			if test.expectErr != "" {
 				if !errors.Is(err, os.ErrNotExist) {
 					t.Fatalf("expected file to not exist")

@@ -19,6 +19,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 const (
@@ -27,7 +28,14 @@ const (
 	agentArchivePg = `For a full list of versions, see
 	https://docs.contrastsecurity.com/en/go-agent-release-notes-and-archive.html`
 
-	badver = `Version %q does not exist. ` + agentArchivePg
+	badver            = `Version %q does not exist. ` + agentArchivePg
+	sysRequirementsPg = `For system requirements, see
+	https://docs.contrastsecurity.com/en/go-system-requirements.html`
+
+	agentInstallPg = "https://docs.contrastsecurity.com/en/install-go.html"
+	unknownError   = `Sorry, something strange happened. Please try again later or
+install manually. For the latter, see the instructions at
+` + agentInstallPg
 )
 
 // Install attempts to download a release of contrast-go matching version, os,
@@ -124,7 +132,7 @@ func (id installData) dlNotFoundError(res *http.Response) error {
 	if err != nil {
 		return fmt.Errorf(badver, id.version)
 	}
-	res2.Body.Close()
+	defer res2.Body.Close()
 	if res2.StatusCode != http.StatusOK {
 		// invalid version; tell user what versions are valid
 		res2, err = http.Get(id.baseURL)
@@ -146,8 +154,41 @@ func (id installData) dlNotFoundError(res *http.Response) error {
 		}
 	}
 
-	// TODO(GO-1423): is os/arch wrong? print a nice message if so
-	// hint: use htmlDir() to get the supported os/arch's
+	avail, err := listPlatforms(res2.Body)
+	if err != nil || len(avail) < 2 {
+		return fmt.Errorf(unknownError)
+	}
+	// os and/or arch is invalid
+	return &errBadPlat{
+		available: avail,
+		arch:      id.arch,
+		os:        id.os,
+	}
+}
 
-	return fmt.Errorf(badver, id.version)
+// reads html from body, returning extracted platforms
+func listPlatforms(body io.Reader) ([]string, error) {
+	var plats []string
+	subdirs, err := htmlDir(body)
+	if err != nil {
+		return nil, err
+	}
+	for _, sub := range subdirs {
+		if !strings.Contains(sub, "-") {
+			// all platforms contain a dash: os-arch. throw away anything else.
+			continue
+		}
+		plats = append(plats, sub)
+	}
+	return plats, nil
+}
+
+type errBadPlat struct {
+	available []string
+	arch, os  string
+}
+
+func (err *errBadPlat) Error() string {
+	return fmt.Sprintf("contrast-go is not available for platform \"%s-%s\". Available platforms:\n\t%s\n%s",
+		err.os, err.arch, strings.Join(err.available, ", "), sysRequirementsPg)
 }

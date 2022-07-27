@@ -113,7 +113,7 @@ func (err *errBadVersion) Error() string {
 		err.badVersion, err.availableVersions.String(), agentArchivePg)
 }
 
-// reads html from body, returning extracted dir links
+// reads html from body, returning extracted versions
 func listVersions(body io.Reader) (versions, error) {
 	var vers versions
 	subdirs, err := htmlDir(body)
@@ -126,6 +126,7 @@ func listVersions(body io.Reader) (versions, error) {
 	return vers, nil
 }
 
+// reads html from body, returning extracted dir links
 func htmlDir(body io.Reader) ([]string, error) {
 	var subdirs []string
 	z := html.NewTokenizer(body)
@@ -137,7 +138,7 @@ func htmlDir(body io.Reader) ([]string, error) {
 				//reached end of input
 				return subdirs, nil
 			}
-			return nil, fmt.Errorf("Version specified does not exist. %s", agentArchivePg)
+			return nil, fmt.Errorf("Dir specified does not exist. %s", agentArchivePg)
 		case html.StartTagToken:
 			if tok := z.Token(); tok.DataAtom == atom.A {
 				for _, a := range tok.Attr {

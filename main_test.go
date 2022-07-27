@@ -57,25 +57,84 @@ func TestScripts(t *testing.T) {
 	})
 }
 
+const (
+	versdir = `<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><body><h1>Index of go-agent-release/</h1>
+<pre>Name    Last modified      Size</pre><hr/>
+<pre><a href="1.2.3/">1.2.3/</a>  26-Feb-2021 22:24    -
+<a href="3.0.0/">3.0.0/</a>   07-Jul-2022 15:47    -
+<a href="latest/">latest/</a>  22-Feb-2021 15:28    -
+</pre><hr/><address style="font-size:small;">Online Server</address></body></html>`
+
+	archdir = `<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><body><h1>Index of go-agent-release/3.0.0</h1>
+<pre>Name              Last modified      Size</pre><hr/>
+<pre><a href="../">../</a>
+<a href="darwin-amd64/">darwin-amd64/</a>      07-Jul-2022 15:47    -
+<a href="linux-amd64/">linux-amd64/</a>       07-Jul-2022 15:47    -
+<a href="dependencies.csv">dependencies.csv</a>   07-Jul-2022 15:47  1.25 KB
+</pre><hr/><address style="font-size:small;">Online Server</address></body></html>`
+)
+
+var (
+	allowedOses   = []string{"linux", "darwin"}
+	allowedArches = []string{"amd64"}
+)
+
+func allowed(list []string, val string) bool {
+	for _, elem := range list {
+		if val == elem {
+			return true
+		}
+	}
+	return false
+}
+
 // startServer starts a test server to handle downloads and puts the server's
 // address in the $baseURL environment variable.
 func startServer(ts *testscript.TestScript, neg bool, args []string) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if neg {
+			w.WriteHeader(404)
+			return
+		}
 		paths := strings.Split(r.RequestURI[1:], "/")
 		switch len(paths) {
 		case 0:
-			w.WriteHeader(500)
-		case 1, 2:
-			// TODO(GO-1423): we may want these responses to emulate
-			// artifactory's behavior and return a list of directory entries,
-			// perhaps based on args
-			w.WriteHeader(404)
+			_, _ = w.Write([]byte(versdir))
+		case 1:
+			switch paths[0] {
+			case "latest":
+				http.Redirect(w, r, "../3.0.0", http.StatusSeeOther)
+				return
+			case "3.0.0":
+				_, _ = w.Write([]byte(archdir))
+			default:
+				w.WriteHeader(404)
+			}
+			//case 2:
+			// this would be the dir containing contrast-go, but we don't read it. handled by default case.
 		case 3:
-			if paths[2] == "contrast-go" && !neg {
-				w.Write([]byte(r.RequestURI))
+			osArch := strings.Split(paths[1], "-")
+			if len(osArch) != 2 {
+				w.WriteHeader(404)
+				return
+			}
+			if !allowed(allowedArches, osArch[1]) {
+				w.WriteHeader(404)
+				return
+			}
+			if !allowed(allowedOses, osArch[0]) {
+				w.WriteHeader(404)
+				return
+			}
+			if paths[2] == "contrast-go" {
+				_, _ = w.Write([]byte(r.RequestURI))
 			} else {
 				w.WriteHeader(404)
 			}
+		default:
+			ts.Fatalf("unexpected request for %s\n", r.RequestURI)
 		}
 	}))
 	ts.Defer(s.Close)

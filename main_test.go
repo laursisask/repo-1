@@ -15,10 +15,12 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -32,6 +34,19 @@ func TestMain(m *testing.M) {
 	}))
 }
 
+// replacePath replaces the old location with the new location in $PATH
+func replacePath(path, old, new string) string {
+	newpath := []string{}
+	for _, filepath := range strings.Split(path, ":") {
+		if filepath == old {
+			newpath = append(newpath, new)
+		} else {
+			newpath = append(newpath, filepath)
+		}
+	}
+	return strings.Join(newpath, ":")
+}
+
 func TestScripts(t *testing.T) {
 	testscript.Run(t, testscript.Params{
 		Dir: "testdata",
@@ -40,7 +55,31 @@ func TestScripts(t *testing.T) {
 			if err := os.Mkdir(filepath.Join(env.WorkDir, "bin"), 0700); err != nil {
 				env.T().Fatal(err)
 			}
+
+			// go env GOBIN
+			installedGo, err := exec.LookPath("go")
+			if err != nil {
+				env.T().Fatal(err)
+			}
+			cmd := exec.Command(installedGo, "env", "GOBIN")
+			var stdout bytes.Buffer
+			cmd.Stdout = &stdout
+			if err := cmd.Run(); err != nil {
+				env.T().Fatal(err)
+			}
+			out := strings.Fields(stdout.String())
+			if len(out) > 0 {
+				// Remove previous GOBIN from $PATH, and add the new GOBIN
+				// to avoid shadowing contrast-go if it is already installed
+				// on your machine
+				env.Setenv("PATH", replacePath(env.Getenv("PATH"), out[0], bin))
+			} else {
+				// If GOBIN unset, no need to replace it in PATH
+				env.Setenv("PATH", env.Getenv("PATH") + ":" + bin)
+			}
+
 			env.Setenv("GOBIN", bin)
+
 			return nil
 		},
 		Cmds: map[string]func(*testscript.TestScript, bool, []string){

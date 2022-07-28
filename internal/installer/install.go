@@ -19,6 +19,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -52,7 +53,7 @@ func Install(baseURL, version, os, arch, path string) error {
 	if err != nil {
 		return err
 	}
-	return id.install(tmp)
+	return id.install(tmp, nil)
 }
 
 type installData struct {
@@ -112,13 +113,36 @@ func (id *installData) download() (string, error) {
 }
 
 // move from temp location to final
-func (id installData) install(tmpFile string) error {
+func (id installData) install(tmpFile string, lookupFunc func() (string, error)) error {
+	if lookupFunc == nil {
+		// pass in custom lookup function for testing
+		lookupFunc = func() (string, error) {
+			return exec.LookPath("contrast-go")
+		}
+	}
 	if err := os.Rename(tmpFile, id.dst); err != nil {
 		return err
 	}
 
 	if err := os.Chmod(id.dst, 0755); err != nil {
 		return fmt.Errorf("permission issue: %w", err)
+	}
+
+	path, err := lookupFunc()
+	if err != nil {
+		return fmt.Errorf(
+			`contrast-go was installed at %s, but this location was not found in $PATH.
+Make sure that the $PATH environment variable includes %s`,
+			id.dst,
+			id.dst,
+		)
+	}
+	if path != id.dst {
+		return fmt.Errorf(
+			"contrast-go installed at %s, but shadowed in path by %s",
+			id.dst,
+			path,
+		)
 	}
 
 	return nil

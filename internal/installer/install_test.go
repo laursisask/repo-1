@@ -16,6 +16,7 @@ package installer
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -160,17 +161,39 @@ func Test_install(t *testing.T) {
 		dst string
 
 		expectErr string
+
+		expectNotExist bool
+
+		lookupFunc func() (string, error)
 	}{
 		"basic": {
 			tmpPresent: true,
 		},
 		"missing": {
-			tmpPresent: false,
-			expectErr:  "no such file",
+			tmpPresent:     false,
+			expectErr:      "no such file",
+			expectNotExist: true,
 		},
 		"unwriteable dir": {
-			dst:       filepath.Join("dir", "contrast-go"),
-			expectErr: "rename",
+			dst:            filepath.Join("dir", "contrast-go"),
+			expectErr:      "rename",
+			expectNotExist: true,
+		},
+		"inaccessible": {
+			tmpPresent:     true,
+			expectErr:      "not found in $PATH",
+			expectNotExist: false,
+			lookupFunc: func() (string, error) {
+				return "", fmt.Errorf("not found in path")
+			},
+		},
+		"shadowed": {
+			tmpPresent:     true,
+			expectErr:      "shadowed in path",
+			expectNotExist: false,
+			lookupFunc: func() (string, error) {
+				return "/made/up/directory", nil
+			},
 		},
 	}
 	for name, test := range tests {
@@ -187,7 +210,12 @@ func Test_install(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			err := id.install(tmp)
+			if test.lookupFunc == nil {
+				test.lookupFunc = func() (string, error) {
+					return id.dst, nil
+				}
+			}
+			err := id.install(tmp, test.lookupFunc)
 			switch {
 			case (test.expectErr == "") != (err == nil):
 				t.Fatalf("unexpected err: %v", err)
@@ -201,7 +229,7 @@ func Test_install(t *testing.T) {
 				}
 			}
 			fi, err := os.Stat(id.dst)
-			if test.expectErr != "" {
+			if test.expectNotExist {
 				if !errors.Is(err, os.ErrNotExist) {
 					t.Fatalf("expected file to not exist")
 				}

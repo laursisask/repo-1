@@ -2,6 +2,7 @@ run-test-server
 
 env GOBIN=
 env GOPATH=$WORK/gopath
+env PATH=$GOPATH/bin:$PATH
 mkdir $GOPATH/bin
 
 contrast-go-installer -u $baseURL latest
@@ -15,7 +16,6 @@ env GOPATH=
 stderr 'no such file or directory'
 
 env GOBIN=
-env GOPATH=
 env GOPATH=$WORK/gopath
 # this will make GOPATH invalid and cause 'go env GOPATH' to fail
 cp go.mod gopath/go.mod

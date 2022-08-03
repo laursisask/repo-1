@@ -75,7 +75,7 @@ func TestScripts(t *testing.T) {
 				env.Setenv("PATH", replacePath(env.Getenv("PATH"), out[0], bin))
 			} else {
 				// If GOBIN unset, no need to replace it in PATH
-				env.Setenv("PATH", env.Getenv("PATH") + ":" + bin)
+				env.Setenv("PATH", env.Getenv("PATH")+":"+bin)
 			}
 
 			env.Setenv("GOBIN", bin)

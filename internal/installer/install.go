@@ -75,7 +75,7 @@ func (id *installData) download() (string, error) {
 	}
 	defer tmp.Close()
 
-	res, err := http.Get(url)
+	res, err := makeRequest(url)
 	if err != nil {
 		return "", fmt.Errorf("unexpected connection issue: %w", err)
 	}
@@ -148,18 +148,28 @@ Make sure that the $PATH environment variable includes %s`,
 	return nil
 }
 
+func makeRequest(url string) (*http.Response, error) {
+	client := http.DefaultClient
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "contrast-go-installer/0")
+	return client.Do(req)
+}
+
 // determine what went wrong and return a nice error for the user
 func (id installData) dlNotFoundError(res *http.Response) error {
 	// first, check the version
 	url := fmt.Sprintf("%s/%s", id.baseURL, id.version)
-	res2, err := http.Get(url)
+	res2, err := makeRequest(url)
 	if err != nil {
 		return fmt.Errorf(badver, id.version)
 	}
 	defer res2.Body.Close()
 	if res2.StatusCode != http.StatusOK {
 		// invalid version; tell user what versions are valid
-		res2, err = http.Get(id.baseURL)
+		res2, err = makeRequest(id.baseURL)
 		if err != nil {
 			return fmt.Errorf(badver, id.version)
 		}

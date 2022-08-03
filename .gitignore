@@ -12,6 +12,7 @@ contrast-go-installer
 
 # editor settings
 .vscode
+.idea
 
 # Test binary, built with `go test -c`
 *.test

@@ -27,6 +27,24 @@ import (
 
 const dlsite = "https://pkg.contrastsecurity.com/go-agent-release"
 
+func Test_userAgent(t *testing.T) {
+	t.Run("test user agent", func(t *testing.T) {
+		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte("some data"))
+		}))
+		t.Cleanup(s.Close)
+		response, err := makeRequest(s.URL)
+
+		if err != nil {
+			t.Fatalf("unexpected err: %v", err)
+		}
+
+		if !strings.Contains(response.Request.Header.Get("User-agent"), "contrast-go-installer") {
+			t.Fatalf("expected constrast-go-install in user-agent header, got: %v", response.Request.Header.Get("User-agent"))
+		}
+	})
+}
+
 func Test_download(t *testing.T) {
 	var tests = map[string]struct {
 		handler http.Handler

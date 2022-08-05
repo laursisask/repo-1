@@ -319,6 +319,7 @@ func TestAccSyntheticsCanary_run(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", rName),
 					resource.TestCheckResourceAttr(resourceName, "run_config.0.memory_in_mb", "1000"),
 					resource.TestCheckResourceAttr(resourceName, "run_config.0.timeout_in_seconds", "60"),
+					resource.TestCheckResourceAttr(resourceName, "run_config.0.environment_variables.foo", "bar"),
 				),
 			},
 			{
@@ -751,6 +752,9 @@ resource "aws_synthetics_canary" "test" {
 
   run_config {
     timeout_in_seconds = 60
+    environment_variables = {
+      foo = "bar"
+    }
   }
 }
 `, rName))

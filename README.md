@@ -1,24 +1,43 @@
-This tool is a work in progress and the contents of this README are expected to
-change.
+# contrast-go-installer
+A tool to install Contrast Security's [contrast-go](https://docs.contrastsecurity.com/en/go.html),
+which instruments web apps for library usage and vulnerability reporting (IAST).
 
-# Temporary Requirements
+`contrast-go-installer` chooses the correct binary for your OS and architecture,
+and downloads the latest version - or a specific version, if desired.
 
-These requirements will go away when we release the tool. For now, they are
-intended to let us develop this privately.
+Click for a [demo of contrast-go](http://www.youtube.com/watch?v=ffBWozHhASw)
 
-1. Your `GOPRIVATE` environment variable must include
-   `github.com/Contrast-Security-Inc/*`. To check if if does, run `go env
-   GOPRIVATE`. To add it: `go env -w GOPRIVATE="$(go env
-   GOPRIVATE),github.com/Contrast-Security-Inc/*"` 
-2. Run `git config --add --global
-   url."git@github.com:Contrast-Security-Inc/".insteadOf
-   https://github.com/Contrast-Security-Inc/`. This will allow you to fetch
-   private module over ssh.
-
-# Usage
-
-`go run github.com/contrast-security-inc/contrast-go-installer@latest`
 
 # System Requirements
+> **Note**
+> We are including `contrast-go` requirements, not just `contrast-go-installer`,
+because you likely want to use it on the same machine you downloaded on.
+* Go, which can be downloaded from https://go.dev/dl/.
+  * `contrast-go-installer` requires go1.17 or later.
+  * `contrast-go` requires one of the two latest Go releases, following the [Go release policy](https://go.dev/doc/devel/release#policy). For more information, please see the [release notes](https://docs.contrastsecurity.com/en/go-agent-release-notes-and-archive.html).
 
-* [go](https://go.dev/dl/)
+* `contrast-go` also has [OS and architecture requirements](https://docs.contrastsecurity.com/en/go-system-requirements.html).
+
+# Usage
+Once you have `go` installed, just run one of the following commands.
+<!-- TODO verify oss url -->
+Download latest `contrast-go` version: 
+```sh
+$ go run github.com/contrastsecurity/contrast-go-installer@latest latest
+```
+or download a specific `contrast-go` version: 
+```sh
+$ go run github.com/contrastsecurity/contrast-go-installer@latest 3.1.0
+```
+
+The install location will be `$GOBIN` if set, otherwise `$GOPATH/bin`. If this
+directory is not in `$PATH`, `contrast-go-installer` will warn you.
+
+To change the install location, override $GOBIN for the above command:
+```sh
+$GOBIN=/path/to/dir go run github.com/contrastsecurity/contrast-go-installer@latest 3.1.0
+```
+<!-- NOTE: blank lines are *required* around markdown blocks inside <details>, or it won't render as markdown -->
+
+# Additional Help
+We want the installation experience to be painless. If you experience issues, please contact us via our [support portal](https://support.contrastsecurity.com/hc/en-us)

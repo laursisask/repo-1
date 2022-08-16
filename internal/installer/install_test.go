@@ -88,7 +88,7 @@ func Test_download(t *testing.T) {
 				s.Close()
 				return s
 			},
-			expectErr: "unexpected connection issue",
+			expectErr: "there is a network communication issue",
 		},
 		"untrusted cert": {
 			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

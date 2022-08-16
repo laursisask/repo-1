@@ -15,8 +15,10 @@
 package installer
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -77,7 +79,7 @@ func (id *installData) download() (string, error) {
 
 	res, err := makeRequest(url)
 	if err != nil {
-		return "", fmt.Errorf("unexpected connection issue: %w", err)
+		return "", err
 	}
 	defer res.Body.Close()
 
@@ -155,7 +157,13 @@ func makeRequest(url string) (*http.Response, error) {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", "contrast-go-installer/0")
-	return client.Do(req)
+	response, responseErr := client.Do(req)
+
+	if netErr := new(net.OpError); errors.As(responseErr, &netErr) {
+		return response, fmt.Errorf("there is a network communication issue: %s", responseErr)
+	}
+
+	return response, responseErr
 }
 
 // determine what went wrong and return a nice error for the user

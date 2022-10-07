@@ -1,4 +1,4 @@
-module github.com/contrast-security-inc/contrast-go-installer
+module github.com/contrast-security-oss/contrast-go-installer
 
 go 1.17
 

@@ -25,7 +25,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/contrast-security-inc/contrast-go-installer/internal/installer"
+	"github.com/contrast-security-oss/contrast-go-installer/internal/installer"
 )
 
 const usageString = `usage: %[1]s <version>

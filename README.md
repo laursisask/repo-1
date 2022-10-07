@@ -23,22 +23,21 @@ requirements](https://docs.contrastsecurity.com/en/go-system-requirements.html).
 
 ## Usage
 
-<!-- TODO verify oss url -->
 To install the latest `contrast-go` version: 
 ```sh
-go run github.com/contrastsecurity/contrast-go-installer@latest latest
+go run github.com/contrast-security-oss/contrast-go-installer@latest latest
 ```
 
 To install a specific `contrast-go` version: 
 ```sh
-go run github.com/contrastsecurity/contrast-go-installer@latest 3.1.0
+go run github.com/contrast-security-oss/contrast-go-installer@latest 3.1.0
 ```
 
 The install location will be `$GOBIN` if set, otherwise `$GOPATH/bin`. To change
 the install location, override `$GOBIN` when running the command:
 
 ```sh
-GOBIN=/path/to/dir go run github.com/contrastsecurity/contrast-go-installer@latest 3.1.0
+GOBIN=/path/to/dir go run github.com/contrast-security-oss/contrast-go-installer@latest 3.1.0
 ```
 <!-- NOTE: blank lines are *required* around markdown blocks inside <details>, or it won't render as markdown -->
 

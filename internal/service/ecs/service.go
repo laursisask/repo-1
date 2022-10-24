@@ -456,6 +456,10 @@ func resourceServiceCreate(d *schema.ResourceData, meta interface{}) error {
 		EnableExecuteCommand: aws.Bool(d.Get("enable_execute_command").(bool)),
 	}
 
+	if v, ok := d.GetOk("task_definition"); ok {
+		input.TaskDefinition = aws.String(v.(string))
+	}
+
 	if schedulingStrategy == ecs.SchedulingStrategyDaemon && deploymentMinimumHealthyPercent != 100 {
 		input.DeploymentConfiguration = &ecs.DeploymentConfiguration{
 			MinimumHealthyPercent: aws.Int64(int64(deploymentMinimumHealthyPercent)),

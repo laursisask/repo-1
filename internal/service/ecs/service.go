@@ -451,7 +451,6 @@ func resourceServiceCreate(d *schema.ResourceData, meta interface{}) error {
 		SchedulingStrategy:   aws.String(schedulingStrategy),
 		ServiceName:          aws.String(d.Get("name").(string)),
 		Tags:                 Tags(tags.IgnoreAWS()),
-		TaskDefinition:       aws.String(d.Get("task_definition").(string)),
 		EnableECSManagedTags: aws.Bool(d.Get("enable_ecs_managed_tags").(bool)),
 		EnableExecuteCommand: aws.Bool(d.Get("enable_execute_command").(bool)),
 	}

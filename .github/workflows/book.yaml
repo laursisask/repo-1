@@ -23,6 +23,7 @@ jobs:
         source ~/.bashrc
         sudo gem install jekyll bundler jekyll-contentful-data-import
         cd scripts
+        chmod +x create-epub.sh
         ./create-epub.sh
 
     - name: Validate HTML

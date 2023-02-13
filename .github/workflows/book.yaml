@@ -16,13 +16,14 @@ jobs:
       env:
         VERSION: 0.1.${{ github.run_number }}
       run: |-
-        sudo apt-get install -y ruby-full build-essential zlib1g-dev python2
+        sudo apt-get install -y ruby-full build-essential zlib1g-dev python2 dos2unix
         echo '# Install Ruby Gems to ~/gems' >> ~/.bashrc
         echo 'export GEM_HOME="$HOME/gems"' >> ~/.bashrc
         echo 'export PATH="$HOME/gems/bin:$PATH"' >> ~/.bashrc
         source ~/.bashrc
         sudo gem install jekyll bundler jekyll-contentful-data-import
         cd scripts
+        dos2unix create-epub.sh
         chmod +x create-epub.sh
         ./create-epub.sh
 

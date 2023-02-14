@@ -1,0 +1,10 @@
+<h1><a id="apigateway">Deploying the API Gateway</a></h1>
+<p>
+    The work done to this point created the global Octopus resources required to support a deployment of applications and infrastructure to AWS. With this done we are now able to deploy the API Gateway instance that exposes our Lambda microservices.
+</p>
+<p>
+    The API Gateway provides a shared entry point for web clients interacting with the microservices that make up the Octopub sample application. Because it is a shared resources, it is deployed as a separate project in its own CloudFormation stack. We'll make use of CloudFormation output variables to allow subsequent AWS resources to attach themselves to the API Gateway.
+</p>
+<p>
+    
+</p>

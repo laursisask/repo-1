@@ -1,0 +1,19 @@
+<h1><a id="libraryvariablesets">Configuring shared variables</a></h1>
+<p>
+    Library variable sets provide a way to share variables across many projects. This allows projects to access a common set of variables capturing cross cutting details such as accounts, AWS regions, and names of CloudFormation stacks that multiple projects query for outputs.
+</p>
+<p>
+    To create the AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/libraryvariablesets</strong> directory using the following commands:
+</p>
+<pre>cd terraform/libraryvariablesets
+terraform init
+terraform apply</pre>
+<p>
+    This creates a library variable set called <strong>Octopub</strong> containing three variables:
+</p>
+<ul>
+    <li><strong>AWS.Account</strong> - A reference to the account created previously.</li>
+    <li><strong>AWS.CloudFormation.ApiGatewayStack</strong> - The name of the CloudFormation stack that will create the shared API Gateway.</li>
+    <li><strong>AWS.Region</strong> - The AWS region that the resources are created in.</li>
+</li>
+<div><img alt="Octopus environments" src="images/octopus/libraryvariableset.png"/></div>

@@ -23,3 +23,6 @@ terraform apply</pre>
     The CloudFormation stack responsible for creating the API Gateway exposes a number of output variables. Subsequent Lambda deployments will read these variables to attach the Lambda to the API Gateway:
 </p>
 <div><img alt="Octopus environments" src="images/octopus/apigatewaycfoutputs.png"/></div>
+<p>
+    With the API Gateway configured, the next step is to deploy the backend REST API microservice as a Lambda.
+</p>

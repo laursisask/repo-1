@@ -94,7 +94,7 @@ variable "library_variable_set_octopub_aws_cloudformation_apigatewaystack_0" {
   nullable    = false
   sensitive   = false
   description = "The value associated with the variable AWS.CloudFormation.ApiGatewayStack"
-  default     = "OctopubApiGateway"
+  default     = "OctopubApiGateway-#{Octopus.Environment.Name}"
 }
 
 resource "octopusdeploy_variable" "library_variable_set_octopub_aws_cloudformation_apigatewaystack_0" {

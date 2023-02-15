@@ -69,4 +69,8 @@ resource "octopusdeploy_environment" "environment_production" {
   servicenow_extension_settings {
     is_enabled = false
   }
+
+  depends_on = [
+    octopusdeploy_environment.environment_development
+  ]
 }

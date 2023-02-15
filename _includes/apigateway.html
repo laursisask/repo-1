@@ -6,5 +6,20 @@
     The API Gateway provides a shared entry point for web clients interacting with the microservices that make up the Octopub sample application. Because it is a shared resources, it is deployed as a separate project in its own CloudFormation stack. We'll make use of CloudFormation output variables to allow subsequent AWS resources to attach themselves to the API Gateway.
 </p>
 <p>
-    
+    To create the API Gateway deployment project in Octopus, apply the Terraform configuration in the <strong>terraform/apigateway</strong> directory using the following commands:
 </p>
+<pre>cd terraform/apigateway
+terraform init
+terraform apply</pre>
+<p>
+    This creates a project <strong>API Gateway</strong> with a single <strong>Deploy an AWS CloudFormation template</strong> step that deploys an API Gateway instance:
+</p>
+<div><img alt="Octopus environments" src="images/octopus/apigateway.png"/></div>
+<p>
+    Deploying this project creates an new API Gateway instance in AWS with a number of resources exposing the <strong>api</strong> and <strong>health</strong> endpoints, with a proxy resource matching all other requests made under the root resource:
+</p>
+<div><img alt="Octopus environments" src="images/octopus/apigatewayaws.png"/></div>
+<p>
+    The CloudFormation stack responsible for creating the API Gateway exposes a number of output variables. Subsequent Lambda deployments will read these variables to attach the Lambda to the API Gateway:
+</p>
+<div><img alt="Octopus environments" src="images/octopus/apigatewaycfoutputs.png"/></div>

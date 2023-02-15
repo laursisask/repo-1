@@ -409,7 +409,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         "Octopus.Action.Aws.Region" = "#{AWS.Region}"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Downloading Docker images\"\n\necho \"##octopus[stdout-verbose]\"\n\ndocker pull amazon/aws-cli 2\u003e\u00261\n\n# Alias the docker run commands\nshopt -s expand_aliases\nalias aws=\"docker run --rm -i -v $(pwd):/build -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli\"\n\necho \"##octopus[stdout-default]\"\n\naws lambda invoke \\\n  --function-name 'octopub-backend-#{Octopus.Environment.Name | Replace \" .*\" \"\" | ToLower}-DBMigration' \\\n  --payload '{}' \\\n  response.json\n"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Downloading Docker images\"\n\necho \"##octopus[stdout-verbose]\"\n\ndocker pull amazon/aws-cli 2\u003e\u00261\n\n# Alias the docker run commands\nshopt -s expand_aliases\nalias aws=\"docker run --rm -i -v $(pwd):/build -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli\"\n\necho \"##octopus[stdout-default]\"\n\naws lambda invoke \\\n  --function-name 'octopub-products-#{Octopus.Environment.Name | Replace \" .*\" \"\" | ToLower}-DBMigration' \\\n  --payload '{}' \\\n  response.json\n"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "Bash"
@@ -546,36 +546,20 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       properties                         = {
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
           {
-            "key" = "OctopusTenantId"
-            "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
+            "ParameterKey" = "EnvironmentName"
+            "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
           },
           {
-            "key" = "OctopusStepId"
-            "value" = "#{Octopus.Step.Id}"
+            "ParameterKey" = "RestApi"
+            "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
           },
           {
-            "key" = "OctopusRunbookRunId"
-            "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+            "ParameterKey" = "ResourceId"
+            "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.Api}"
           },
           {
-            "key" = "OctopusDeploymentId"
-            "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
-          },
-          {
-            "key" = "OctopusProjectId"
-            "value" = "#{Octopus.Project.Id}"
-          },
-          {
-            "key" = "OctopusEnvironmentId"
-            "value" = "#{Octopus.Environment.Id}"
-          },
-          {
-            "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
-            "key" = "Environment"
-          },
-          {
-            "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
-            "key" = "DeploymentProject"
+            "ParameterKey" = "ProxyLambdaVersion"
+            "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda Version].Output.AwsOutputs[LambdaVersion]}"
           },
         ])
         "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])

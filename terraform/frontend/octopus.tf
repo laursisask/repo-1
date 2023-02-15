@@ -100,6 +100,44 @@ resource "octopusdeploy_project" "project_frontend_webapp" {
   }
 }
 
+resource "octopusdeploy_variable" "frontend_webapp_producthealthendpoint" {
+  owner_id     = "${octopusdeploy_project.project_frontend_webapp.id}"
+  value        = "https://#{Octopus.Action[Get Stack Outputs].Output.RestApi}.execute-api.ap-southeast-2.amazonaws.com/#{Octopus.Environment.Name | Replace \" .*\" \"\"}/health/products"
+  name         = "productHealthEndpoint"
+  type         = "String"
+  description  = ""
+  is_sensitive = false
+
+  scope {
+    actions      = []
+    channels     = []
+    environments = []
+    machines     = []
+    roles        = null
+    tenant_tags  = null
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "frontend_webapp_productendpoint" {
+  owner_id     = "${octopusdeploy_project.project_frontend_webapp.id}"
+  value        = "https://#{Octopus.Action[Get Stack Outputs].Output.RestApi}.execute-api.ap-southeast-2.amazonaws.com/#{Octopus.Environment.Name | Replace \" .*\" \"\"}/api/products"
+  name         = "productEndpoint"
+  type         = "String"
+  description  = ""
+  is_sensitive = false
+
+  scope {
+    actions      = []
+    channels     = []
+    environments = []
+    machines     = []
+    roles        = null
+    tenant_tags  = null
+  }
+  depends_on = []
+}
+
 resource "octopusdeploy_deployment_process" "deployment_process_project_frontend_webapp" {
   project_id = "${octopusdeploy_project.project_frontend_webapp.id}"
 

@@ -122,7 +122,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       properties                         = {
         "Octopus.Action.Aws.CloudFormationTemplate" = "Resources:\n  LambdaS3Bucket:\n    Type: 'AWS::S3::Bucket'\nOutputs:\n  LambdaS3Bucket:\n    Description: The S3 Bucket\n    Value:\n      Ref: LambdaS3Bucket\n"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubBackendS3Bucket-#{Octopus.Environment.Name}"
+        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubBackendS3Bucket-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.Aws.TemplateSource" = "Inline"
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
@@ -296,7 +296,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         "Octopus.Action.Aws.TemplateSource" = "Inline"
         "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
         "Octopus.Action.Template.Version" = "1"
-        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambda-#{Octopus.Environment.Name}"
+        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambda-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
         "Vpc.Cidr" = "10.0.0.0/16"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
           {
@@ -446,7 +446,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
           "CAPABILITY_IAM",
           "CAPABILITY_NAMED_IAM",
         ])
-        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambdaVersion-#{Octopus.Environment.Name}-#{Octopus.Deployment.Id | Replace -}"
+        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambdaVersion-#{Octopus.Environment.Name | Replace \" .*\" \"\"}-#{Octopus.Deployment.Id | Replace -}"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
@@ -564,7 +564,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         ])
         "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsApiGateway-#{Octopus.Environment.Name}"
+        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsApiGateway-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
         "Octopus.Action.Aws.CloudFormationTemplate" = "# This template links the reverse proxy to the API Gateway. Once this linking is done,\n# the API Gateway is ready to be deployed to a stage. But the old Lambda versions are\n# still referenced by the existing stage, so no changes have been exposed to the\n# end user.\nParameters:\n  EnvironmentName:\n    Type: String\n    Default: '#{Octopus.Environment.Name | Replace \" .*\" \"\"}'\n  RestApi:\n    Type: String\n  ResourceId:\n    Type: String\n  ProxyLambdaVersion:\n    Type: String\nResources:\n  ApiProductsResource:\n    Type: 'AWS::ApiGateway::Resource'\n    Properties:\n      RestApiId: !Ref RestApi\n      ParentId: !Ref ResourceId\n      PathPart: products\n  ApiProductsProxyResource:\n    Type: 'AWS::ApiGateway::Resource'\n    Properties:\n      RestApiId: !Ref RestApi\n      ParentId: !Ref ApiProductsResource\n      PathPart: '{proxy+}'\n  ApiProductsMethod:\n    Type: 'AWS::ApiGateway::Method'\n    Properties:\n      AuthorizationType: NONE\n      HttpMethod: ANY\n      Integration:\n        IntegrationHttpMethod: POST\n        TimeoutInMillis: 20000\n        Type: AWS_PROXY\n        Uri: !Join\n          - ''\n          - - 'arn:'\n            - !Ref 'AWS::Partition'\n            - ':apigateway:'\n            - !Ref 'AWS::Region'\n            - ':lambda:path/2015-03-31/functions/'\n            - !Ref ProxyLambdaVersion\n            - /invocations\n      ResourceId: !Ref ApiProductsResource\n      RestApiId: !Ref RestApi\n  ApiProxyProductsMethod:\n    Type: 'AWS::ApiGateway::Method'\n    Properties:\n      AuthorizationType: NONE\n      HttpMethod: ANY\n      Integration:\n        IntegrationHttpMethod: POST\n        TimeoutInMillis: 20000\n        Type: AWS_PROXY\n        Uri: !Join\n          - ''\n          - - 'arn:'\n            - !Ref 'AWS::Partition'\n            - ':apigateway:'\n            - !Ref 'AWS::Region'\n            - ':lambda:path/2015-03-31/functions/'\n            - !Ref ProxyLambdaVersion\n            - /invocations\n      ResourceId: !Ref ApiProductsProxyResource\n      RestApiId: !Ref RestApi\n  'Deployment#{Octopus.Deployment.Id | Replace -}':\n    Type: 'AWS::ApiGateway::Deployment'\n    Properties:\n      RestApiId: !Ref RestApi\n    DependsOn:\n      - ApiProductsMethod\nOutputs:\n  DeploymentId:\n    Description: The deployment id\n    Value: !Ref 'Deployment#{Octopus.Deployment.Id | Replace -}'\n  ApiProductsMethod:\n    Description: The method hosting the root api endpoint\n    Value: !Ref ApiProductsMethod\n  ApiProxyProductsMethod:\n    Description: The method hosting the api endpoint subdirectories\n    Value: !Ref ApiProxyProductsMethod\n  DownstreamService:\n    Description: The function that was configured to accept traffic.\n    Value: !Join\n      - ''\n      - - 'arn:'\n        - !Ref 'AWS::Partition'\n        - ':apigateway:'\n        - !Ref 'AWS::Region'\n        - ':lambda:path/2015-03-31/functions/'\n        - !Ref ProxyLambdaVersion\n        - /invocations\n"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
@@ -651,7 +651,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         ])
         "Octopus.Action.Aws.CloudFormationTemplate" = "# This template updates the stage with the deployment created in the previous step.\n# It is here that the new Lambda versions are exposed to the end user.\nParameters:\n  EnvironmentName:\n    Type: String\n    Default: '#{Octopus.Environment.Name | Replace \" .*\" \"\"}'\n  DeploymentId:\n    Type: String\n    Default: 'Deployment#{DeploymentId}'\n  ApiGatewayId:\n    Type: String\nResources:\n  Stage:\n    Type: 'AWS::ApiGateway::Stage'\n    Properties:\n      DeploymentId:\n        'Fn::Sub': '$${DeploymentId}'\n      RestApiId:\n        'Fn::Sub': '$${ApiGatewayId}'\n      StageName:\n        'Fn::Sub': '$${EnvironmentName}'\nOutputs:\n  DnsName:\n    Value:\n      'Fn::Join':\n        - ''\n        - - Ref: ApiGatewayId\n          - .execute-api.\n          - Ref: 'AWS::Region'\n          - .amazonaws.com\n  StageURL:\n    Description: The url of the stage\n    Value:\n      'Fn::Join':\n        - ''\n        - - 'https://'\n          - Ref: ApiGatewayId\n          - .execute-api.\n          - Ref: 'AWS::Region'\n          - .amazonaws.com/\n          - Ref: Stage\n          - /\n"
         "Octopus.Action.Aws.TemplateSource" = "Inline"
-        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubApiGatewayStage-#{Octopus.Environment.Name}"
+        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubApiGatewayStage-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
           {

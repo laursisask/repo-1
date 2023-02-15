@@ -203,7 +203,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
         "Octopus.Action.Aws.Region" = "#{AWS.Region}"
         "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
-        "Octopus.Action.Package.FeedId" = "${data.octopusdeploy_feeds.sales_maven_feed.feeds[0].id}"
         "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
           "storageClass" = "STANDARD"

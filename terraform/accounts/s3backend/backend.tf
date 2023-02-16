@@ -1,13 +1,6 @@
 terraform {
-  required_providers {
-    octopusdeploy = { source = "OctopusDeployLabs/octopusdeploy", version = "0.10.3" }
+  backend "s3" {
   }
-}
-
-provider "octopusdeploy" {
-  address  = "${var.octopus_server}"
-  api_key  = "${var.octopus_apikey}"
-  space_id = "${var.octopus_space_id}"
 }
 
 variable "octopus_server" {
@@ -31,17 +24,6 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
-resource "octopusdeploy_aws_account" "account_aws_account" {
-  name                              = "AWS Account"
-  description                       = ""
-  environments                      = []
-  tenant_tags                       = []
-  tenants                           = null
-  tenanted_deployment_participation = "Untenanted"
-  access_key                        = "${var.account_aws_account_access}"
-  secret_key                        = "${var.account_aws_account}"
-}
-
 variable "account_aws_account" {
   type        = string
   nullable    = false
@@ -54,4 +36,13 @@ variable "account_aws_account_access" {
   nullable    = false
   sensitive   = true
   description = "The AWS access key associated with the account AWS Account"
+}
+
+module "octopus" {
+  source = "../octopus"
+  octopus_server = var.octopus_server
+  octopus_apikey = var.octopus_apikey
+  octopus_space_id = var.octopus_space_id
+  account_aws_account = var.account_aws_account
+  account_aws_account_access = var.account_aws_account_access
 }

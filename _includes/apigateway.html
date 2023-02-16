@@ -6,9 +6,9 @@
     The API Gateway provides a shared entry point for web clients interacting with the microservices that make up the Octopub sample application. Because it is a shared resources, it is deployed as a separate project in its own CloudFormation stack. We'll make use of CloudFormation output variables to allow subsequent AWS resources to attach themselves to the API Gateway.
 </p>
 <p>
-    To create the API Gateway deployment project in Octopus, apply the Terraform configuration in the <strong>terraform/apigateway</strong> directory using the following commands:
+    To create the API Gateway deployment project in Octopus, apply the Terraform configuration in the <strong>terraform/apigateway/octopus</strong> directory using the following commands:
 </p>
-<pre>cd terraform/apigateway
+<pre>cd terraform/apigateway/octopus
 terraform init
 terraform apply</pre>
 <p>

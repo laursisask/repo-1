@@ -6,8 +6,23 @@
     The products microservice is the first to be deployed. This is a REST API exposing the books and articles that make up our online library. This service is written as a Lambda, and persists data in a serverless RDS database.
 </p>
 <p>
-    To create the AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/products</strong> directory using the following commands:
+    To create the AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/products/octopus</strong> directory using the following commands:
 </p>
-<pre>cd terraform/products
+<pre>cd terraform/products/octopus
 terraform init
 terraform apply</pre>
+<p>
+    You will be prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to allow them to be applied. Once the configuration is applied you will see a new project called <strong>Products Service</strong>:
+</p>
+<div><img alt="Products Service process page" src="images/octopus/productsservice.png"/></div>
+<p>
+    This deployment project includes a number of steps required to upload, deploy, and expose the Lambda. Once deployed, the Lambda is created in AWS:
+</p>
+<div><img alt="Products Lambda" src="images/octopus/productslambda.png"/></div>
+<p>
+    The Lambda is exposed via API Gateway:
+</p>
+<div><img alt="Products Lambda" src="images/octopus/productsapigateway.png"/></div>
+<p>
+    With the products API deployed the next step is to deploy the web based frontend.
+</p>

@@ -3,9 +3,9 @@
     Library variable sets provide a way to share variables across many projects. This allows projects to access a common set of variables capturing cross cutting details such as accounts, AWS regions, and names of CloudFormation stacks that multiple projects query for outputs.
 </p>
 <p>
-    To create the AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/libraryvariablesets</strong> directory using the following commands:
+    To create the AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/libraryvariablesets/octopus</strong> directory using the following commands:
 </p>
-<pre>cd terraform/libraryvariablesets
+<pre>cd terraform/libraryvariablesets/octopus
 terraform init
 terraform apply</pre>
 <p>

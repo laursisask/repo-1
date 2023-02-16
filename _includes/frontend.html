@@ -1,1 +1,36 @@
 <h1><a id="frontend">Deploying the Frontend Web App</a></h1>
+<p>
+    The frontend web app provides the interface end users consume to view the library of books and blog posts maintained by the Octopub sample application.
+</p>
+<p>
+    Unlike the products service, which is deployed as a Lambda, the frontend web app is a static web site with no server side processing. This allows us to host the frontend web app in an S3 bucket. API Gateway is then configured to direct requests to S3, providing end users with a single hostname and shared URL structure for accessing both the static frontend website and Lambda based backend APIs.
+</p>
+<p>
+    To create the AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/frontend/octopus</strong> directory using the following commands:
+</p>
+<pre>cd terraform/frontend/octopus
+terraform init
+terraform apply</pre>
+<p>
+    You will be prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to allow them to be applied. Once the configuration is applied you will see a new project called <strong>Frontend WebApp</strong>:
+</p>
+<div><img alt="Frontend WebApp process page" src="images/octopus/frontendproject.png"/></div>
+<p>
+    This deployment project includes a number of steps required to upload, deploy, and expose the static web app files. Once deployed, a new S3 bucket is created in AWS:
+</p>
+<div><img alt="Frontend Web App S3 Bucket" src="images/octopus/frontends3bucket.png"/></div>
+<p>
+    The S3 bucket is exposed via API Gateway:
+</p>
+<div><img alt="Web App Api Gateway" src="images/octopus/frontendap[igateway.png"/></div>
+<p>
+    With the frontend deployed we now have everything in place to view Octopub in a web browser. The deployment process shows the API Gateway stage URL in the task summary:
+</p>
+<div><img alt="Web App Deployment Results" src="images/octopus/frontenddeployment.png"/></div>
+<p>
+    Clicking the link takes you to the Octopub website:
+</p>
+<div><img alt="Octopub" src="images/octopus/octopub.png"/></div>
+<p>
+    And with that our Lambda based application deployment is complete.
+</p>

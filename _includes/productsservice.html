@@ -1,1 +1,13 @@
 <h1><a id="productsservice">Deploying the Products REST API</a></h1>
+<p>
+    All the resources we have created in Octopus allow us to deploy our application to AWS, and the AWS resources we created provide the infrastructure required to expose those applications to end users. With this foundation in place it is now time to deploy our microservice stack.
+</p>
+<p>
+    The products microservice is the first to be deployed. This is a REST API exposing the books and articles that make up our online library. This service is written as a Lambda, and persists data in a serverless RDS database.
+</p>
+<p>
+    To create the AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/products</strong> directory using the following commands:
+</p>
+<pre>cd terraform/products
+terraform init
+terraform apply</pre>

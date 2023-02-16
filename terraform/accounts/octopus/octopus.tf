@@ -1,8 +1,3 @@
-module "foo" {
-  source = "/home/matthew/Code/TerraformBackendOverride"
-  count   = var.override_backend ? 1 : 0
-}
-
 terraform {
   required_providers {
     octopusdeploy = { source = "OctopusDeployLabs/octopusdeploy", version = "0.10.3" }

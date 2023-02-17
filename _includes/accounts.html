@@ -6,13 +6,13 @@
     AWS accounts are made up of an access and secret key. The documentation at <a href="https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/">https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/</a> provides instructions for creating AWS access keys.
 </p>
 <p>
-    To create the AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/accounts/octopus</strong> directory using the following commands:
+    To create the associated AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/accounts/octopus</strong> directory using the following commands:
 </p>
 <pre>cd terraform/accounts/octopus
 terraform init
 terraform apply</pre>
 <p>
-    You will be prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to allow them to be applied. Once the configuration is applied you will see a new account called <strong>AWS Account</strong>:
+    You will be prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied you will see a new account called <strong>AWS Account</strong>:
 </p>
 <div><img alt="Octopus accounts" src="images/octopus/awsaccount.png"/></div>
 <p>

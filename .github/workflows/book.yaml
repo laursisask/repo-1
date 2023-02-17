@@ -38,7 +38,7 @@ jobs:
     - name: Install Calibre
       run: sudo -v && wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo --preserve-env=CALIBRE_INSTALLER_LOCAL_URL sh /dev/stdin
       env:
-        CALIBRE_INSTALLER_LOCAL_URL: https://octopus-sales-engineering.s3.ap-southeast-2.amazonaws.com/calibre-6.12.0-x86_64.txz
+        CALIBRE_INSTALLER_LOCAL_URL: https://octopus-sales-engineering.s3.ap-southeast-2.amazonaws.com/calibre-6.13.0-x86_64.txz
     
     - name: Convert to PDF
       run: >

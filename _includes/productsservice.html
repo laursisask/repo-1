@@ -1,6 +1,6 @@
 <h1><a id="productsservice">Deploying the Products REST API</a></h1>
 <p>
-    All the resources we have created in Octopus allow us to deploy our application to AWS, and the AWS resources we created provide the infrastructure required to expose those applications to end users. With this foundation in place it is now time to deploy our microservice stack.
+    All the resources we have created in Octopus allowed us to deploy our application to AWS, and the AWS resources we created provide the infrastructure required to expose those applications to end users. With this foundation in place it is now time to deploy our microservice stack.
 </p>
 <p>
     The products microservice is the first to be deployed. This is a REST API exposing the books and articles that make up our online library. This service is written as a Lambda, and persists data in a serverless RDS database.
@@ -12,11 +12,11 @@
 terraform init
 terraform apply</pre>
 <p>
-    You will be prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied you will see a new project called <strong>Products Service</strong>:
+    You will be prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied a new project called <strong>Products Service</strong> is created:
 </p>
 <div><img alt="Products Service process page" src="images/octopus/productsservice.png"/></div>
 <p>
-    This deployment project includes a number of steps required to upload, deploy, and expose the Lambda. Once deployed, the Lambda is created in AWS:
+    This deployment project includes steps to upload, deploy, and expose the Lambda. Once deployed, the Lambda is created in AWS:
 </p>
 <div><img alt="Products Lambda" src="images/octopus/productslambda.png"/></div>
 <p>

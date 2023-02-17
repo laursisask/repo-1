@@ -9,7 +9,7 @@
 terraform init
 terraform apply</pre>
 <p>
-    This creates a library variable set called <strong>Octopub</strong> containing three variables:
+    You will be prompted for the URL of your Octopus instance, the Octopus API key, and the ID of the space to apply the configuration to. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied a new library variable set called <strong>Octopub</strong> containing three variables is created:
 </p>
 <ul>
     <li><strong>AWS.Account</strong> - A reference to the account created previously.</li>
@@ -17,3 +17,6 @@ terraform apply</pre>
     <li><strong>AWS.Region</strong> - The AWS region that the resources are created in.</li>
 </li>
 <div><img alt="Octopus environments" src="images/octopus/libraryvariableset.png"/></div>
+<p>
+    We now have all the global resources required to begin deploying AWS resources. The next step is to deploy a shared API Gateway instance.
+</p>

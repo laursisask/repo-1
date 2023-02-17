@@ -1,6 +1,6 @@
 <h1><a id="environments">Configuring the environments</a></h1>
 <p>
-    Octopus environments typically represent copies of infrastructure that deployments are progressed through. For example, you may have a development environment where the engineering teams deploy their applications as they make changes. Once a version of the application is ready to be tested it is promoted to a test environment where QA engineering and product owners can review the new functionality. Once all testing is complete and the business signs off, the application is deployed to the production environment where is made available to end users.
+    Octopus environments typically represent copies of infrastructure that deployments are progressed through. For example, you may have a development environment where the engineering teams deploy their applications as they make changes. Once a version of the application is ready to be tested it is promoted to a test environment where QA and product owners can review the new functionality. Once all testing is complete and the business signs off, the application is deployed to the production environment where is made available to end users.
 </p>
 <p>
     To create the AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/environments/octopus</strong> directory using the following commands:
@@ -9,7 +9,7 @@
 terraform init
 terraform apply</pre>
 <p>
-    You will be prompted for the URL of your Octopus instance, the Octopus API key, and the ID of the space to apply the configuration to. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied you will see two new environments called <strong>Development</strong> and <strong>Production</strong>:
+    You will be prompted for the URL of your Octopus instance, the Octopus API key, and the ID of the space to apply the configuration to. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied two new environments called <strong>Development</strong> and <strong>Production</strong> are created:
 </p>
 <div><img alt="Octopus environments" src="images/octopus/environments.png"/></div>
 <p>

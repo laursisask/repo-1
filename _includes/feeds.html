@@ -1,6 +1,6 @@
 <h1><a id="feeds">Configuring the sample application feed</a></h1>
 <p>
-    This book documents the process of deploying a sample application called Octopub. Octopub exposes a sample online library and is implemented as a number of microservices.
+    This book documents the process of deploying a sample application called Octopub. Octopub implements a sample online library and is implemented as a number of microservices.
 </p>
 <p>
     For convenience, the services that make up Octopub have been compiled, packaged, and exposed via a public Maven repository. In this chapter we'll configure an Octopus Maven feed which we'll use in later chapters to download and deploy Octopub to AWS.
@@ -15,7 +15,7 @@
 terraform init
 terraform apply</pre>
 <p>
-    You will be prompted for the URL of your Octopus instance, the Octopus API key, and the ID of the space to apply the configuration to. Terraform then displays a list of changes and prompts you to allow them to be applied. Once the configuration is applied you will see a new feed called <strong>Sales Maven Feed</strong>:
+    You will be prompted for the URL of your Octopus instance, the Octopus API key, and the ID of the space to apply the configuration to. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied you will see a new feed called <strong>Sales Maven Feed</strong>:
 </p>
 <div><img alt="Octopus environments" src="images/octopus/mavenfeed.png"/></div>
 <p>
@@ -23,5 +23,5 @@ terraform apply</pre>
 </p>
 <div><img alt="Octopus environments" src="images/octopus/mavenfeedsearch.png"/></div>
 <p>
-    With the feed configured the next step is to configure the AWS credentials Octopus uses during deployments.
+    With the feed configured the next step is to configure the AWS credentials used by Octopus to perform deployments.
 </p>

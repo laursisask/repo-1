@@ -22,6 +22,61 @@ terraform apply</pre>
     To verify the feed is working as expected, click it, and then click the <strong>TEST</strong> button. Enter <strong>com.octopus:frontend-webapp-static</strong> as the package name and click the <strong>SEARCH</strong> button:
 </p>
 <div><img alt="Octopus environments" src="images/octopus/mavenfeedsearch.png"/></div>
+<h2>Breaking down the HCL</h2>
+<p>
+    We start by defining a requirement on the Octopus terraform provider.
+</p>
+<p>
+    Note that the version of the provider is fixed. The Octopus provider is a zero-version release indicating breaking changes may be introduced at any time. By fixing the version of the provider, we can update it at our own pace, and deal with any potential breaking changes in an organized manner.
+</p>
+<p>
+    Had we referenced the latest version of the provider, our Terraform configuration may have randomly stopped working, which is not an ideal outcome:
+</p>
+<pre>terraform {
+    required_providers {
+      octopusdeploy = { source = "OctopusDeployLabs/octopusdeploy", version = "0.10.3" }
+    }
+  }</pre>
+<p>
+The Octopus provider requires the Octopus server, API key, and space ID. Each of these values is consumed from a variable:
+</p>
+<pre>provider "octopusdeploy" {
+    address  = "${var.octopus_server}"
+    api_key  = "${var.octopus_apikey}"
+    space_id = "${var.octopus_space_id}"
+  }</pre>
+<p>
+    The Octopus server, API key, and space ID are defined as Terraform variables, allowing them to be passed in when applying the Terraform configuration:
+</p>
+<pre>variable "octopus_server" {
+    type        = string
+    nullable    = false
+    sensitive   = false
+    description = "The URL of the Octopus server e.g. https://myinstance.octopus.app."
+  }
+  
+  variable "octopus_apikey" {
+    type        = string
+    nullable    = false
+    sensitive   = true
+    description = "The API key used to access the Octopus server."
+  }
+  
+  variable "octopus_space_id" {
+    type        = string
+    nullable    = false
+    sensitive   = false
+    description = "The ID of the Octopus space to populate."
+  }</pre>
+<p>
+    The final resource is the Octopus feed. We have used the Maven feed to access a public AWS S3 bucket, allowing Octopus to consume artifacts without having to define any credentials:
+</p>
+<pre>resource "octopusdeploy_maven_feed" "sales_maven_feed" {
+    download_attempts              = 10
+    download_retry_backoff_seconds = 20
+    feed_uri                       = "https://octopus-sales-public-maven-repo.s3.ap-southeast-2.amazonaws.com/snapshot"
+    name                           = "Sales Maven Feed"
+  }</pre>
 <p>
     With the feed configured the next step is to configure the AWS credentials used by Octopus to perform deployments.
 </p>

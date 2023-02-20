@@ -31,20 +31,6 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
-data "octopusdeploy_environments" "environment_production" {
-  ids          = null
-  partial_name = "Production"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_environments" "environment_development" {
-  ids          = null
-  partial_name = "Development"
-  skip         = 0
-  take         = 1
-}
-
 data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
   ids          = null
   partial_name = "Octopub"
@@ -252,22 +238,22 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
         "Octopus.Action.Aws.TemplateSource" = "Inline"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
-        {
-        "ParameterKey" = "Hostname"
-        "ParameterValue" = "#{WebApp.Hostname}"
-                },
+          {
+            "ParameterKey" = "Hostname"
+            "ParameterValue" = "#{WebApp.Hostname}"
+          },
         ])
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
         "Octopus.Action.Aws.Region" = "#{AWS.Region}"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
-        {
-        "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
-        "key" = "Environment"
-                },
-        {
-        "value" = "Frontend_WebApp"
-        "key" = "DeploymentProject"
-                },
+          {
+            "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            "key" = "Environment"
+          },
+          {
+            "value" = "Frontend_WebApp"
+            "key" = "DeploymentProject"
+          },
         ])
         "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
         AWSTemplateFormatVersion: 2010-09-09
@@ -613,48 +599,48 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
         "Octopus.Action.Aws.CloudFormationStackName" = "OctopubFrontendApiGateway-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
-        {
-        "key" = "Environment"
-        "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
-                },
-        {
-        "key" = "DeploymentProject"
-        "value" = "Frontend_WebApp"
-                },
+          {
+            "key" = "Environment"
+            "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          },
+          {
+            "key" = "DeploymentProject"
+            "value" = "Frontend_WebApp"
+          },
         ])
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
-        {
-        "ParameterKey" = "EnvironmentName"
-        "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
-                },
-        {
-        "ParameterKey" = "RestApi"
-        "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
-                },
-        {
-        "ParameterKey" = "RootResourceId"
-        "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RootResourceId}"
-                },
-        {
-        "ParameterKey" = "ResourceId"
-        "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.Web}"
-                },
-        {
-        "ParameterKey" = "PackageVersion"
-        "ParameterValue" = "#{Octopus.Action[Upload Frontend].Package[].PackageVersion}"
-                },
-        {
-        "ParameterKey" = "PackageId"
-        "ParameterValue" = "#{Octopus.Action[Upload Frontend].Package[].PackageId}"
-                },
-        {
-        "ParameterKey" = "BucketName"
-        "ParameterValue" = "#{Octopus.Action[Create S3 bucket].Output.AwsOutputs[Bucket]}"
-                },
-        {
-        "ParameterKey" = "SubPath"
-        "ParameterValue" = ""
-                },
+          {
+            "ParameterKey" = "EnvironmentName"
+            "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          },
+          {
+            "ParameterKey" = "RestApi"
+            "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
+          },
+          {
+            "ParameterKey" = "RootResourceId"
+            "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RootResourceId}"
+          },
+          {
+            "ParameterKey" = "ResourceId"
+            "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.Web}"
+          },
+          {
+            "ParameterKey" = "PackageVersion"
+            "ParameterValue" = "#{Octopus.Action[Upload Frontend].Package[].PackageVersion}"
+          },
+          {
+            "ParameterKey" = "PackageId"
+            "ParameterValue" = "#{Octopus.Action[Upload Frontend].Package[].PackageId}"
+          },
+          {
+            "ParameterKey" = "BucketName"
+            "ParameterValue" = "#{Octopus.Action[Create S3 bucket].Output.AwsOutputs[Bucket]}"
+          },
+          {
+            "ParameterKey" = "SubPath"
+            "ParameterValue" = ""
+          },
         ])
         "Octopus.Action.Aws.Region" = "#{AWS.Region}"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
@@ -690,18 +676,18 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
-        {
-        "ParameterKey" = "EnvironmentName"
-        "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
-                },
-        {
-        "ParameterKey" = "DeploymentId"
-        "ParameterValue" = "#{Octopus.Action[Proxy with API Gateway].Output.AwsOutputs[DeploymentId]}"
-                },
-        {
-        "ParameterKey" = "ApiGatewayId"
-        "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
-                },
+          {
+            "ParameterKey" = "EnvironmentName"
+            "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          },
+          {
+            "ParameterKey" = "DeploymentId"
+            "ParameterValue" = "#{Octopus.Action[Proxy with API Gateway].Output.AwsOutputs[DeploymentId]}"
+          },
+          {
+            "ParameterKey" = "ApiGatewayId"
+            "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
+          },
         ])
         "Octopus.Action.Aws.CloudFormationStackName" = "OctopubApiGatewayStage-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
         "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
@@ -745,14 +731,14 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
         EOF
         "Octopus.Action.Aws.WaitForCompletion" = "True"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
-        {
-        "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
-        "key" = "Environment"
-                },
-        {
-        "key" = "DeploymentProject"
-        "value" = "Frontend_WebApp"
-                },
+          {
+            "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            "key" = "Environment"
+          },
+          {
+            "key" = "DeploymentProject"
+            "value" = "Frontend_WebApp"
+          },
         ])
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
       }

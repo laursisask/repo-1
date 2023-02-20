@@ -23,6 +23,1131 @@ terraform apply</pre>
     The Lambda is exposed via API Gateway:
 </p>
 <div><img alt="Products Lambda" src="images/octopus/productsapigateway.png"/></div>
+<h2>Breaking down the HCL</h2>
+<p>
+    As with the API Gateway deployment project, the Lambda deployment project needs access to many existing resources such as the library variable set, default lifecycle, worker pool, and feed. These are all exposed via data lookups:
+</p>
+<pre>data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
+    ids          = null
+    partial_name = "Octopub"
+    skip         = 0
+    take         = 1
+  }
+  
+  data "octopusdeploy_lifecycles" "default" {
+    ids          = []
+    partial_name = "Default Lifecycle"
+    skip         = 0
+    take         = 1
+  }
+  
+  data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
+    name = "Hosted Ubuntu"
+    ids  = null
+    skip = 0
+    take = 1
+  }
+  
+  data "octopusdeploy_feeds" "sales_maven_feed" {
+    feed_type    = "Maven"
+    ids          = []
+    partial_name = "Sales Maven Feed"
+    skip         = 0
+    take         = 1
+  }</pre>
+<p>
+    Here we create a new project group to hold the deployment project:
+</p>
+<pre>resource "octopusdeploy_project_group" "project_group_products" {
+    name        = "Products API"
+    description = "The products REST API"
+  }</pre>
+<p>
+    Here we create the deployment project:
+</p>
+<pre>resource "octopusdeploy_project" "project_products_service" {
+    name                                 = "Products Service"
+    auto_create_release                  = false
+    default_guided_failure_mode          = "EnvironmentDefault"
+    default_to_skip_if_already_installed = false
+    description                          = "Deploys the backend service to Lambda."
+    discrete_channel_release             = false
+    is_disabled                          = false
+    is_version_controlled                = false
+    lifecycle_id                         = "${data.octopusdeploy_lifecycles.default.lifecycles[0].id}"
+    project_group_id                     = "${octopusdeploy_project_group.project_group_products.id}"
+    included_library_variable_sets       = ["${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"]
+    tenanted_deployment_participation    = "Untenanted"
+  
+    connectivity_policy {
+      allow_deployments_to_no_targets = false
+      exclude_unhealthy_targets       = false
+      skip_machine_behavior           = "SkipUnavailableMachines"
+    }
+  }</pre>
+<p>
+    Here we create the deployment process.
+</p>  
+<p>
+    This deployment process includes many individual steps to complete the deployment of a Lambda to AWS and then exposing the Lambda via an API Gateway:
+</p>
+<pre>  resource "octopusdeploy_deployment_process" "deployment_process_project_products_service" {
+    project_id = "${octopusdeploy_project.project_products_service.id}"
+  
+    step {
+      condition           = "Success"
+      name                = "Create S3 bucket"
+      package_requirement = "LetOctopusDecide"
+      start_trigger       = "StartAfterPrevious"</pre>
+<p>
+    The first step (or, more technically, the action assigned to the first step) creates a new S3 bucket. This bucket is used to hold the Lambda application archive:
+</p>
+<pre>      action {
+        action_type                        = "Octopus.AwsRunCloudFormation"
+        name                               = "Create S3 bucket"
+        notes                              = "Create an S3 bucket to hold the Lambda application code that is to be deployed."
+        condition                          = "Success"
+        run_on_server                      = true
+        is_disabled                        = false
+        can_be_used_for_project_versioning = false
+        is_required                        = false
+        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+        properties                         = {
+          "Octopus.Action.Aws.CloudFormationTemplate" = "Resources:\n  LambdaS3Bucket:\n    Type: 'AWS::S3::Bucket'\nOutputs:\n  LambdaS3Bucket:\n    Description: The S3 Bucket\n    Value:\n      Ref: LambdaS3Bucket\n"
+          "Octopus.Action.Aws.WaitForCompletion" = "True"
+          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubBackendS3Bucket-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+          "Octopus.Action.Aws.TemplateSource" = "Inline"
+          "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
+          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+            {
+              "key" = "OctopusTenantId"
+              "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
+            },
+            {
+              "key" = "OctopusStepId"
+              "value" = "#{Octopus.Step.Id}"
+            },
+            {
+              "key" = "OctopusRunbookRunId"
+              "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusDeploymentId"
+              "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusProjectId"
+              "value" = "#{Octopus.Project.Id}"
+            },
+            {
+              "key" = "OctopusEnvironmentId"
+              "value" = "#{Octopus.Environment.Id}"
+            },
+            {
+              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+              "key" = "Environment"
+            },
+            {
+              "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+              "key" = "DeploymentProject"
+            },
+          ])
+          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+          "Octopus.Action.Aws.IamCapabilities" = jsonencode([
+            "CAPABILITY_AUTO_EXPAND",
+            "CAPABILITY_IAM",
+            "CAPABILITY_NAMED_IAM",
+          ])
+          "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
+          "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+          "Octopus.Action.Aws.AssumeRole" = "False"
+        }
+        environments                       = []
+        excluded_environments              = []
+        channels                           = []
+        tenant_tags                        = []
+        features                           = []
+      }
+  
+      properties   = {}
+      target_roles = []
+    }
+    step {
+      condition           = "Success"
+      name                = "Upload Lambda"
+      package_requirement = "LetOctopusDecide"
+      start_trigger       = "StartAfterPrevious"</pre>
+<p>
+    The next step uploads the Lambda artifact consumed from the Maven feed. In essence this transfers the artifact from an external feed to an S3 bucket created in the correct AWS region:
+</p>  
+<pre>      action {
+        action_type                        = "Octopus.AwsUploadS3"
+        name                               = "Upload Lambda"
+        notes                              = "Upload the Lambda application packages to the S3 bucket created in the previous step."
+        condition                          = "Success"
+        run_on_server                      = true
+        is_disabled                        = false
+        can_be_used_for_project_versioning = true
+        is_required                        = false
+        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+        properties                         = {
+          "Octopus.Action.Aws.AssumeRole" = "False"
+          "Octopus.Action.Aws.S3.BucketName" = "#{Octopus.Action[Create S3 bucket].Output.AwsOutputs[LambdaS3Bucket]}"
+          "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+          "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+          "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
+          "Octopus.Action.Package.DownloadOnTentacle" = "False"
+          "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
+            "storageClass" = "STANDARD"
+            "tags" = []
+            "bucketKey" = ""
+            "bucketKeyBehaviour" = "Filename"
+            "bucketKeyPrefix" = ""
+            "cannedAcl" = "private"
+            "metadata" = []
+          })
+        }
+        environments                       = []
+        excluded_environments              = []
+        channels                           = []
+        tenant_tags                        = []
+  
+        primary_package {
+          package_id           = "com.octopus:products-microservice-lambda"
+          acquisition_location = "Server"
+          feed_id              = "${data.octopusdeploy_feeds.sales_maven_feed.feeds[0].id}"
+          properties           = { SelectionMode = "immediate" }
+        }
+  
+        features = []
+      }
+  
+      properties   = {}
+      target_roles = []
+    }
+    step {
+      condition           = "Success"
+      name                = "Get Stack Outputs"
+      package_requirement = "LetOctopusDecide"
+      start_trigger       = "StartAfterPrevious"</pre>
+<p>
+    The Lambda requires the ID of API Gateway resources. These IDs are exposed as CloudFormation output variables.
+</p>  
+<p>
+    Note that Octopus does not store values like this between deployments in the same way that Terraform maintains state or CloudFormation maintains a stack. Octopus consumes the output variables of a CloudFormation stack during a deployment to gain access to these long lived values:
+</p>
+<pre>      action {
+        action_type                        = "Octopus.AwsRunScript"
+        name                               = "Get Stack Outputs"
+        notes                              = "Read the CloudFormation outputs from the stack that created the shared API Gateway instance."
+        condition                          = "Success"
+        run_on_server                      = true
+        is_disabled                        = false
+        can_be_used_for_project_versioning = false
+        is_required                        = false
+        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+        properties                         = {
+          "OctopusUseBundledTooling" = "False"
+          "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+          "Octopus.Action.Script.ScriptBody" = <<-EOF
+          echo "Downloading Docker images"
+  
+          echo "##octopus[stdout-verbose]"
+  
+          docker pull amazon/aws-cli 2>&1
+  
+          # Alias the docker run commands
+          shopt -s expand_aliases
+          alias aws="docker run --rm -i -v $(pwd):/build -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli"
+  
+          echo "##octopus[stdout-default]"
+  
+          API_RESOURCE=$(aws cloudformation \
+              describe-stacks \
+              --stack-name #{AWS.CloudFormation.ApiGatewayStack} \
+              --query "Stacks[0].Outputs[?OutputKey=='Api'].OutputValue" \
+              --output text)
+  
+          set_octopusvariable "Api" $${API_RESOURCE}
+  
+          echo "API Resource ID: $${API_RESOURCE}"
+  
+          if [[ -z "$${API_RESOURCE}" ]]; then
+            echo "Run the API Gateway project first"
+            exit 1
+          fi
+  
+          REST_API=$(aws cloudformation \
+              describe-stacks \
+              --stack-name #{AWS.CloudFormation.ApiGatewayStack} \
+              --query "Stacks[0].Outputs[?OutputKey=='RestApi'].OutputValue" \
+              --output text)
+  
+          set_octopusvariable "RestApi" $${REST_API}
+  
+          echo "Rest Api ID: $${REST_API}"
+  
+          if [[ -z "$${REST_API}" ]]; then
+            echo "Run the API Gateway project first"
+            exit 1
+          fi
+          EOF
+          "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+          "Octopus.Action.Aws.AssumeRole" = "False"
+          "Octopus.Action.Script.ScriptSource" = "Inline"
+          "Octopus.Action.Script.Syntax" = "Bash"
+        }
+        environments                       = []
+        excluded_environments              = []
+        channels                           = []
+        tenant_tags                        = []
+        features                           = []
+      }
+  
+      properties   = {}
+      target_roles = []
+    }
+    step {
+      condition           = "Success"
+      name                = "Deploy Application Lambda"
+      package_requirement = "LetOctopusDecide"
+      start_trigger       = "StartAfterPrevious"</pre>
+<p>
+    The next step is to deploy the Lambda and its associated infrastructure including a VPC, subnets, RDS database, RDS subnet groups, security groups, and CloudWatch log groups. 
+</p>  
+<p>
+    Our Lambda interacts with a database, and includes migration scripts that populate initial data and optionally migrate data with new schema and data changes. Because the serverless database deployed in this CloudFormation template has no public access, the only way to interact with it is to run code in the same VPC as the RDS database. The Lambda itself is a logic place to run these migrations, and so we actually deploy the Lambda twice: one instance with environment variables that allow it to run the database migrations, and one instance with environment variables that allow the Lambda to respond to HTTP traffic:
+</p>
+<pre>      action {
+        action_type                        = "Octopus.AwsRunCloudFormation"
+        name                               = "Deploy Application Lambda"
+        notes                              = "To achieve zero downtime deployments, we must deploy Lambdas and their versions in separate stacks. This stack deploys the main application Lambda."
+        condition                          = "Success"
+        run_on_server                      = true
+        is_disabled                        = false
+        can_be_used_for_project_versioning = false
+        is_required                        = false
+        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+        properties                         = {
+          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+          "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+          "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+          "Octopus.Action.Aws.IamCapabilities" = jsonencode([
+            "CAPABILITY_AUTO_EXPAND",
+            "CAPABILITY_IAM",
+            "CAPABILITY_NAMED_IAM",
+          ])
+          "Octopus.Action.Aws.TemplateSource" = "Inline"
+          "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
+          "Octopus.Action.Template.Version" = "1"
+          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambda-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          "Vpc.Cidr" = "10.0.0.0/16"
+          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+            {
+              "key" = "OctopusTenantId"
+              "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
+            },
+            {
+              "key" = "OctopusStepId"
+              "value" = "#{Octopus.Step.Id}"
+            },
+            {
+              "key" = "OctopusRunbookRunId"
+              "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusDeploymentId"
+              "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusProjectId"
+              "value" = "#{Octopus.Project.Id}"
+            },
+            {
+              "key" = "OctopusEnvironmentId"
+              "value" = "#{Octopus.Environment.Id}"
+            },
+            {
+              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+              "key" = "Environment"
+            },
+            {
+              "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+              "key" = "DeploymentProject"
+            },
+          ])
+          "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+          # This stack creates a new application lambda.
+          Parameters:
+            EnvironmentName:
+              Type: String
+              Default: '#{Octopus.Environment.Name}'
+            RestApi:
+              Type: String
+            ResourceId:
+              Type: String
+            LambdaS3Key:
+              Type: String
+            LambdaS3Bucket:
+              Type: String
+            LambdaName:
+              Type: String
+            SubnetGroupName:
+              Type: String
+            LambdaDescription:
+              Type: String
+            DBUsername:
+              Type: String
+            DBPassword:
+              Type: String
+          Resources:
+            VPC:
+              Type: "AWS::EC2::VPC"
+              Properties:
+                CidrBlock: "#{Vpc.Cidr}"
+                Tags:
+                - Key: "Name"
+                  Value: !Ref LambdaName
+            SubnetA:
+              Type: "AWS::EC2::Subnet"
+              Properties:
+                AvailabilityZone: !Select
+                  - 0
+                  - !GetAZs
+                    Ref: 'AWS::Region'
+                VpcId: !Ref "VPC"
+                CidrBlock: "10.0.0.0/24"
+            SubnetB:
+              Type: "AWS::EC2::Subnet"
+              Properties:
+                AvailabilityZone: !Select
+                  - 1
+                  - !GetAZs
+                    Ref: 'AWS::Region'
+                VpcId: !Ref "VPC"
+                CidrBlock: "10.0.1.0/24"
+            RouteTable:
+              Type: "AWS::EC2::RouteTable"
+              Properties:
+                VpcId: !Ref "VPC"
+            SubnetGroup:
+              Type: "AWS::RDS::DBSubnetGroup"
+              Properties:
+                DBSubnetGroupName: !Ref SubnetGroupName
+                DBSubnetGroupDescription: "Subnet Group"
+                SubnetIds:
+                - !Ref "SubnetA"
+                - !Ref "SubnetB"
+            InstanceSecurityGroup:
+              Type: "AWS::EC2::SecurityGroup"
+              Properties:
+                GroupName: "Example Security Group"
+                GroupDescription: "RDS traffic"
+                VpcId: !Ref "VPC"
+                SecurityGroupEgress:
+                - IpProtocol: "-1"
+                  CidrIp: "0.0.0.0/0"
+            InstanceSecurityGroupIngress:
+              Type: "AWS::EC2::SecurityGroupIngress"
+              DependsOn: "InstanceSecurityGroup"
+              Properties:
+                GroupId: !Ref "InstanceSecurityGroup"
+                IpProtocol: "tcp"
+                FromPort: "0"
+                ToPort: "65535"
+                SourceSecurityGroupId: !Ref "InstanceSecurityGroup"
+            RDSCluster:
+              Type: "AWS::RDS::DBCluster"
+              Properties:
+                DBSubnetGroupName: !Ref "SubnetGroup"
+                MasterUsername: !Ref "DBUsername"
+                MasterUserPassword: !Ref "DBPassword"
+                DatabaseName: "products"
+                Engine: "aurora-mysql"
+                EngineMode: "serverless"
+                VpcSecurityGroupIds:
+                - !Ref "InstanceSecurityGroup"
+                ScalingConfiguration:
+                  AutoPause: true
+                  MaxCapacity: 1
+                  MinCapacity: 1
+                  SecondsUntilAutoPause: 300
+              DependsOn:
+                - SubnetGroup
+            AppLogGroup:
+              Type: 'AWS::Logs::LogGroup'
+              Properties:
+                LogGroupName: !Sub '/aws/lambda/$${LambdaName}'
+                RetentionInDays: 14
+            IamRoleLambdaExecution:
+              Type: 'AWS::IAM::Role'
+              Properties:
+                AssumeRolePolicyDocument:
+                  Version: 2012-10-17
+                  Statement:
+                    - Effect: Allow
+                      Principal:
+                        Service:
+                          - lambda.amazonaws.com
+                      Action:
+                        - 'sts:AssumeRole'
+                Policies:
+                  - PolicyName: !Sub '$${LambdaName}-policy'
+                    PolicyDocument:
+                      Version: 2012-10-17
+                      Statement:
+                        - Effect: Allow
+                          Action:
+                            - 'logs:CreateLogStream'
+                            - 'logs:CreateLogGroup'
+                            - 'logs:PutLogEvents'
+                          Resource:
+                            - !Sub >-
+                              arn:$${AWS::Partition}:logs:$${AWS::Region}:$${AWS::AccountId}:log-group:/aws/lambda/$${LambdaName}*:*
+                        - Effect: Allow
+                          Action:
+                            - 'ec2:DescribeInstances'
+                            - 'ec2:CreateNetworkInterface'
+                            - 'ec2:AttachNetworkInterface'
+                            - 'ec2:DeleteNetworkInterface'
+                            - 'ec2:DescribeNetworkInterfaces'
+                          Resource: "*"
+                Path: /
+                RoleName: !Sub '$${LambdaName}-role'
+            MigrationLambda:
+              Type: 'AWS::Lambda::Function'
+              Properties:
+                Description: !Ref LambdaDescription
+                Code:
+                  S3Bucket: !Ref LambdaS3Bucket
+                  S3Key: !Ref LambdaS3Key
+                Environment:
+                  Variables:
+                    DATABASE_HOSTNAME: !GetAtt
+                    - RDSCluster
+                    - Endpoint.Address
+                    DATABASE_USERNAME: !Ref "DBUsername"
+                    DATABASE_PASSWORD: !Ref "DBPassword"
+                    MIGRATE_AT_START: !!str "false"
+                    LAMBDA_NAME: "DatabaseInit"
+                    QUARKUS_PROFILE: "faas"
+                FunctionName: !Sub '$${LambdaName}-DBMigration'
+                Handler: not.used.in.provided.runtime
+                MemorySize: 256
+                PackageType: Zip
+                Role: !GetAtt
+                  - IamRoleLambdaExecution
+                  - Arn
+                Runtime: provided
+                Timeout: 600
+                VpcConfig:
+                  SecurityGroupIds:
+                    - !Ref "InstanceSecurityGroup"
+                  SubnetIds:
+                    - !Ref "SubnetA"
+                    - !Ref "SubnetB"
+            ApplicationLambda:
+              Type: 'AWS::Lambda::Function'
+              Properties:
+                Description: !Ref LambdaDescription
+                Code:
+                  S3Bucket: !Ref LambdaS3Bucket
+                  S3Key: !Ref LambdaS3Key
+                Environment:
+                  Variables:
+                    DATABASE_HOSTNAME: !GetAtt
+                    - RDSCluster
+                    - Endpoint.Address
+                    DATABASE_USERNAME: !Ref "DBUsername"
+                    DATABASE_PASSWORD: !Ref "DBPassword"
+                    MIGRATE_AT_START: !!str "false"
+                    QUARKUS_PROFILE: "faas"
+                FunctionName: !Sub '$${LambdaName}'
+                Handler: not.used.in.provided.runtime
+                MemorySize: 256
+                PackageType: Zip
+                Role: !GetAtt
+                  - IamRoleLambdaExecution
+                  - Arn
+                Runtime: provided
+                Timeout: 600
+                VpcConfig:
+                  SecurityGroupIds:
+                    - !Ref "InstanceSecurityGroup"
+                  SubnetIds:
+                    - !Ref "SubnetA"
+                    - !Ref "SubnetB"
+          Outputs:
+            ApplicationLambda:
+              Description: The Lambda ref
+              Value: !Ref ApplicationLambda
+          EOF
+          "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
+            {
+              "ParameterKey" = "EnvironmentName"
+              "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            },
+            {
+              "ParameterKey" = "RestApi"
+              "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
+            },
+            {
+              "ParameterKey" = "ResourceId"
+              "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.Api}"
+            },
+            {
+              "ParameterKey" = "LambdaS3Key"
+              "ParameterValue" = "#{Octopus.Action[Upload Lambda].Package[].PackageId}.#{Octopus.Action[Upload Lambda].Package[].PackageVersion}.zip"
+            },
+            {
+              "ParameterKey" = "LambdaS3Bucket"
+              "ParameterValue" = "#{Octopus.Action[Create S3 bucket].Output.AwsOutputs[LambdaS3Bucket]}"
+            },
+            {
+              "ParameterKey" = "LambdaName"
+              "ParameterValue" = "octopub-products-#{Octopus.Environment.Name | Replace \" .*\" \"\" | ToLower}"
+            },
+            {
+              "ParameterKey" = "SubnetGroupName"
+              "ParameterValue" = "octopub-products-#{Octopus.Environment.Name | Replace \" .*\" \"\" | ToLower}"
+            },
+            {
+              "ParameterKey" = "LambdaDescription"
+              "ParameterValue" = "#{Octopus.Deployment.Id} v#{Octopus.Action[Upload Lambda].Package[].PackageVersion}"
+            },
+            {
+              "ParameterKey" = "DBUsername"
+              "ParameterValue" = "productadmin"
+            },
+            {
+              "ParameterKey" = "DBPassword"
+              "ParameterValue" = "Password01!"
+            },
+          ])
+          "Octopus.Action.Aws.AssumeRole" = "False"
+          "Octopus.Action.Aws.WaitForCompletion" = "True"
+        }
+        environments                       = []
+        excluded_environments              = []
+        channels                           = []
+        tenant_tags                        = []
+        features                           = []
+      }
+  
+      properties   = {}
+      target_roles = []
+    }
+    step {
+      condition           = "Success"
+      name                = "Run Database Migrations"
+      package_requirement = "LetOctopusDecide"
+      start_trigger       = "StartAfterPrevious"</pre>
+<p>
+    The next step is to manually execute the database migration Lambda. This ensures that the database is populated and migrated:
+</p>  
+<pre>      action {
+        action_type                        = "Octopus.AwsRunScript"
+        name                               = "Run Database Migrations"
+        notes                              = "Run the Lambda that performs database migrations."
+        condition                          = "Success"
+        run_on_server                      = true
+        is_disabled                        = false
+        can_be_used_for_project_versioning = false
+        is_required                        = false
+        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+        properties                         = {
+          "OctopusUseBundledTooling" = "False"
+          "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+          "Octopus.Action.Aws.AssumeRole" = "False"
+          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+          "Octopus.Action.Script.ScriptBody" = <<-EOF
+          echo "Downloading Docker images"
+  
+          echo "##octopus[stdout-verbose]"
+  
+          docker pull amazon/aws-cli 2>&1
+  
+          # Alias the docker run commands
+          shopt -s expand_aliases
+          alias aws="docker run --rm -i -v $(pwd):/build -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli"
+  
+          echo "##octopus[stdout-default]"
+  
+          aws lambda invoke \
+            --function-name 'octopub-products-#{Octopus.Environment.Name | Replace " .*" "" | ToLower}-DBMigration' \
+            --payload '{}' \
+            response.json
+          EOF
+          "Octopus.Action.Script.ScriptSource" = "Inline"
+          "Octopus.Action.Script.Syntax" = "Bash"
+        }
+        environments                       = []
+        excluded_environments              = []
+        channels                           = []
+        tenant_tags                        = []
+        features                           = []
+      }
+  
+      properties   = {}
+      target_roles = []
+    }
+    step {
+      condition           = "Success"
+      name                = "Deploy Application Lambda Version"
+      package_requirement = "LetOctopusDecide"
+      start_trigger       = "StartAfterPrevious"</pre>
+<p>
+    Each deployment of the Lambda creates a new immutable Lambda version. This version is created by a CloudFormation stack with a unique name for each deployment, ensuring old Lambda versions are not removed as new versions are deployed:
+</p>  
+<pre>      action {
+        action_type                        = "Octopus.AwsRunCloudFormation"
+        name                               = "Deploy Application Lambda Version"
+        notes                              = "Stacks deploying Lambda versions must have unique names to ensure a new version is created each time. This step deploys a uniquely names stack creating a version of the Lambda deployed in the last step."
+        condition                          = "Success"
+        run_on_server                      = true
+        is_disabled                        = false
+        can_be_used_for_project_versioning = false
+        is_required                        = false
+        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+        properties                         = {
+          "Octopus.Action.Aws.IamCapabilities" = jsonencode([
+            "CAPABILITY_AUTO_EXPAND",
+            "CAPABILITY_IAM",
+            "CAPABILITY_NAMED_IAM",
+          ])
+          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambdaVersion-#{Octopus.Environment.Name | Replace \" .*\" \"\"}-#{Octopus.Deployment.Id | Replace -}"
+          "Octopus.Action.Aws.AssumeRole" = "False"
+          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+            {
+              "key" = "OctopusTenantId"
+              "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
+            },
+            {
+              "key" = "OctopusStepId"
+              "value" = "#{Octopus.Step.Id}"
+            },
+            {
+              "key" = "OctopusRunbookRunId"
+              "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusDeploymentId"
+              "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusProjectId"
+              "value" = "#{Octopus.Project.Id}"
+            },
+            {
+              "key" = "OctopusEnvironmentId"
+              "value" = "#{Octopus.Environment.Id}"
+            },
+            {
+              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+              "key" = "Environment"
+            },
+            {
+              "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+              "key" = "DeploymentProject"
+            },
+          ])
+          "Octopus.Action.Aws.WaitForCompletion" = "True"
+          "Octopus.Action.Aws.TemplateSource" = "Inline"
+          "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+          "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+          "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+          # This template creates a new lambda version for the application lambda created in the
+          # previous step. This template is created in a unique stack each time, and is cleaned
+          # up by Octopus once the API gateway no longer points to this version.
+          Parameters:
+            RestApi:
+              Type: String
+            LambdaDescription:
+              Type: String
+            ApplicationLambda:
+              Type: String
+          Resources:
+            LambdaVersion:
+              Type: 'AWS::Lambda::Version'
+              Properties:
+                FunctionName: !Ref ApplicationLambda
+                Description: !Ref LambdaDescription
+            ApplicationLambdaPermissions:
+              Type: 'AWS::Lambda::Permission'
+              Properties:
+                FunctionName: !Ref LambdaVersion
+                Action: 'lambda:InvokeFunction'
+                Principal: apigateway.amazonaws.com
+                SourceArn: !Join
+                  - ''
+                  - - 'arn:'
+                    - !Ref 'AWS::Partition'
+                    - ':execute-api:'
+                    - !Ref 'AWS::Region'
+                    - ':'
+                    - !Ref 'AWS::AccountId'
+                    - ':'
+                    - !Ref RestApi
+                    - /*/*
+          Outputs:
+            LambdaVersion:
+              Description: The name of the Lambda version resource deployed by this template
+              Value: !Ref LambdaVersion
+          EOF
+          "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
+            {
+              "ParameterKey" = "RestApi"
+              "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
+            },
+            {
+              "ParameterKey" = "LambdaDescription"
+              "ParameterValue" = "#{Octopus.Deployment.Id} v#{Octopus.Action[Upload Lambda].Package[].PackageVersion}"
+            },
+            {
+              "ParameterKey" = "ApplicationLambda"
+              "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda].Output.AwsOutputs[ApplicationLambda]}"
+            },
+          ])
+          "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([
+            {
+              "ParameterKey" = "RestApi"
+              "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
+            },
+            {
+              "ParameterKey" = "LambdaDescription"
+              "ParameterValue" = "#{Octopus.Deployment.Id} v#{Octopus.Action[Upload Lambda].Package[].PackageVersion}"
+            },
+            {
+              "ParameterKey" = "ApplicationLambda"
+              "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda].Output.AwsOutputs[ApplicationLambda]}"
+            },
+          ])
+        }
+        environments                       = []
+        excluded_environments              = []
+        channels                           = []
+        tenant_tags                        = []
+        features                           = []
+      }
+  
+      properties   = {}
+      target_roles = []
+    }
+    step {
+      condition           = "Success"
+      name                = "Update API Gateway"
+      package_requirement = "LetOctopusDecide"
+      start_trigger       = "StartAfterPrevious"</pre>
+<p>
+    Once the Lambda version is created, the next step is to expose it via the API Gateway. The CloudFormation template created by this step creates a number of API Gateway methods attached to the API Gateway resources created by the project in the last chapter:
+</p>  
+<pre>      action {
+        action_type                        = "Octopus.AwsRunCloudFormation"
+        name                               = "Update API Gateway"
+        notes                              = "This step attaches the reverse proxy version created in the previous step to the API Gateway, and creates an API Gateway deployment."
+        condition                          = "Success"
+        run_on_server                      = true
+        is_disabled                        = false
+        can_be_used_for_project_versioning = false
+        is_required                        = false
+        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+        properties                         = {
+          "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
+            {
+              "ParameterKey" = "EnvironmentName"
+              "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            },
+            {
+              "ParameterKey" = "RestApi"
+              "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
+            },
+            {
+              "ParameterKey" = "ResourceId"
+              "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.Api}"
+            },
+            {
+              "ParameterKey" = "ProxyLambdaVersion"
+              "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda Version].Output.AwsOutputs[LambdaVersion]}"
+            },
+          ])
+          "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
+          "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsApiGateway-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+          # This template links the reverse proxy to the API Gateway. Once this linking is done,
+          # the API Gateway is ready to be deployed to a stage. But the old Lambda versions are
+          # still referenced by the existing stage, so no changes have been exposed to the
+          # end user.
+          Parameters:
+            EnvironmentName:
+              Type: String
+              Default: '#{Octopus.Environment.Name | Replace " .*" ""}'
+            RestApi:
+              Type: String
+            ResourceId:
+              Type: String
+            ProxyLambdaVersion:
+              Type: String
+          Resources:
+            ApiProductsResource:
+              Type: 'AWS::ApiGateway::Resource'
+              Properties:
+                RestApiId: !Ref RestApi
+                ParentId: !Ref ResourceId
+                PathPart: products
+            ApiProductsProxyResource:
+              Type: 'AWS::ApiGateway::Resource'
+              Properties:
+                RestApiId: !Ref RestApi
+                ParentId: !Ref ApiProductsResource
+                PathPart: '{proxy+}'
+            ApiProductsMethod:
+              Type: 'AWS::ApiGateway::Method'
+              Properties:
+                AuthorizationType: NONE
+                HttpMethod: ANY
+                Integration:
+                  IntegrationHttpMethod: POST
+                  TimeoutInMillis: 20000
+                  Type: AWS_PROXY
+                  Uri: !Join
+                    - ''
+                    - - 'arn:'
+                      - !Ref 'AWS::Partition'
+                      - ':apigateway:'
+                      - !Ref 'AWS::Region'
+                      - ':lambda:path/2015-03-31/functions/'
+                      - !Ref ProxyLambdaVersion
+                      - /invocations
+                ResourceId: !Ref ApiProductsResource
+                RestApiId: !Ref RestApi
+            ApiProxyProductsMethod:
+              Type: 'AWS::ApiGateway::Method'
+              Properties:
+                AuthorizationType: NONE
+                HttpMethod: ANY
+                Integration:
+                  IntegrationHttpMethod: POST
+                  TimeoutInMillis: 20000
+                  Type: AWS_PROXY
+                  Uri: !Join
+                    - ''
+                    - - 'arn:'
+                      - !Ref 'AWS::Partition'
+                      - ':apigateway:'
+                      - !Ref 'AWS::Region'
+                      - ':lambda:path/2015-03-31/functions/'
+                      - !Ref ProxyLambdaVersion
+                      - /invocations
+                ResourceId: !Ref ApiProductsProxyResource
+                RestApiId: !Ref RestApi
+            'Deployment#{Octopus.Deployment.Id | Replace -}':
+              Type: 'AWS::ApiGateway::Deployment'
+              Properties:
+                RestApiId: !Ref RestApi
+              DependsOn:
+                - ApiProductsMethod
+          Outputs:
+            DeploymentId:
+              Description: The deployment id
+              Value: !Ref 'Deployment#{Octopus.Deployment.Id | Replace -}'
+            ApiProductsMethod:
+              Description: The method hosting the root api endpoint
+              Value: !Ref ApiProductsMethod
+            ApiProxyProductsMethod:
+              Description: The method hosting the api endpoint subdirectories
+              Value: !Ref ApiProxyProductsMethod
+            DownstreamService:
+              Description: The function that was configured to accept traffic.
+              Value: !Join
+                - ''
+                - - 'arn:'
+                  - !Ref 'AWS::Partition'
+                  - ':apigateway:'
+                  - !Ref 'AWS::Region'
+                  - ':lambda:path/2015-03-31/functions/'
+                  - !Ref ProxyLambdaVersion
+                  - /invocations
+          EOF
+          "Octopus.Action.Aws.AssumeRole" = "False"
+          "Octopus.Action.Aws.WaitForCompletion" = "True"
+          "Octopus.Action.Aws.TemplateSource" = "Inline"
+          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+          "Octopus.Action.Aws.IamCapabilities" = jsonencode([
+            "CAPABILITY_AUTO_EXPAND",
+            "CAPABILITY_IAM",
+            "CAPABILITY_NAMED_IAM",
+          ])
+          "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+            {
+              "key" = "OctopusTenantId"
+              "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
+            },
+            {
+              "key" = "OctopusStepId"
+              "value" = "#{Octopus.Step.Id}"
+            },
+            {
+              "key" = "OctopusRunbookRunId"
+              "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusDeploymentId"
+              "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusProjectId"
+              "value" = "#{Octopus.Project.Id}"
+            },
+            {
+              "key" = "OctopusEnvironmentId"
+              "value" = "#{Octopus.Environment.Id}"
+            },
+            {
+              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+              "key" = "Environment"
+            },
+            {
+              "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+              "key" = "DeploymentProject"
+            },
+          ])
+        }
+        environments                       = []
+        excluded_environments              = []
+        channels                           = []
+        tenant_tags                        = []
+        features                           = []
+      }
+  
+      properties   = {}
+      target_roles = []
+    }
+    step {
+      condition           = "Success"
+      name                = "Update Stage"
+      package_requirement = "LetOctopusDecide"
+      start_trigger       = "StartAfterPrevious"</pre>
+<p>
+    The changes to the API Gateway must be deployed as an API Gateway stage in order for the changes to be exposed publicly:
+</p>  
+<pre>      action {
+        action_type                        = "Octopus.AwsRunCloudFormation"
+        name                               = "Update Stage"
+        notes                              = "This step deploys the deployment created in the previous step, effectively exposing the new Lambdas to the public."
+        condition                          = "Success"
+        run_on_server                      = true
+        is_disabled                        = false
+        can_be_used_for_project_versioning = false
+        is_required                        = false
+        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+        properties                         = {
+          "Octopus.Action.Aws.WaitForCompletion" = "True"
+          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+            {
+              "key" = "Environment"
+              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            },
+            {
+              "key" = "DeploymentProject"
+              "value" = "Backend_Service"
+            },
+          ])
+          "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+          # This template updates the stage with the deployment created in the previous step.
+          # It is here that the new Lambda versions are exposed to the end user.
+          Parameters:
+            EnvironmentName:
+              Type: String
+              Default: '#{Octopus.Environment.Name | Replace " .*" ""}'
+            DeploymentId:
+              Type: String
+              Default: 'Deployment#{DeploymentId}'
+            ApiGatewayId:
+              Type: String
+          Resources:
+            Stage:
+              Type: 'AWS::ApiGateway::Stage'
+              Properties:
+                DeploymentId:
+                  'Fn::Sub': '$${DeploymentId}'
+                RestApiId:
+                  'Fn::Sub': '$${ApiGatewayId}'
+                StageName:
+                  'Fn::Sub': '$${EnvironmentName}'
+          Outputs:
+            DnsName:
+              Value:
+                'Fn::Join':
+                  - ''
+                  - - Ref: ApiGatewayId
+                    - .execute-api.
+                    - Ref: 'AWS::Region'
+                    - .amazonaws.com
+            StageURL:
+              Description: The url of the stage
+              Value:
+                'Fn::Join':
+                  - ''
+                  - - 'https://'
+                    - Ref: ApiGatewayId
+                    - .execute-api.
+                    - Ref: 'AWS::Region'
+                    - .amazonaws.com/
+                    - Ref: Stage
+                    - /
+          EOF
+          "Octopus.Action.Aws.TemplateSource" = "Inline"
+          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubApiGatewayStage-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+          "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
+            {
+              "ParameterKey" = "EnvironmentName"
+              "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\" }"
+            },
+            {
+              "ParameterKey" = "DeploymentId"
+              "ParameterValue" = "#{Octopus.Action[Update API Gateway].Output.AwsOutputs[DeploymentId]}"
+            },
+            {
+              "ParameterKey" = "ApiGatewayId"
+              "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
+            },
+          ])
+          "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+          "Octopus.Action.Aws.AssumeRole" = "False"
+          "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([
+            {
+              "ParameterKey" = "EnvironmentName"
+              "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\" }"
+            },
+            {
+              "ParameterValue" = "#{Octopus.Action[Update API Gateway].Output.AwsOutputs[DeploymentId]}"
+              "ParameterKey" = "DeploymentId"
+            },
+            {
+              "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
+              "ParameterKey" = "ApiGatewayId"
+            },
+          ])
+          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+        }
+        environments                       = []
+        excluded_environments              = []
+        channels                           = []
+        tenant_tags                        = []
+        features                           = []
+      }
+  
+      properties   = {}
+      target_roles = []
+    }
+  }</pre>
 <p>
     With the products API deployed the next step is to deploy the web based frontend.
 </p>

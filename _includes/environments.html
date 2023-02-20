@@ -16,6 +16,55 @@ terraform apply</pre>
     The new environments are automatically included in the default lifecycle, which defines the order in which deployments are progressed through environments:
 </p>
 <div><img alt="Octopus environments" src="images/octopus/lifecycles.png"/></div>
+<h2>Breaking down the HCL</h2>
+<p>
+    We have two environments for this sample application. The first is the <strong>Development</strong> environment, which is typically used to expose versions of the application under active development with other internal members of the DevOps team:
+</p>
+<pre>resource "octopusdeploy_environment" "environment_development" {
+      name                         = "Development"
+      description                  = "An environment for the development team."
+      allow_dynamic_infrastructure = true
+      use_guided_failure           = false
+      sort_order                   = 0
+    
+      jira_extension_settings {
+        environment_type = "unmapped"
+      }
+    
+      jira_service_management_extension_settings {
+        is_enabled = false
+      }
+    
+      servicenow_extension_settings {
+        is_enabled = false
+      }
+    }</pre>
+<p>
+    The second environment is the <strong>Production</strong> environment. This is typically where version of the application are deployed for public access by end users or customers.
+</p>    
+<p>
+    Note the <strong>sort_order</strong> property, which specifies that the <strong>Production</strong> environment appears after the <strong>Development</strong> environment. This is because the order in which environments are sorted is directly reflected in the default lifecycle. We need the <strong>Development</strong> environment to have a lower sort value so it will appear first in the default lifecycle:
+</p>
+<pre>resource "octopusdeploy_environment" "environment_production" {
+      name                         = "Production"
+      description                  = "The production environment."
+      allow_dynamic_infrastructure = true
+      use_guided_failure           = false
+      sort_order                   = 1
+    
+      jira_extension_settings {
+        environment_type = "unmapped"
+      }
+    
+      jira_service_management_extension_settings {
+        is_enabled = false
+      }
+    
+      servicenow_extension_settings {
+        is_enabled = false
+      }
+    
+    }</pre>
 <p>
     With the environments created, the next step is to define shared global variables with a library variable set.
 </p>

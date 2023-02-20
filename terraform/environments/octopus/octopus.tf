@@ -56,7 +56,7 @@ resource "octopusdeploy_environment" "environment_production" {
   description                  = "The production environment."
   allow_dynamic_infrastructure = true
   use_guided_failure           = false
-  sort_order                   = 0
+  sort_order                   = 1
 
   jira_extension_settings {
     environment_type = "unmapped"
@@ -69,8 +69,4 @@ resource "octopusdeploy_environment" "environment_production" {
   servicenow_extension_settings {
     is_enabled = false
   }
-
-  depends_on = [
-    octopusdeploy_environment.environment_development
-  ]
 }

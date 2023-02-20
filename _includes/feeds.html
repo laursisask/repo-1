@@ -69,6 +69,9 @@ The Octopus provider requires the Octopus server, API key, and space ID. Each of
     description = "The ID of the Octopus space to populate."
   }</pre>
 <p>
+  The terraform configuration block, provider initialization, and provider variables above are shared between all projects. We won't cover them again as they are identical ever time.
+</p>
+<p>
     The final resource is the Octopus feed. We have used the Maven feed to access a public AWS S3 bucket, allowing Octopus to consume artifacts without having to define any credentials:
 </p>
 <pre>resource "octopusdeploy_maven_feed" "sales_maven_feed" {

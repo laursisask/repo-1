@@ -19,6 +19,36 @@ terraform apply</pre>
     To verify the account is working as expected, click it, and then click the <strong>SAVE AND TEST</strong> button:
 </p>
 <div><img alt="Octopus account test" src="images/octopus/awsaccountest.png"/></div>
+<h2>Breaking down the HCL</h2>
+<p>
+    We start by defining the AWS account. This account does not belong to any tenants or environments, making it globally available. The AWS keys reference variables allowing them to be passed in when the Terraform configuration is applied:
+</p>
+<pre>resource "octopusdeploy_aws_account" "account_aws_account" {
+    name                              = "AWS Account"
+    description                       = ""
+    environments                      = []
+    tenant_tags                       = []
+    tenants                           = null
+    tenanted_deployment_participation = "Untenanted"
+    access_key                        = "${var.account_aws_account_access}"
+    secret_key                        = "${var.account_aws_account}"
+  }</pre>
+<p>
+    The AWS keys are exposed as variables:
+</p>
+<pre>variable "account_aws_account" {
+    type        = string
+    nullable    = false
+    sensitive   = true
+    description = "The AWS secret key associated with the account AWS Account"
+  }
+  
+  variable "account_aws_account_access" {
+    type        = string
+    nullable    = false
+    sensitive   = false
+    description = "The AWS access key associated with the account AWS Account"
+  }</pre>
 <p>
     With the account configured the next step is to configure the environments.
 </p>

@@ -31,20 +31,6 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
-data "octopusdeploy_environments" "environment_production" {
-  ids          = null
-  partial_name = "Production"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_environments" "environment_development" {
-  ids          = null
-  partial_name = "Development"
-  skip         = 0
-  take         = 1
-}
-
 data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
   ids          = null
   partial_name = "Octopub"
@@ -252,7 +238,49 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Downloading Docker images\"\n\necho \"##octopus[stdout-verbose]\"\n\ndocker pull amazon/aws-cli 2\u003e\u00261\n\n# Alias the docker run commands\nshopt -s expand_aliases\nalias aws=\"docker run --rm -i -v $(pwd):/build -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli\"\n\necho \"##octopus[stdout-default]\"\n\nAPI_RESOURCE=$(aws cloudformation \\\n    describe-stacks \\\n    --stack-name #{AWS.CloudFormation.ApiGatewayStack} \\\n    --query \"Stacks[0].Outputs[?OutputKey=='Api'].OutputValue\" \\\n    --output text)\n\nset_octopusvariable \"Api\" $${API_RESOURCE}\n\necho \"API Resource ID: $${API_RESOURCE}\"\n\nif [[ -z \"$${API_RESOURCE}\" ]]; then\n  echo \"Run the API Gateway project first\"\n  exit 1\nfi\n\nREST_API=$(aws cloudformation \\\n    describe-stacks \\\n    --stack-name #{AWS.CloudFormation.ApiGatewayStack} \\\n    --query \"Stacks[0].Outputs[?OutputKey=='RestApi'].OutputValue\" \\\n    --output text)\n\nset_octopusvariable \"RestApi\" $${REST_API}\n\necho \"Rest Api ID: $${REST_API}\"\n\nif [[ -z \"$${REST_API}\" ]]; then\n  echo \"Run the API Gateway project first\"\n  exit 1\nfi\n\n"
+        "Octopus.Action.Script.ScriptBody" = <<-EOF
+        echo "Downloading Docker images"
+
+        echo "##octopus[stdout-verbose]"
+
+        docker pull amazon/aws-cli 2>&1
+
+        # Alias the docker run commands
+        shopt -s expand_aliases
+        alias aws="docker run --rm -i -v $(pwd):/build -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli"
+
+        echo "##octopus[stdout-default]"
+
+        API_RESOURCE=$(aws cloudformation \
+            describe-stacks \
+            --stack-name #{AWS.CloudFormation.ApiGatewayStack} \
+            --query "Stacks[0].Outputs[?OutputKey=='Api'].OutputValue" \
+            --output text)
+
+        set_octopusvariable "Api" $${API_RESOURCE}
+
+        echo "API Resource ID: $${API_RESOURCE}"
+
+        if [[ -z "$${API_RESOURCE}" ]]; then
+          echo "Run the API Gateway project first"
+          exit 1
+        fi
+
+        REST_API=$(aws cloudformation \
+            describe-stacks \
+            --stack-name #{AWS.CloudFormation.ApiGatewayStack} \
+            --query "Stacks[0].Outputs[?OutputKey=='RestApi'].OutputValue" \
+            --output text)
+
+        set_octopusvariable "RestApi" $${REST_API}
+
+        echo "Rest Api ID: $${REST_API}"
+
+        if [[ -z "$${REST_API}" ]]; then
+          echo "Run the API Gateway project first"
+          exit 1
+        fi
+        EOF
         "Octopus.Action.Aws.Region" = "#{AWS.Region}"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
@@ -332,7 +360,212 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
             "key" = "DeploymentProject"
           },
         ])
-        "Octopus.Action.Aws.CloudFormationTemplate" = "# This stack creates a new application lambda.\nParameters:\n  EnvironmentName:\n    Type: String\n    Default: '#{Octopus.Environment.Name}'\n  RestApi:\n    Type: String\n  ResourceId:\n    Type: String\n  LambdaS3Key:\n    Type: String\n  LambdaS3Bucket:\n    Type: String\n  LambdaName:\n    Type: String\n  SubnetGroupName:\n    Type: String\n  LambdaDescription:\n    Type: String\n  DBUsername:\n    Type: String\n  DBPassword:\n    Type: String\nResources:\n  VPC:\n    Type: \"AWS::EC2::VPC\"\n    Properties:\n      CidrBlock: \"#{Vpc.Cidr}\"\n      Tags:\n      - Key: \"Name\"\n        Value: !Ref LambdaName\n  SubnetA:\n    Type: \"AWS::EC2::Subnet\"\n    Properties:\n      AvailabilityZone: !Select\n        - 0\n        - !GetAZs\n          Ref: 'AWS::Region'\n      VpcId: !Ref \"VPC\"\n      CidrBlock: \"10.0.0.0/24\"\n  SubnetB:\n    Type: \"AWS::EC2::Subnet\"\n    Properties:\n      AvailabilityZone: !Select\n        - 1\n        - !GetAZs\n          Ref: 'AWS::Region'\n      VpcId: !Ref \"VPC\"\n      CidrBlock: \"10.0.1.0/24\"\n  RouteTable:\n    Type: \"AWS::EC2::RouteTable\"\n    Properties:\n      VpcId: !Ref \"VPC\"\n  SubnetGroup:\n    Type: \"AWS::RDS::DBSubnetGroup\"\n    Properties:\n      DBSubnetGroupName: !Ref SubnetGroupName\n      DBSubnetGroupDescription: \"Subnet Group\"\n      SubnetIds:\n      - !Ref \"SubnetA\"\n      - !Ref \"SubnetB\"\n  InstanceSecurityGroup:\n    Type: \"AWS::EC2::SecurityGroup\"\n    Properties:\n      GroupName: \"Example Security Group\"\n      GroupDescription: \"RDS traffic\"\n      VpcId: !Ref \"VPC\"\n      SecurityGroupEgress:\n      - IpProtocol: \"-1\"\n        CidrIp: \"0.0.0.0/0\"\n  InstanceSecurityGroupIngress:\n    Type: \"AWS::EC2::SecurityGroupIngress\"\n    DependsOn: \"InstanceSecurityGroup\"\n    Properties:\n      GroupId: !Ref \"InstanceSecurityGroup\"\n      IpProtocol: \"tcp\"\n      FromPort: \"0\"\n      ToPort: \"65535\"\n      SourceSecurityGroupId: !Ref \"InstanceSecurityGroup\"\n  RDSCluster:\n    Type: \"AWS::RDS::DBCluster\"\n    Properties:\n      DBSubnetGroupName: !Ref \"SubnetGroup\"\n      MasterUsername: !Ref \"DBUsername\"\n      MasterUserPassword: !Ref \"DBPassword\"\n      DatabaseName: \"products\"\n      Engine: \"aurora-mysql\"\n      EngineMode: \"serverless\"\n      VpcSecurityGroupIds:\n      - !Ref \"InstanceSecurityGroup\"\n      ScalingConfiguration:\n        AutoPause: true\n        MaxCapacity: 1\n        MinCapacity: 1\n        SecondsUntilAutoPause: 300\n    DependsOn:\n      - SubnetGroup\n  AppLogGroup:\n    Type: 'AWS::Logs::LogGroup'\n    Properties:\n      LogGroupName: !Sub '/aws/lambda/$${LambdaName}'\n      RetentionInDays: 14\n  IamRoleLambdaExecution:\n    Type: 'AWS::IAM::Role'\n    Properties:\n      AssumeRolePolicyDocument:\n        Version: 2012-10-17\n        Statement:\n          - Effect: Allow\n            Principal:\n              Service:\n                - lambda.amazonaws.com\n            Action:\n              - 'sts:AssumeRole'\n      Policies:\n        - PolicyName: !Sub '$${LambdaName}-policy'\n          PolicyDocument:\n            Version: 2012-10-17\n            Statement:\n              - Effect: Allow\n                Action:\n                  - 'logs:CreateLogStream'\n                  - 'logs:CreateLogGroup'\n                  - 'logs:PutLogEvents'\n                Resource:\n                  - !Sub \u003e-\n                    arn:$${AWS::Partition}:logs:$${AWS::Region}:$${AWS::AccountId}:log-group:/aws/lambda/$${LambdaName}*:*\n              - Effect: Allow\n                Action:\n                  - 'ec2:DescribeInstances'\n                  - 'ec2:CreateNetworkInterface'\n                  - 'ec2:AttachNetworkInterface'\n                  - 'ec2:DeleteNetworkInterface'\n                  - 'ec2:DescribeNetworkInterfaces'\n                Resource: \"*\"\n      Path: /\n      RoleName: !Sub '$${LambdaName}-role'\n  MigrationLambda:\n    Type: 'AWS::Lambda::Function'\n    Properties:\n      Description: !Ref LambdaDescription\n      Code:\n        S3Bucket: !Ref LambdaS3Bucket\n        S3Key: !Ref LambdaS3Key\n      Environment:\n        Variables:\n          DATABASE_HOSTNAME: !GetAtt\n          - RDSCluster\n          - Endpoint.Address\n          DATABASE_USERNAME: !Ref \"DBUsername\"\n          DATABASE_PASSWORD: !Ref \"DBPassword\"\n          MIGRATE_AT_START: !!str \"false\"\n          LAMBDA_NAME: \"DatabaseInit\"\n          QUARKUS_PROFILE: \"faas\"\n      FunctionName: !Sub '$${LambdaName}-DBMigration'\n      Handler: not.used.in.provided.runtime\n      MemorySize: 256\n      PackageType: Zip\n      Role: !GetAtt\n        - IamRoleLambdaExecution\n        - Arn\n      Runtime: provided\n      Timeout: 600\n      VpcConfig:\n        SecurityGroupIds:\n          - !Ref \"InstanceSecurityGroup\"\n        SubnetIds:\n          - !Ref \"SubnetA\"\n          - !Ref \"SubnetB\"\n  ApplicationLambda:\n    Type: 'AWS::Lambda::Function'\n    Properties:\n      Description: !Ref LambdaDescription\n      Code:\n        S3Bucket: !Ref LambdaS3Bucket\n        S3Key: !Ref LambdaS3Key\n      Environment:\n        Variables:\n          DATABASE_HOSTNAME: !GetAtt\n          - RDSCluster\n          - Endpoint.Address\n          DATABASE_USERNAME: !Ref \"DBUsername\"\n          DATABASE_PASSWORD: !Ref \"DBPassword\"\n          MIGRATE_AT_START: !!str \"false\"\n          QUARKUS_PROFILE: \"faas\"\n      FunctionName: !Sub '$${LambdaName}'\n      Handler: not.used.in.provided.runtime\n      MemorySize: 256\n      PackageType: Zip\n      Role: !GetAtt\n        - IamRoleLambdaExecution\n        - Arn\n      Runtime: provided\n      Timeout: 600\n      VpcConfig:\n        SecurityGroupIds:\n          - !Ref \"InstanceSecurityGroup\"\n        SubnetIds:\n          - !Ref \"SubnetA\"\n          - !Ref \"SubnetB\"\nOutputs:\n  ApplicationLambda:\n    Description: The Lambda ref\n    Value: !Ref ApplicationLambda\n"
+        "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+        # This stack creates a new application lambda.
+        Parameters:
+          EnvironmentName:
+            Type: String
+            Default: '#{Octopus.Environment.Name}'
+          RestApi:
+            Type: String
+          ResourceId:
+            Type: String
+          LambdaS3Key:
+            Type: String
+          LambdaS3Bucket:
+            Type: String
+          LambdaName:
+            Type: String
+          SubnetGroupName:
+            Type: String
+          LambdaDescription:
+            Type: String
+          DBUsername:
+            Type: String
+          DBPassword:
+            Type: String
+        Resources:
+          VPC:
+            Type: "AWS::EC2::VPC"
+            Properties:
+              CidrBlock: "#{Vpc.Cidr}"
+              Tags:
+              - Key: "Name"
+                Value: !Ref LambdaName
+          SubnetA:
+            Type: "AWS::EC2::Subnet"
+            Properties:
+              AvailabilityZone: !Select
+                - 0
+                - !GetAZs
+                  Ref: 'AWS::Region'
+              VpcId: !Ref "VPC"
+              CidrBlock: "10.0.0.0/24"
+          SubnetB:
+            Type: "AWS::EC2::Subnet"
+            Properties:
+              AvailabilityZone: !Select
+                - 1
+                - !GetAZs
+                  Ref: 'AWS::Region'
+              VpcId: !Ref "VPC"
+              CidrBlock: "10.0.1.0/24"
+          RouteTable:
+            Type: "AWS::EC2::RouteTable"
+            Properties:
+              VpcId: !Ref "VPC"
+          SubnetGroup:
+            Type: "AWS::RDS::DBSubnetGroup"
+            Properties:
+              DBSubnetGroupName: !Ref SubnetGroupName
+              DBSubnetGroupDescription: "Subnet Group"
+              SubnetIds:
+              - !Ref "SubnetA"
+              - !Ref "SubnetB"
+          InstanceSecurityGroup:
+            Type: "AWS::EC2::SecurityGroup"
+            Properties:
+              GroupName: "Example Security Group"
+              GroupDescription: "RDS traffic"
+              VpcId: !Ref "VPC"
+              SecurityGroupEgress:
+              - IpProtocol: "-1"
+                CidrIp: "0.0.0.0/0"
+          InstanceSecurityGroupIngress:
+            Type: "AWS::EC2::SecurityGroupIngress"
+            DependsOn: "InstanceSecurityGroup"
+            Properties:
+              GroupId: !Ref "InstanceSecurityGroup"
+              IpProtocol: "tcp"
+              FromPort: "0"
+              ToPort: "65535"
+              SourceSecurityGroupId: !Ref "InstanceSecurityGroup"
+          RDSCluster:
+            Type: "AWS::RDS::DBCluster"
+            Properties:
+              DBSubnetGroupName: !Ref "SubnetGroup"
+              MasterUsername: !Ref "DBUsername"
+              MasterUserPassword: !Ref "DBPassword"
+              DatabaseName: "products"
+              Engine: "aurora-mysql"
+              EngineMode: "serverless"
+              VpcSecurityGroupIds:
+              - !Ref "InstanceSecurityGroup"
+              ScalingConfiguration:
+                AutoPause: true
+                MaxCapacity: 1
+                MinCapacity: 1
+                SecondsUntilAutoPause: 300
+            DependsOn:
+              - SubnetGroup
+          AppLogGroup:
+            Type: 'AWS::Logs::LogGroup'
+            Properties:
+              LogGroupName: !Sub '/aws/lambda/$${LambdaName}'
+              RetentionInDays: 14
+          IamRoleLambdaExecution:
+            Type: 'AWS::IAM::Role'
+            Properties:
+              AssumeRolePolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                  - Effect: Allow
+                    Principal:
+                      Service:
+                        - lambda.amazonaws.com
+                    Action:
+                      - 'sts:AssumeRole'
+              Policies:
+                - PolicyName: !Sub '$${LambdaName}-policy'
+                  PolicyDocument:
+                    Version: 2012-10-17
+                    Statement:
+                      - Effect: Allow
+                        Action:
+                          - 'logs:CreateLogStream'
+                          - 'logs:CreateLogGroup'
+                          - 'logs:PutLogEvents'
+                        Resource:
+                          - !Sub >-
+                            arn:$${AWS::Partition}:logs:$${AWS::Region}:$${AWS::AccountId}:log-group:/aws/lambda/$${LambdaName}*:*
+                      - Effect: Allow
+                        Action:
+                          - 'ec2:DescribeInstances'
+                          - 'ec2:CreateNetworkInterface'
+                          - 'ec2:AttachNetworkInterface'
+                          - 'ec2:DeleteNetworkInterface'
+                          - 'ec2:DescribeNetworkInterfaces'
+                        Resource: "*"
+              Path: /
+              RoleName: !Sub '$${LambdaName}-role'
+          MigrationLambda:
+            Type: 'AWS::Lambda::Function'
+            Properties:
+              Description: !Ref LambdaDescription
+              Code:
+                S3Bucket: !Ref LambdaS3Bucket
+                S3Key: !Ref LambdaS3Key
+              Environment:
+                Variables:
+                  DATABASE_HOSTNAME: !GetAtt
+                  - RDSCluster
+                  - Endpoint.Address
+                  DATABASE_USERNAME: !Ref "DBUsername"
+                  DATABASE_PASSWORD: !Ref "DBPassword"
+                  MIGRATE_AT_START: !!str "false"
+                  LAMBDA_NAME: "DatabaseInit"
+                  QUARKUS_PROFILE: "faas"
+              FunctionName: !Sub '$${LambdaName}-DBMigration'
+              Handler: not.used.in.provided.runtime
+              MemorySize: 256
+              PackageType: Zip
+              Role: !GetAtt
+                - IamRoleLambdaExecution
+                - Arn
+              Runtime: provided
+              Timeout: 600
+              VpcConfig:
+                SecurityGroupIds:
+                  - !Ref "InstanceSecurityGroup"
+                SubnetIds:
+                  - !Ref "SubnetA"
+                  - !Ref "SubnetB"
+          ApplicationLambda:
+            Type: 'AWS::Lambda::Function'
+            Properties:
+              Description: !Ref LambdaDescription
+              Code:
+                S3Bucket: !Ref LambdaS3Bucket
+                S3Key: !Ref LambdaS3Key
+              Environment:
+                Variables:
+                  DATABASE_HOSTNAME: !GetAtt
+                  - RDSCluster
+                  - Endpoint.Address
+                  DATABASE_USERNAME: !Ref "DBUsername"
+                  DATABASE_PASSWORD: !Ref "DBPassword"
+                  MIGRATE_AT_START: !!str "false"
+                  QUARKUS_PROFILE: "faas"
+              FunctionName: !Sub '$${LambdaName}'
+              Handler: not.used.in.provided.runtime
+              MemorySize: 256
+              PackageType: Zip
+              Role: !GetAtt
+                - IamRoleLambdaExecution
+                - Arn
+              Runtime: provided
+              Timeout: 600
+              VpcConfig:
+                SecurityGroupIds:
+                  - !Ref "InstanceSecurityGroup"
+                SubnetIds:
+                  - !Ref "SubnetA"
+                  - !Ref "SubnetB"
+        Outputs:
+          ApplicationLambda:
+            Description: The Lambda ref
+            Value: !Ref ApplicationLambda
+        EOF
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
           {
             "ParameterKey" = "EnvironmentName"
@@ -409,8 +642,24 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         "Octopus.Action.Aws.Region" = "#{AWS.Region}"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Downloading Docker images\"\n\necho \"##octopus[stdout-verbose]\"\n\ndocker pull amazon/aws-cli 2\u003e\u00261\n\n# Alias the docker run commands\nshopt -s expand_aliases\nalias aws=\"docker run --rm -i -v $(pwd):/build -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli\"\n\necho \"##octopus[stdout-default]\"\n\naws lambda invoke \\\n  --function-name 'octopub-products-#{Octopus.Environment.Name | Replace \" .*\" \"\" | ToLower}-DBMigration' \\\n  --payload '{}' \\\n  response.json\n"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Script.ScriptBody" = <<-EOF
+        echo "Downloading Docker images"
+
+        echo "##octopus[stdout-verbose]"
+
+        docker pull amazon/aws-cli 2>&1
+
+        # Alias the docker run commands
+        shopt -s expand_aliases
+        alias aws="docker run --rm -i -v $(pwd):/build -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY amazon/aws-cli"
+
+        echo "##octopus[stdout-default]"
+
+        aws lambda invoke \
+          --function-name 'octopub-products-#{Octopus.Environment.Name | Replace " .*" "" | ToLower}-DBMigration' \
+          --payload '{}' \
+          response.json
+        EOF
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "Bash"
       }
@@ -487,7 +736,45 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         "Octopus.Action.Aws.TemplateSource" = "Inline"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.Aws.Region" = "#{AWS.Region}"
-        "Octopus.Action.Aws.CloudFormationTemplate" = "# This template creates a new lambda version for the application lambda created in the\n# previous step. This template is created in a unique stack each time, and is cleaned\n# up by Octopus once the API gateway no longer points to this version.\nParameters:\n  RestApi:\n    Type: String\n  LambdaDescription:\n    Type: String\n  ApplicationLambda:\n    Type: String\nResources:\n  LambdaVersion:\n    Type: 'AWS::Lambda::Version'\n    Properties:\n      FunctionName: !Ref ApplicationLambda\n      Description: !Ref LambdaDescription\n  ApplicationLambdaPermissions:\n    Type: 'AWS::Lambda::Permission'\n    Properties:\n      FunctionName: !Ref LambdaVersion\n      Action: 'lambda:InvokeFunction'\n      Principal: apigateway.amazonaws.com\n      SourceArn: !Join\n        - ''\n        - - 'arn:'\n          - !Ref 'AWS::Partition'\n          - ':execute-api:'\n          - !Ref 'AWS::Region'\n          - ':'\n          - !Ref 'AWS::AccountId'\n          - ':'\n          - !Ref RestApi\n          - /*/*\nOutputs:\n  LambdaVersion:\n    Description: The name of the Lambda version resource deployed by this template\n    Value: !Ref LambdaVersion\n"
+        "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+        # This template creates a new lambda version for the application lambda created in the
+        # previous step. This template is created in a unique stack each time, and is cleaned
+        # up by Octopus once the API gateway no longer points to this version.
+        Parameters:
+          RestApi:
+            Type: String
+          LambdaDescription:
+            Type: String
+          ApplicationLambda:
+            Type: String
+        Resources:
+          LambdaVersion:
+            Type: 'AWS::Lambda::Version'
+            Properties:
+              FunctionName: !Ref ApplicationLambda
+              Description: !Ref LambdaDescription
+          ApplicationLambdaPermissions:
+            Type: 'AWS::Lambda::Permission'
+            Properties:
+              FunctionName: !Ref LambdaVersion
+              Action: 'lambda:InvokeFunction'
+              Principal: apigateway.amazonaws.com
+              SourceArn: !Join
+                - ''
+                - - 'arn:'
+                  - !Ref 'AWS::Partition'
+                  - ':execute-api:'
+                  - !Ref 'AWS::Region'
+                  - ':'
+                  - !Ref 'AWS::AccountId'
+                  - ':'
+                  - !Ref RestApi
+                  - /*/*
+        Outputs:
+          LambdaVersion:
+            Description: The name of the Lambda version resource deployed by this template
+            Value: !Ref LambdaVersion
+        EOF
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
           {
             "ParameterKey" = "RestApi"
@@ -565,7 +852,102 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsApiGateway-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
-        "Octopus.Action.Aws.CloudFormationTemplate" = "# This template links the reverse proxy to the API Gateway. Once this linking is done,\n# the API Gateway is ready to be deployed to a stage. But the old Lambda versions are\n# still referenced by the existing stage, so no changes have been exposed to the\n# end user.\nParameters:\n  EnvironmentName:\n    Type: String\n    Default: '#{Octopus.Environment.Name | Replace \" .*\" \"\"}'\n  RestApi:\n    Type: String\n  ResourceId:\n    Type: String\n  ProxyLambdaVersion:\n    Type: String\nResources:\n  ApiProductsResource:\n    Type: 'AWS::ApiGateway::Resource'\n    Properties:\n      RestApiId: !Ref RestApi\n      ParentId: !Ref ResourceId\n      PathPart: products\n  ApiProductsProxyResource:\n    Type: 'AWS::ApiGateway::Resource'\n    Properties:\n      RestApiId: !Ref RestApi\n      ParentId: !Ref ApiProductsResource\n      PathPart: '{proxy+}'\n  ApiProductsMethod:\n    Type: 'AWS::ApiGateway::Method'\n    Properties:\n      AuthorizationType: NONE\n      HttpMethod: ANY\n      Integration:\n        IntegrationHttpMethod: POST\n        TimeoutInMillis: 20000\n        Type: AWS_PROXY\n        Uri: !Join\n          - ''\n          - - 'arn:'\n            - !Ref 'AWS::Partition'\n            - ':apigateway:'\n            - !Ref 'AWS::Region'\n            - ':lambda:path/2015-03-31/functions/'\n            - !Ref ProxyLambdaVersion\n            - /invocations\n      ResourceId: !Ref ApiProductsResource\n      RestApiId: !Ref RestApi\n  ApiProxyProductsMethod:\n    Type: 'AWS::ApiGateway::Method'\n    Properties:\n      AuthorizationType: NONE\n      HttpMethod: ANY\n      Integration:\n        IntegrationHttpMethod: POST\n        TimeoutInMillis: 20000\n        Type: AWS_PROXY\n        Uri: !Join\n          - ''\n          - - 'arn:'\n            - !Ref 'AWS::Partition'\n            - ':apigateway:'\n            - !Ref 'AWS::Region'\n            - ':lambda:path/2015-03-31/functions/'\n            - !Ref ProxyLambdaVersion\n            - /invocations\n      ResourceId: !Ref ApiProductsProxyResource\n      RestApiId: !Ref RestApi\n  'Deployment#{Octopus.Deployment.Id | Replace -}':\n    Type: 'AWS::ApiGateway::Deployment'\n    Properties:\n      RestApiId: !Ref RestApi\n    DependsOn:\n      - ApiProductsMethod\nOutputs:\n  DeploymentId:\n    Description: The deployment id\n    Value: !Ref 'Deployment#{Octopus.Deployment.Id | Replace -}'\n  ApiProductsMethod:\n    Description: The method hosting the root api endpoint\n    Value: !Ref ApiProductsMethod\n  ApiProxyProductsMethod:\n    Description: The method hosting the api endpoint subdirectories\n    Value: !Ref ApiProxyProductsMethod\n  DownstreamService:\n    Description: The function that was configured to accept traffic.\n    Value: !Join\n      - ''\n      - - 'arn:'\n        - !Ref 'AWS::Partition'\n        - ':apigateway:'\n        - !Ref 'AWS::Region'\n        - ':lambda:path/2015-03-31/functions/'\n        - !Ref ProxyLambdaVersion\n        - /invocations\n"
+        "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+        # This template links the reverse proxy to the API Gateway. Once this linking is done,
+        # the API Gateway is ready to be deployed to a stage. But the old Lambda versions are
+        # still referenced by the existing stage, so no changes have been exposed to the
+        # end user.
+        Parameters:
+          EnvironmentName:
+            Type: String
+            Default: '#{Octopus.Environment.Name | Replace " .*" ""}'
+          RestApi:
+            Type: String
+          ResourceId:
+            Type: String
+          ProxyLambdaVersion:
+            Type: String
+        Resources:
+          ApiProductsResource:
+            Type: 'AWS::ApiGateway::Resource'
+            Properties:
+              RestApiId: !Ref RestApi
+              ParentId: !Ref ResourceId
+              PathPart: products
+          ApiProductsProxyResource:
+            Type: 'AWS::ApiGateway::Resource'
+            Properties:
+              RestApiId: !Ref RestApi
+              ParentId: !Ref ApiProductsResource
+              PathPart: '{proxy+}'
+          ApiProductsMethod:
+            Type: 'AWS::ApiGateway::Method'
+            Properties:
+              AuthorizationType: NONE
+              HttpMethod: ANY
+              Integration:
+                IntegrationHttpMethod: POST
+                TimeoutInMillis: 20000
+                Type: AWS_PROXY
+                Uri: !Join
+                  - ''
+                  - - 'arn:'
+                    - !Ref 'AWS::Partition'
+                    - ':apigateway:'
+                    - !Ref 'AWS::Region'
+                    - ':lambda:path/2015-03-31/functions/'
+                    - !Ref ProxyLambdaVersion
+                    - /invocations
+              ResourceId: !Ref ApiProductsResource
+              RestApiId: !Ref RestApi
+          ApiProxyProductsMethod:
+            Type: 'AWS::ApiGateway::Method'
+            Properties:
+              AuthorizationType: NONE
+              HttpMethod: ANY
+              Integration:
+                IntegrationHttpMethod: POST
+                TimeoutInMillis: 20000
+                Type: AWS_PROXY
+                Uri: !Join
+                  - ''
+                  - - 'arn:'
+                    - !Ref 'AWS::Partition'
+                    - ':apigateway:'
+                    - !Ref 'AWS::Region'
+                    - ':lambda:path/2015-03-31/functions/'
+                    - !Ref ProxyLambdaVersion
+                    - /invocations
+              ResourceId: !Ref ApiProductsProxyResource
+              RestApiId: !Ref RestApi
+          'Deployment#{Octopus.Deployment.Id | Replace -}':
+            Type: 'AWS::ApiGateway::Deployment'
+            Properties:
+              RestApiId: !Ref RestApi
+            DependsOn:
+              - ApiProductsMethod
+        Outputs:
+          DeploymentId:
+            Description: The deployment id
+            Value: !Ref 'Deployment#{Octopus.Deployment.Id | Replace -}'
+          ApiProductsMethod:
+            Description: The method hosting the root api endpoint
+            Value: !Ref ApiProductsMethod
+          ApiProxyProductsMethod:
+            Description: The method hosting the api endpoint subdirectories
+            Value: !Ref ApiProxyProductsMethod
+          DownstreamService:
+            Description: The function that was configured to accept traffic.
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':apigateway:'
+                - !Ref 'AWS::Region'
+                - ':lambda:path/2015-03-31/functions/'
+                - !Ref ProxyLambdaVersion
+                - /invocations
+        EOF
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
         "Octopus.Action.Aws.TemplateSource" = "Inline"
@@ -649,7 +1031,50 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
             "value" = "Backend_Service"
           },
         ])
-        "Octopus.Action.Aws.CloudFormationTemplate" = "# This template updates the stage with the deployment created in the previous step.\n# It is here that the new Lambda versions are exposed to the end user.\nParameters:\n  EnvironmentName:\n    Type: String\n    Default: '#{Octopus.Environment.Name | Replace \" .*\" \"\"}'\n  DeploymentId:\n    Type: String\n    Default: 'Deployment#{DeploymentId}'\n  ApiGatewayId:\n    Type: String\nResources:\n  Stage:\n    Type: 'AWS::ApiGateway::Stage'\n    Properties:\n      DeploymentId:\n        'Fn::Sub': '$${DeploymentId}'\n      RestApiId:\n        'Fn::Sub': '$${ApiGatewayId}'\n      StageName:\n        'Fn::Sub': '$${EnvironmentName}'\nOutputs:\n  DnsName:\n    Value:\n      'Fn::Join':\n        - ''\n        - - Ref: ApiGatewayId\n          - .execute-api.\n          - Ref: 'AWS::Region'\n          - .amazonaws.com\n  StageURL:\n    Description: The url of the stage\n    Value:\n      'Fn::Join':\n        - ''\n        - - 'https://'\n          - Ref: ApiGatewayId\n          - .execute-api.\n          - Ref: 'AWS::Region'\n          - .amazonaws.com/\n          - Ref: Stage\n          - /\n"
+        "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+        # This template updates the stage with the deployment created in the previous step.
+        # It is here that the new Lambda versions are exposed to the end user.
+        Parameters:
+          EnvironmentName:
+            Type: String
+            Default: '#{Octopus.Environment.Name | Replace " .*" ""}'
+          DeploymentId:
+            Type: String
+            Default: 'Deployment#{DeploymentId}'
+          ApiGatewayId:
+            Type: String
+        Resources:
+          Stage:
+            Type: 'AWS::ApiGateway::Stage'
+            Properties:
+              DeploymentId:
+                'Fn::Sub': '$${DeploymentId}'
+              RestApiId:
+                'Fn::Sub': '$${ApiGatewayId}'
+              StageName:
+                'Fn::Sub': '$${EnvironmentName}'
+        Outputs:
+          DnsName:
+            Value:
+              'Fn::Join':
+                - ''
+                - - Ref: ApiGatewayId
+                  - .execute-api.
+                  - Ref: 'AWS::Region'
+                  - .amazonaws.com
+          StageURL:
+            Description: The url of the stage
+            Value:
+              'Fn::Join':
+                - ''
+                - - 'https://'
+                  - Ref: ApiGatewayId
+                  - .execute-api.
+                  - Ref: 'AWS::Region'
+                  - .amazonaws.com/
+                  - Ref: Stage
+                  - /
+        EOF
         "Octopus.Action.Aws.TemplateSource" = "Inline"
         "Octopus.Action.Aws.CloudFormationStackName" = "OctopubApiGatewayStage-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"

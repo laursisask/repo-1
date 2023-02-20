@@ -416,7 +416,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
 <p>
     The S3 bucket is exposed via the API Gateway:
 </p>
-    action {
+<pre>    action {
       action_type                        = "Octopus.AwsRunCloudFormation"
       name                               = "Proxy with API Gateway"
       condition                          = "Success"

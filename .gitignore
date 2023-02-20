@@ -35,3 +35,5 @@ terraform.rc
 
 # We don't want terraform lock files
 .terraform.lock.hcl
+
+_site

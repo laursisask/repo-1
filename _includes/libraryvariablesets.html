@@ -17,6 +17,107 @@ terraform apply</pre>
     <li><strong>AWS.Region</strong> - The AWS region that the resources are created in.</li>
 </ul>
 <div><img alt="Octopus environments" src="images/octopus/libraryvariableset.png"/></div>
+<h2>Breaking down the HCL</h2>
+<p>
+    A common requirement as we introduce new resources into existing spaces is to reference the ID of existing resources. This is done with <strong>data</strong> lookups. Here we look up the ID of the AWS account created in the previous chapter:
+</p>
+<pre>data "octopusdeploy_accounts" "aws_account" {
+    account_type = "AmazonWebServicesAccount"
+    ids          = []
+    partial_name = "AWS Account"
+    skip         = 0
+    take         = 1
+  }</pre>
+<p>
+    Here we create the library variable set:
+</p>
+<pre>resource "octopusdeploy_library_variable_set" "library_variable_set_octopub" {
+    name        = "Octopub"
+    description = ""
+  }</pre>
+<p>
+    Octopus variables can either belong to a project or a library variable set. Both are represented by the same resource in HCL. The difference is the resources that is set as the variable owner.
+</p>
+<p>
+    Here we create an Octopus variable that references the AWS account retrieved in the data lookup above and assigned to the library variable set:
+</p>
+<pre>resource "octopusdeploy_variable" "library_variable_set_octopub_aws_account_0" {
+    owner_id     = "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
+    value        = "${data.octopusdeploy_accounts.aws_account.accounts[0].id}"
+    name         = "AWS.Account"
+    type         = "AmazonWebServicesAccount"
+    is_sensitive = false
+  
+    scope {
+      actions      = []
+      channels     = []
+      environments = []
+      machines     = []
+      roles        = null
+      tenant_tags  = null
+    }
+    depends_on = []
+  }</pre>
+<p>
+    Here we create a Terraform variable to expose the AWS region our cloud resources are created in:
+</p>
+<pre>variable "library_variable_set_octopub_aws_region_1" {
+    type        = string
+    nullable    = false
+    sensitive   = false
+    description = "The value associated with the variable AWS.Region"
+    default     = "ap-southeast-2"
+  }</pre>
+<p>
+    The Terraform variable is then captured in an Octopus variable:
+</p>  
+<pre>resource "octopusdeploy_variable" "library_variable_set_octopub_aws_region_1" {
+    owner_id     = "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
+    value        = "${var.library_variable_set_octopub_aws_region_1}"
+    name         = "AWS.Region"
+    type         = "String"
+    description  = ""
+    is_sensitive = false
+  
+    scope {
+      actions      = []
+      channels     = []
+      environments = []
+      machines     = []
+      roles        = null
+      tenant_tags  = null
+    }
+    depends_on = []
+  }</pre>
+<p>
+    We follow that pattern of creating a Terraform variable and capturing it in an Octopus variable here with the name of the CloudFormation stack used to create the shared API gateway:
+</p>
+<pre>variable "library_variable_set_octopub_aws_cloudformation_apigatewaystack_0" {
+    type        = string
+    nullable    = false
+    sensitive   = false
+    description = "The value associated with the variable AWS.CloudFormation.ApiGatewayStack"
+    default     = "OctopubApiGateway-#{Octopus.Environment.Name}"
+  }
+  
+  resource "octopusdeploy_variable" "library_variable_set_octopub_aws_cloudformation_apigatewaystack_0" {
+    owner_id     = "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
+    value        = "${var.library_variable_set_octopub_aws_cloudformation_apigatewaystack_0}"
+    name         = "AWS.CloudFormation.ApiGatewayStack"
+    type         = "String"
+    description  = ""
+    is_sensitive = false
+  
+    scope {
+      actions      = []
+      channels     = []
+      environments = []
+      machines     = []
+      roles        = null
+      tenant_tags  = null
+    }
+    depends_on = []
+  }</pre>
 <p>
     We now have all the global resources required to begin deploying AWS resources. The next step is to deploy a shared API Gateway instance.
 </p>

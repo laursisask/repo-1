@@ -1,4 +1,4 @@
-// Copyright 2022 Contrast Security, Inc.
+// Copyright 2023 Contrast Security, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -207,9 +207,9 @@ func (id installData) dlNotFoundError(res *http.Response) error {
 			return fmt.Errorf(badver, id.version)
 		}
 
-		return &errBadVersion{
-			availableVersions: avail,
-			badVersion:        id.version,
+		return &ErrBadVersion{
+			AvailableVersions: avail,
+			BadVersion:        id.version,
 		}
 	}
 
@@ -218,10 +218,10 @@ func (id installData) dlNotFoundError(res *http.Response) error {
 		return fmt.Errorf(unknownError)
 	}
 	// os and/or arch is invalid
-	return &errBadPlat{
-		available: avail,
-		arch:      id.arch,
-		os:        id.os,
+	return &ErrBadPlatform{
+		Available: avail,
+		Arch:      id.arch,
+		OS:        id.os,
 	}
 }
 
@@ -242,12 +242,12 @@ func listPlatforms(body io.Reader) ([]string, error) {
 	return plats, nil
 }
 
-type errBadPlat struct {
-	available []string
-	arch, os  string
+type ErrBadPlatform struct {
+	Available []string
+	Arch, OS  string
 }
 
-func (err *errBadPlat) Error() string {
+func (err *ErrBadPlatform) Error() string {
 	return fmt.Sprintf("contrast-go is not available for platform \"%s-%s\". Available platforms:\n\t%s\n%s",
-		err.os, err.arch, strings.Join(err.available, ", "), sysRequirementsPg)
+		err.OS, err.Arch, strings.Join(err.Available, ", "), sysRequirementsPg)
 }

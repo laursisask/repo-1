@@ -1,4 +1,4 @@
-// Copyright 2022 Contrast Security, Inc.
+// Copyright 2023 Contrast Security, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -115,9 +115,22 @@ func main1() int {
 	}
 	path = filepath.Join(path, "contrast-go")
 
-	fixDarwinArch(env)
+	err = installer.Install(*source, version, env.GOOS, env.GOARCH, path)
+	if err != nil && env.GOOS == "darwin" && env.GOARCH == "arm64" {
+		// No darwin/arm64 binary? Try darwin/amd64. We don't do the same for
+		// linux/arm64 since linux doesn't automagically translate binaries.
+		bp := &installer.ErrBadPlatform{}
+		if errors.As(err, &bp) {
+			log.Println(
+				"darwin/arm64 is not a release target for this contrast-go version.",
+				"Setting release to darwin/amd64 to run in compatibility mode.",
+			)
+			env.GOARCH = "amd64"
+			err = installer.Install(*source, version, env.GOOS, env.GOARCH, path)
+		}
+	}
 
-	if err := installer.Install(*source, version, env.GOOS, env.GOARCH, path); err != nil {
+	if err != nil {
 		log.Println(err)
 		return 2
 	}
@@ -154,16 +167,4 @@ func targetDir(gobin, path string) (string, error) {
 	}
 
 	return filepath.Join(list[0], "bin"), nil
-}
-
-func fixDarwinArch(env *goenv) {
-	if !(env.GOOS == "darwin" && env.GOARCH == "arm64") {
-		return
-	}
-
-	env.GOARCH = "amd64"
-	log.Println(
-		"darwin/arm64 is not currently a release target.",
-		"Setting release to darwin/amd64 to run in compatibility mode.",
-	)
 }

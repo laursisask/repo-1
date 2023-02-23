@@ -1,4 +1,4 @@
-// Copyright 2022 Contrast Security, Inc.
+// Copyright 2023 Contrast Security, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -99,9 +99,9 @@ func TestErrBadVersion_Error(t *testing.T) {
 		avail = append(avail, toVersion(v))
 	}
 
-	err := &errBadVersion{
-		availableVersions: avail,
-		badVersion:        "badVer",
+	err := &ErrBadVersion{
+		AvailableVersions: avail,
+		BadVersion:        "badVer",
 	}
 	got := err.Error()
 	if !strings.Contains(got, want) {

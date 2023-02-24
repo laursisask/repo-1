@@ -161,8 +161,16 @@ terraform apply</pre>
                   - '*/*'
                 EndpointConfiguration:
                   Types:
-                    - REGIONAL
-            Health:
+                    - REGIONAL</pre>
+<p>
+  API Gateway resources are the individual URL path elements to which Lambdas and other integrations can be attached. We define three resources:
+</p>
+<ul>
+  <li>Health, which exposes health check endpoints.</li>
+  <li>Api, which exposes the API endpoints.</li>
+  <li>Web, which exposes the frontend web application.</li>
+</ul>
+<pre>            Health:
               Type: 'AWS::ApiGateway::Resource'
               Properties:
                 RestApiId:
@@ -189,7 +197,10 @@ terraform apply</pre>
                 ParentId: !GetAtt
                   - RestApi
                   - RootResourceId
-                PathPart: '{proxy+}'
+                PathPart: '{proxy+}'</pre>
+<p>
+  The IDs of the resources created by this CloudFormation template are exposed as outputs. These outputs are captured as Octopus output variables able to be consumed in subsequent steps. They are also able to be queried via the <strong>aws</strong> CLI in other Octopus deployment projects:
+</p>
           Outputs:
             RestApi:
               Description: The REST API
@@ -213,8 +224,11 @@ terraform apply</pre>
           "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
           "Octopus.Action.Aws.TemplateSource" = "Inline"
           "Octopus.Action.Aws.WaitForCompletion" = "True"
-          "Octopus.Action.Aws.AssumeRole" = "False"
-          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+          "Octopus.Action.Aws.AssumeRole" = "False"</pre>
+<p>
+  The variable referenced here is defined in the library variable set. Typically, referencing a variable requires the use of the Octostache syntax (i.e. <strong>#{Variable.Name}</strong>), but some fields, like account selection fields, reference the variable names directly:
+</p>
+<pre>          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
           "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         }
         environments                       = []

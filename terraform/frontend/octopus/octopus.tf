@@ -420,32 +420,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
             Type: String
           SubPath:
             Type: String
-        Conditions:
-          IsFeatureBranch:
-            'Fn::Not':
-              - 'Fn::Equals':
-                  - Ref: SubPath
-                  - ''
         Resources:
-          BranchResource:
-            Type: 'AWS::ApiGateway::Resource'
-            Condition: IsFeatureBranch
-            Properties:
-              RestApiId:
-                Ref: RestApi
-              ParentId:
-                Ref: RootResourceId
-              PathPart:
-                Ref: SubPath
-          BranchResourceProxy:
-            Type: 'AWS::ApiGateway::Resource'
-            Condition: IsFeatureBranch
-            Properties:
-              RestApiId:
-                Ref: RestApi
-              ParentId:
-                Ref: BranchResource
-              PathPart: '{proxy+}'
           FrontendMethodOne:
             Type: 'AWS::ApiGateway::Method'
             Properties:
@@ -495,10 +470,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
                     method.response.header.Permissions-Policy: true
                     method.response.header.Strict-Transport-Security: true
               ResourceId:
-                'Fn::If':
-                  - IsFeatureBranch
-                  - Ref: BranchResource
-                  - Ref: RootResourceId
+                Ref: RootResourceId
               RestApiId:
                 Ref: RestApi
           FrontendMethodTwo:
@@ -564,10 +536,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
                   ResponseParameters:
                     method.response.header.Location: true
               ResourceId:
-                'Fn::If':
-                  - IsFeatureBranch
-                  - Ref: BranchResourceProxy
-                  - Ref: ResourceId
+                Ref: ResourceId
               RestApiId:
                 Ref: RestApi
           'Deployment#{Octopus.Deployment.Id | Replace -}':

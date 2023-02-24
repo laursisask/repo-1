@@ -28,7 +28,12 @@ terraform apply</pre>
     The deployment of an API Gateway instance is an example of defining a complex deployment process in Octopus via Terraform. The deployment project and the steps it contains require references to a number of resources created in previous chapters. These are exposed via data lookups.
 </p>
 <p>
-    This data lookup gets the ID of the library variable set:
+    This data lookup gets the ID of the library variable set. 
+</p>
+<p>Note the pattern shown here where we skip zero results and take one. This pattern allows us to convert an resource name to an ID.
+</p>
+<p>
+  Also note that many data lookups only expose a partial name field rather than a complete name. This is a consequence of the Octopus API, which often allows resource collections to be filtered by a text field in the UI that that return all resources partially matching a name rather than matching the exact text typed in. Performing a lookup on a partial name match will work well most of the time so long as the resource names are unambiguous, but there are edge cases where partial name matching may produce unexpected results:
 </p>
 <pre>data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
     ids          = null
@@ -37,7 +42,7 @@ terraform apply</pre>
     take         = 1
   }</pre>
 <p>
-    This data lookup get the ID of the default lifecycle that is present by default in a new space:
+    This data lookup gets the ID of the default lifecycle that is present by default in a new space:
 </p>
 <pre>data "octopusdeploy_lifecycles" "default" {
     ids          = []
@@ -46,7 +51,10 @@ terraform apply</pre>
     take         = 1
   }</pre>
 <p>
-    This data lookup get the Linux dynamic worker that is present by default in a new space on a hosted Octopus instance. Note that on a self hosted instance of Octopus, this lookup needs to be modified to look up the default worker pool:
+    This data lookup gets the Linux dynamic worker that is present by default in a new space on a hosted Octopus instance.
+</p>
+<p> 
+  Note that on a self hosted instance of Octopus, this lookup needs to be modified to look up the default worker pool:
 </p>
 <pre>data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
     name = "Hosted Ubuntu"
@@ -62,14 +70,14 @@ terraform apply</pre>
     description = "Builds the API Gateway."
   }</pre>
 <p>
-    Next we define the project group:
+    Next we define the project group. Note how we use the results of the data lookups against the lifecycles and library variable sets to link them to the deployment project:
 </p>  
 <pre>resource "octopusdeploy_project" "project_api_gateway" {
     name                                 = "API Gateway"
     auto_create_release                  = false
     default_guided_failure_mode          = "EnvironmentDefault"
     default_to_skip_if_already_installed = false
-    description                          = "Deploys a shared API Gateway. This project is created and managed by the [Octopus Terraform provider](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy/latest/docs). The Terraform files can be found in the [GitHub repo](https://github.com/mcasperson/OctopusBuilder-LAM)."
+    description                          = "Deploys a shared API Gateway. This project is created and managed by the [Octopus Terraform provider](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy/latest/docs). The Terraform files can be found in the [GitHub repo](https://github.com/mcasperson/SalesEngineeringAwsLambda)."
     discrete_channel_release             = false
     is_disabled                          = false
     is_version_controlled                = false
@@ -98,7 +106,7 @@ terraform apply</pre>
       package_requirement = "LetOctopusDecide"
       start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    In this case we have a step with a single action deploying a CloudFormation template:
+    In this case we have a step with a single action deploying a CloudFormation template. This step is executed on a worker from the Ubuntu worker pool by referencing the results of the worker pool data lookup:
 </p>  
 <pre>    action {
         action_type                        = "Octopus.AwsRunCloudFormation"
@@ -108,14 +116,24 @@ terraform apply</pre>
         is_disabled                        = false
         can_be_used_for_project_versioning = false
         is_required                        = false
-        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
-        properties                         = {</pre>
+        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"</pre>
+<p>
+  Steps have a number of common properties, defined above, while the remaining properties are generic key/value pairs. This is referred to as the <strong>property bag</strong>.
+</p>
+<p>
+  There is no documentation describing all the properties that must be defined in the property bag. Typically you would define the step in the Octopus web UI, click the <strong>Download as JSON</strong> option, and then convert the step <strong>Properties</strong> object into the HCL <strong>properties</strong>:
+</p>
+<div><img alt="Octopus accounts" src="images/octopus/downloadasjson.png"/></div>
+<pre>        properties                         = {</pre>
 <p>
     A common pattern in step definitions is to assign a JSON blob to a property. It is more readable to represent JSON as a HCL map and encode it with the <strong>jsonenode</strong> function:
 </p>
 <pre>          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
-            {
-              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            {</pre>
+<p>
+  The template syntax used by Octopus is called <strong>Octostache</strong>. Octostache has a number of filters documented at <a href="https://octopus.com/docs/projects/variables/variable-filters">https://octopus.com/docs/projects/variables/variable-filters</a>. We use the <strong>Replace</strong> filter here to replace anything after a space in the environment name with an empty string. Given our environments are called <strong>Development</strong> and <strong>Production</strong>, this filter does nothing, because these names have no space. However, if we had an environment called <strong>Development (Security)</strong>, this filter would result in a string <strong>Development</strong>:
+</p>
+<pre>              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
               "key" = "Environment"
             },
             {
@@ -130,8 +148,11 @@ terraform apply</pre>
     Another common pattern is for step properties to have long text content assigned to them. Heredoc strings allow this text to be defined over multiple lines, improving the readability of the HCL. Here we have a CloudFormation YAML blob written as a heredoc string:
 </p>
 <pre>          "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOT
-          Resources:
-            RestApi:
+          Resources:</pre>
+<p>
+  The first resource is the API Gateway instance.
+</p>
+<pre>            RestApi:
               Type: 'AWS::ApiGateway::RestApi'
               Properties:
                 Description: My API Gateway

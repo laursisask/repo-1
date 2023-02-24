@@ -448,32 +448,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
             Type: String
           SubPath:
             Type: String
-        Conditions:
-          IsFeatureBranch:
-            'Fn::Not':
-              - 'Fn::Equals':
-                  - Ref: SubPath
-                  - ''
         Resources:
-          BranchResource:
-            Type: 'AWS::ApiGateway::Resource'
-            Condition: IsFeatureBranch
-            Properties:
-              RestApiId:
-                Ref: RestApi
-              ParentId:
-                Ref: RootResourceId
-              PathPart:
-                Ref: SubPath
-          BranchResourceProxy:
-            Type: 'AWS::ApiGateway::Resource'
-            Condition: IsFeatureBranch
-            Properties:
-              RestApiId:
-                Ref: RestApi
-              ParentId:
-                Ref: BranchResource
-              PathPart: '{proxy+}'
           FrontendMethodOne:
             Type: 'AWS::ApiGateway::Method'
             Properties:
@@ -523,10 +498,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
                     method.response.header.Permissions-Policy: true
                     method.response.header.Strict-Transport-Security: true
               ResourceId:
-                'Fn::If':
-                  - IsFeatureBranch
-                  - Ref: BranchResource
-                  - Ref: RootResourceId
+                Ref: RootResourceId
               RestApiId:
                 Ref: RestApi
           FrontendMethodTwo:
@@ -592,10 +564,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
                   ResponseParameters:
                     method.response.header.Location: true
               ResourceId:
-                'Fn::If':
-                  - IsFeatureBranch
-                  - Ref: BranchResourceProxy
-                  - Ref: ResourceId
+                Ref: ResourceId
               RestApiId:
                 Ref: RestApi
           'Deployment#{Octopus.Deployment.Id | Replace -}':

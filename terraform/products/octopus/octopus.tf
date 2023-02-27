@@ -152,7 +152,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
           "CAPABILITY_IAM",
           "CAPABILITY_NAMED_IAM",
         ])
-        "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
         "Octopus.Action.Aws.Region" = "#{AWS.Region}"
         "Octopus.Action.Aws.AssumeRole" = "False"
       }
@@ -322,7 +321,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
           "CAPABILITY_NAMED_IAM",
         ])
         "Octopus.Action.Aws.TemplateSource" = "Inline"
-        "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
         "Octopus.Action.Template.Version" = "1"
         "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambda-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
         "Vpc.Cidr" = "10.0.0.0/16"
@@ -789,20 +787,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
             "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda].Output.AwsOutputs[ApplicationLambda]}"
           },
         ])
-        "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([
-          {
-            "ParameterKey" = "RestApi"
-            "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
-          },
-          {
-            "ParameterKey" = "LambdaDescription"
-            "ParameterValue" = "#{Octopus.Deployment.Id} v#{Octopus.Action[Upload Lambda].Package[].PackageVersion}"
-          },
-          {
-            "ParameterKey" = "ApplicationLambda"
-            "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda].Output.AwsOutputs[ApplicationLambda]}"
-          },
-        ])
       }
       environments                       = []
       excluded_environments              = []
@@ -849,7 +833,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
             "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda Version].Output.AwsOutputs[LambdaVersion]}"
           },
         ])
-        "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsApiGateway-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
         "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
@@ -1094,20 +1077,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         ])
         "Octopus.Action.Aws.Region" = "#{AWS.Region}"
         "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([
-          {
-            "ParameterKey" = "EnvironmentName"
-            "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\" }"
-          },
-          {
-            "ParameterValue" = "#{Octopus.Action[Update API Gateway].Output.AwsOutputs[DeploymentId]}"
-            "ParameterKey" = "DeploymentId"
-          },
-          {
-            "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
-            "ParameterKey" = "ApiGatewayId"
-          },
-        ])
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
       }
       environments                       = []

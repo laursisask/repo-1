@@ -171,7 +171,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_api_gate
             Description: ID of the resource exposing the web app frontend
             Value: !Ref Web
         EOT
-        "Octopus.Action.Aws.CloudFormationTemplateParametersRaw" = jsonencode([])
         "Octopus.Action.Aws.TemplateSource" = "Inline"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
         "Octopus.Action.Aws.AssumeRole" = "False"

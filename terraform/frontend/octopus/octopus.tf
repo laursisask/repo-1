@@ -237,12 +237,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.TemplateSource" = "Inline"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
-          {
-            "ParameterKey" = "Hostname"
-            "ParameterValue" = "#{WebApp.Hostname}"
-          },
-        ])
+        "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
         "Octopus.Action.Aws.Region" = "#{AWS.Region}"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
@@ -292,13 +287,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
               WebsiteConfiguration:
                 IndexDocument: index.html
                 ErrorDocument: error.html
-                RoutingRules:
-                - RoutingRuleCondition:
-                  HttpErrorCodeReturnedEquals: '404'
-                  RedirectRule:
-                    ReplaceKeyWith: index.html
-                    HostName: !Ref Hostname
-                    Protocol: https
             DeletionPolicy: Retain
           BucketPolicy:
             Type: AWS::S3::BucketPolicy

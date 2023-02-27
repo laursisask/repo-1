@@ -129,16 +129,40 @@ terraform apply</pre>
     A common pattern in step definitions is to assign a JSON blob to a property. It is more readable to represent JSON as a HCL map and encode it with the <strong>jsonenode</strong> function:
 </p>
 <pre>          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
-            {</pre>
+            {
+              "key" = "OctopusTenantId"
+              "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
+            },
+            {
+              "key" = "OctopusStepId"
+              "value" = "#{Octopus.Step.Id}"
+            },
+            {
+              "key" = "OctopusRunbookRunId"
+              "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusDeploymentId"
+              "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusProjectId"
+              "value" = "#{Octopus.Project.Id}"
+            },
+            {
+              "key" = "OctopusEnvironmentId"
+              "value" = "#{Octopus.Environment.Id}"
+            },</pre>
 <p>
   The template syntax used by Octopus is called <strong>Octostache</strong>. Octostache has a number of filters documented at <a href="https://octopus.com/docs/projects/variables/variable-filters">https://octopus.com/docs/projects/variables/variable-filters</a>. We use the <strong>Replace</strong> filter here to replace anything after a space in the environment name with an empty string. Given our environments are called <strong>Development</strong> and <strong>Production</strong>, this filter does nothing, because these names have no space. However, if we had an environment called <strong>Development (Security)</strong>, this filter would result in a string <strong>Development</strong>:
 </p>
-<pre>              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+<pre>            {
+              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
               "key" = "Environment"
             },
             {
+              "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
               "key" = "DeploymentProject"
-              "value" = "API_Gateway"
             },
           ])
           "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])

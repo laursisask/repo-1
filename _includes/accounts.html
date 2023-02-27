@@ -1,6 +1,6 @@
 <h1><a id="accounts">Configuring the AWS account</a></h1>
 <p>
-    Accounts provide Octopus with the credentials it requires to interact with cloud platforms. In order for us to deploy to AWS, we must create an AWS account.
+    Accounts provide Octopus with the credentials required to interact with cloud platforms. In order for us to deploy to AWS, we must create an AWS account.
 </p>
 <p>
     AWS accounts are made up of an access and secret key. The documentation at <a href="https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/">https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/</a> provides instructions for creating AWS access keys.
@@ -12,11 +12,11 @@
 terraform init
 terraform apply</pre>
 <p>
-    You will be prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied you will see a new account called <strong>AWS Account</strong>:
+    You are prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied you will see a new account called <strong>AWS Account</strong>:
 </p>
 <div><img alt="Octopus accounts" src="images/octopus/awsaccount.png"/></div>
 <p>
-    To verify the account is working as expected, click it, and then click the <strong>SAVE AND TEST</strong> button:
+    To verify the account works as expected, click it, and then click the <strong>SAVE AND TEST</strong> button:
 </p>
 <div><img alt="Octopus account test" src="images/octopus/awsaccountest.png"/></div>
 <h2>Breaking down the HCL</h2>

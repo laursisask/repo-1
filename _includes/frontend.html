@@ -472,13 +472,22 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
             Type: String
           SubPath:
             Type: String
-        Resources:
-          FrontendMethodOne:
+        Resources:</pre>
+<p>
+  The S3 bucket is exposed via API Gateway methods:
+</p>
+<pre>          FrontendMethodOne:
             Type: 'AWS::ApiGateway::Method'
             Properties:
-              AuthorizationType: NONE
-              HttpMethod: ANY
-              Integration:
+              AuthorizationType: NONE</pre>
+<p>
+  The web application can only respond to HTTP GET requests:
+</p>              
+<pre>              HttpMethod: GET</pre>
+<p>
+  Requests are then forwarded to the S3 bucket. Note this method is attached to the API Gateway root resource. These requests are redirected to the <strong>index.html</strong> file:
+</p>
+<pre>              Integration:
                 ContentHandling: CONVERT_TO_TEXT
                 IntegrationHttpMethod: GET
                 TimeoutInMillis: 20000
@@ -495,8 +504,11 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
                       - /index.html
                 PassthroughBehavior: WHEN_NO_MATCH
                 RequestTemplates:
-                  image/png: ''
-                IntegrationResponses:
+                  image/png: ''</pre>
+<p>
+  The response sent back to the web browser is updated to include a set of security related headers:
+</p>                  
+<pre>                IntegrationResponses:
                   - StatusCode: '200'
                     ResponseParameters:
                       method.response.header.Content-Type: integration.response.header.Content-Type
@@ -524,12 +536,15 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
               ResourceId:
                 Ref: RootResourceId
               RestApiId:
-                Ref: RestApi
-          FrontendMethodTwo:
+                Ref: RestApi</pre>
+<p>
+  Any requests made to subpaths (e.g. requests to CSS or JavaScript files) are handled by a second method attached to the proxy resource:
+</p>                
+<pre>          FrontendMethodTwo:
             Type: 'AWS::ApiGateway::Method'
             Properties:
               AuthorizationType: NONE
-              HttpMethod: ANY
+              HttpMethod: GET
               RequestParameters:
                 method.request.path.proxy: true
               Integration:
@@ -590,8 +605,11 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
               ResourceId:
                 Ref: ResourceId
               RestApiId:
-                Ref: RestApi
-          'Deployment#{Octopus.Deployment.Id | Replace -}':
+                Ref: RestApi</pre>
+<p>
+  Just as we did when deploying Lambda, each time this CloudFormation template is updated a new API Gateway deployment resource is created:
+</p>                
+<pre>          'Deployment#{Octopus.Deployment.Id | Replace -}':
             Type: 'AWS::ApiGateway::Deployment'
             Properties:
               RestApiId:
@@ -829,7 +847,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
     package_requirement = "LetOctopusDecide"
     start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    The final step builds up the URL that the frontend web application is accessed via and displays it in the deployment logs:
+    The final step builds up the URL that the frontend web application is accessed via and displays it in the deployment logs. Note here that we use the AWS Docker image to run the AWS CLI. Most large platforms provide supported Docker images for the CLI tooling, which allows us to treat Docker as a kind of universal application store:
 </p>
 <pre>    action {
       action_type                        = "Octopus.AwsRunScript"

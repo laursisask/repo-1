@@ -449,7 +449,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
             Type: 'AWS::ApiGateway::Method'
             Properties:
               AuthorizationType: NONE
-              HttpMethod: ANY
+              HttpMethod: GET
               Integration:
                 ContentHandling: CONVERT_TO_TEXT
                 IntegrationHttpMethod: GET
@@ -501,7 +501,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
             Type: 'AWS::ApiGateway::Method'
             Properties:
               AuthorizationType: NONE
-              HttpMethod: ANY
+              HttpMethod: GET
               RequestParameters:
                 method.request.path.proxy: true
               Integration:

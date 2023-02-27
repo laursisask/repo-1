@@ -905,6 +905,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
               RestApiId: !Ref RestApi
             DependsOn:
               - ApiProductsMethod
+              - ApiProxyProductsMethod
         Outputs:
           DeploymentId:
             Description: The deployment id

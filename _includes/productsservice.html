@@ -948,9 +948,13 @@ terraform apply</pre>
 <pre>            'Deployment#{Octopus.Deployment.Id | Replace -}':
               Type: 'AWS::ApiGateway::Deployment'
               Properties:
-                RestApiId: !Ref RestApi
-              DependsOn:
+                RestApiId: !Ref RestApi</pre>
+<p>
+  The deployment resource must only be created once the methods have been created. This relationship is enforced by the <strong>DependsOn</strong> property:
+</p>
+<pre>              DependsOn:
                 - ApiProductsMethod
+                - ApiProxyProductsMethod
           Outputs:
             DeploymentId:
               Description: The deployment id

@@ -6,7 +6,7 @@
     The easiest way to get access to an instance of Octopus is to sign up for a cloud instance. You can do so via <a href="https://octopus.com/start">https://octopus.com/start</a>.
 </p>
 <p>
-    You then need to generate an API key for your Octopus instance, which can be done using the instructions at <a href="https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key">https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key</a>.
+    You then must generate an API key for your Octopus instance, which can be done using the instructions at <a href="https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key">https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key</a>.
 </p>
 <p>
     We'll configure Octopus via Terraform and the Octopus Terraform provider. The documentation at <a href="https://developer.hashicorp.com/terraform/downloads">https://developer.hashicorp.com/terraform/downloads</a> provides instructions for installing Terraform on your local operating system.
@@ -15,12 +15,12 @@
     The Terraform configuration files are accessed via git. The GitHub documentation at <a href="https://github.com/git-guides/install-git">https://github.com/git-guides/install-git</a> provides instructions for installing git.
 </p>
 <p>
-    Finally, you will need an AWS subscription to perform the deployments to. Specifically, you will need the Access and Secret keys associated with an AWS account that has permissions to create resources such as API Gateway instances, Lambdas, and S3 buckets. The documentation at <a href="https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/">https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/</a> provides instructions for create AWS keys.
+    Finally, you must have an AWS subscription to perform the deployments to. Specifically, you will need the Access and Secret keys associated with an AWS account that has permissions to create resources such as API Gateway instances, Lambdas, and S3 buckets. The documentation at <a href="https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/">https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/</a> provides instructions to create AWS keys.
 </p>
 <p>
     Once you have the prerequisite tools installed, download a copy of the git repo with the command:
 </p>
-<pre>git clone https://github.com/mcasperson/AWSLambdaOctopusDeployment.git</pre>
+<pre>git clone https://github.com/mcasperson/SalesEngineeringAwsLambda.git</pre>
 <p>
-    This creates a directory called <strong>AWSLambdaOctopusDeployment</strong> which contains the sample Terraform configuration files referenced throughout the rest of this book.
+    This creates a directory called <strong>SalesEngineeringAwsLambda</strong> which contains the sample Terraform configuration files referenced throughout the rest of this book.
 </p>

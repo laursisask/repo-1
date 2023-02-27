@@ -807,7 +807,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
     action {
       action_type                        = "Octopus.AwsRunCloudFormation"
       name                               = "Update API Gateway"
-      notes                              = "This step attaches the reverse proxy version created in the previous step to the API Gateway, and creates an API Gateway deployment."
+      notes                              = "Attach the Lambda to the API Gateway."
       condition                          = "Success"
       run_on_server                      = true
       is_disabled                        = false
@@ -829,17 +829,13 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
             "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.Api}"
           },
           {
-            "ParameterKey" = "ProxyLambdaVersion"
+            "ParameterKey" = "LambdaVersion"
             "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda Version].Output.AwsOutputs[LambdaVersion]}"
           },
         ])
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsApiGateway-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
         "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
-        # This template links the reverse proxy to the API Gateway. Once this linking is done,
-        # the API Gateway is ready to be deployed to a stage. But the old Lambda versions are
-        # still referenced by the existing stage, so no changes have been exposed to the
-        # end user.
         Parameters:
           EnvironmentName:
             Type: String
@@ -848,7 +844,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
             Type: String
           ResourceId:
             Type: String
-          ProxyLambdaVersion:
+          LambdaVersion:
             Type: String
         Resources:
           ApiProductsResource:
@@ -879,7 +875,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
                     - ':apigateway:'
                     - !Ref 'AWS::Region'
                     - ':lambda:path/2015-03-31/functions/'
-                    - !Ref ProxyLambdaVersion
+                    - !Ref LambdaVersion
                     - /invocations
               ResourceId: !Ref ApiProductsResource
               RestApiId: !Ref RestApi
@@ -899,7 +895,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
                     - ':apigateway:'
                     - !Ref 'AWS::Region'
                     - ':lambda:path/2015-03-31/functions/'
-                    - !Ref ProxyLambdaVersion
+                    - !Ref LambdaVersion
                     - /invocations
               ResourceId: !Ref ApiProductsProxyResource
               RestApiId: !Ref RestApi
@@ -928,7 +924,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
                 - ':apigateway:'
                 - !Ref 'AWS::Region'
                 - ':lambda:path/2015-03-31/functions/'
-                - !Ref ProxyLambdaVersion
+                - !Ref LambdaVersion
                 - /invocations
         EOF
         "Octopus.Action.Aws.AssumeRole" = "False"
@@ -1004,16 +1000,40 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
       properties                         = {
         "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
-          {
-            "key" = "Environment"
-            "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
-          },
-          {
-            "key" = "DeploymentProject"
-            "value" = "Backend_Service"
-          },
-        ])
+          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+            {
+              "key" = "OctopusTenantId"
+              "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
+            },
+            {
+              "key" = "OctopusStepId"
+              "value" = "#{Octopus.Step.Id}"
+            },
+            {
+              "key" = "OctopusRunbookRunId"
+              "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusDeploymentId"
+              "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusProjectId"
+              "value" = "#{Octopus.Project.Id}"
+            },
+            {
+              "key" = "OctopusEnvironmentId"
+              "value" = "#{Octopus.Environment.Id}"
+            },
+            {
+              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+              "key" = "Environment"
+            },
+            {
+              "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+              "key" = "DeploymentProject"
+            },
+          ])        
         "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
         # This template updates the stage with the deployment created in the previous step.
         # It is here that the new Lambda versions are exposed to the end user.

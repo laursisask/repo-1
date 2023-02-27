@@ -153,9 +153,9 @@ terraform apply</pre>
               "key" = "OctopusEnvironmentId"
               "value" = "#{Octopus.Environment.Id}"
             },</pre>
-<p>
-  The template syntax used by Octopus is called <strong>Octostache</strong>. Octostache has a number of filters documented at <a href="https://octopus.com/docs/projects/variables/variable-filters">https://octopus.com/docs/projects/variables/variable-filters</a>. We use the <strong>Replace</strong> filter here to replace anything after a space in the environment name with an empty string. Given our environments are called <strong>Development</strong> and <strong>Production</strong>, this filter does nothing, because these names have no space. However, if we had an environment called <strong>Development (Security)</strong>, this filter would result in a string <strong>Development</strong>:
-</p>
+    <p>
+      The template syntax used by Octopus is called <strong>Octostache</strong>. Octostache has a number of filters documented at <a href="https://octopus.com/docs/projects/variables/variable-filters">https://octopus.com/docs/projects/variables/variable-filters</a>. We use the <strong>Replace</strong> filter here to replace anything after a space in the environment name with an empty string. Given our environments are called <strong>Development</strong> and <strong>Production</strong>, this filter does nothing, because these names have no space. However, if we had an environment called <strong>Development (Security)</strong>, this filter would result in a string <strong>Development</strong>:
+    </p>
 <pre>            {
               "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
               "key" = "Environment"
@@ -225,7 +225,7 @@ terraform apply</pre>
 <p>
   The IDs of the resources created by this CloudFormation template are exposed as outputs. These outputs are captured as Octopus output variables able to be consumed in subsequent steps. They are also able to be queried via the <strong>aws</strong> CLI in other Octopus deployment projects:
 </p>
-          Outputs:
+<pre>          Outputs:
             RestApi:
               Description: The REST API
               Value: !Ref RestApi

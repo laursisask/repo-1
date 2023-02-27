@@ -832,7 +832,7 @@ terraform apply</pre>
 <pre>      action {
         action_type                        = "Octopus.AwsRunCloudFormation"
         name                               = "Update API Gateway"
-        notes                              = "This step attaches the reverse proxy version created in the previous step to the API Gateway, and creates an API Gateway deployment."
+        notes                              = "Attach the Lambda to the API Gateway."
         condition                          = "Success"
         run_on_server                      = true
         is_disabled                        = false
@@ -854,17 +854,13 @@ terraform apply</pre>
               "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.Api}"
             },
             {
-              "ParameterKey" = "ProxyLambdaVersion"
+              "ParameterKey" = "LambdaVersion"
               "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda Version].Output.AwsOutputs[LambdaVersion]}"
             },
           ])
           "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
           "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsApiGateway-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
           "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
-          # This template links the reverse proxy to the API Gateway. Once this linking is done,
-          # the API Gateway is ready to be deployed to a stage. But the old Lambda versions are
-          # still referenced by the existing stage, so no changes have been exposed to the
-          # end user.
           Parameters:
             EnvironmentName:
               Type: String
@@ -873,27 +869,42 @@ terraform apply</pre>
               Type: String
             ResourceId:
               Type: String
-            ProxyLambdaVersion:
+            LambdaVersion:
               Type: String
-          Resources:
-            ApiProductsResource:
+          Resources:</pre>
+<p>
+  Each Lambda is attached to the API Gateway via a new Lambda specific API Gateway resource. In this example we create creating a resource called <strong>products</strong> attached to the <strong>api</strong> resource created by the <strong>API Gateway</strong> project:
+</p>
+<pre>            ApiProductsResource:
               Type: 'AWS::ApiGateway::Resource'
               Properties:
                 RestApiId: !Ref RestApi
                 ParentId: !Ref ResourceId
-                PathPart: products
-            ApiProductsProxyResource:
+                PathPart: products</pre>
+<p>
+  The resource above responds to traffic directed to <strong>/api/products</strong>. In order to respond to traffic to any sub path (e.g. <strong>/api/products/1</strong>) we need a proxy resource. A proxy resource has the special path of <strong>{proxy+}</strong> which indicates that it matches all subpaths:
+</p>                
+<pre>            ApiProductsProxyResource:
               Type: 'AWS::ApiGateway::Resource'
               Properties:
                 RestApiId: !Ref RestApi
                 ParentId: !Ref ApiProductsResource
-                PathPart: '{proxy+}'
-            ApiProductsMethod:
+                PathPart: '{proxy+}'</pre>
+<p>
+  API Gateway resources define the URL paths, but alone is not enough to define the requests that API Gateway responds to. API Gateway methods are attached to resources and define the HTTP method to respond to:
+</p>                
+<pre>            ApiProductsMethod:
               Type: 'AWS::ApiGateway::Method'
               Properties:
-                AuthorizationType: NONE
-                HttpMethod: ANY
-                Integration:
+                AuthorizationType: NONE</pre>
+<p>
+  For convenience, API Gateway methods can respond to any HTTP method. We implement this by setting the <strong>HttpMethod</strong> property to <strong>ANY</strong>:
+</p>                
+<pre>                HttpMethod: ANY</pre>
+<p>
+  The integration defines where API Gateway directs the request to. Here we forward the request to the Lambda:
+</p>
+<pre>                Integration:
                   IntegrationHttpMethod: POST
                   TimeoutInMillis: 20000
                   Type: AWS_PROXY
@@ -904,11 +915,14 @@ terraform apply</pre>
                       - ':apigateway:'
                       - !Ref 'AWS::Region'
                       - ':lambda:path/2015-03-31/functions/'
-                      - !Ref ProxyLambdaVersion
+                      - !Ref LambdaVersion
                       - /invocations
                 ResourceId: !Ref ApiProductsResource
-                RestApiId: !Ref RestApi
-            ApiProxyProductsMethod:
+                RestApiId: !Ref RestApi</pre>
+<p>
+  The integration is defined on the proxy resource as well:
+</p>
+<pre>            ApiProxyProductsMethod:
               Type: 'AWS::ApiGateway::Method'
               Properties:
                 AuthorizationType: NONE
@@ -924,11 +938,14 @@ terraform apply</pre>
                       - ':apigateway:'
                       - !Ref 'AWS::Region'
                       - ':lambda:path/2015-03-31/functions/'
-                      - !Ref ProxyLambdaVersion
+                      - !Ref LambdaVersion
                       - /invocations
                 ResourceId: !Ref ApiProductsProxyResource
-                RestApiId: !Ref RestApi
-            'Deployment#{Octopus.Deployment.Id | Replace -}':
+                RestApiId: !Ref RestApi</pre>
+<p>
+  Changes to the API Gateway are only made public when they are deployed and when the deployment is exposed via a stage. Here we create a new deployment resource. Note that the name of the deployment resource is unique for each Octopus deployment due to the Octostache template defined in the resource name. This is required to forced CloudFormation to create a new deployment resource every time this CloudFormation template is updated:
+</p>                
+<pre>            'Deployment#{Octopus.Deployment.Id | Replace -}':
               Type: 'AWS::ApiGateway::Deployment'
               Properties:
                 RestApiId: !Ref RestApi
@@ -953,7 +970,7 @@ terraform apply</pre>
                   - ':apigateway:'
                   - !Ref 'AWS::Region'
                   - ':lambda:path/2015-03-31/functions/'
-                  - !Ref ProxyLambdaVersion
+                  - !Ref LambdaVersion
                   - /invocations
           EOF
           "Octopus.Action.Aws.AssumeRole" = "False"
@@ -1017,7 +1034,7 @@ terraform apply</pre>
       package_requirement = "LetOctopusDecide"
       start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    The changes to the API Gateway must be deployed as an API Gateway stage in order for the changes to be exposed publicly:
+    The deployment created by the previous CloudFormation template must be exposed via a stage to make the change public. This step attaches the API Gateway deployment resource to the stage:
 </p>  
 <pre>      action {
         action_type                        = "Octopus.AwsRunCloudFormation"
@@ -1033,14 +1050,38 @@ terraform apply</pre>
           "Octopus.Action.Aws.WaitForCompletion" = "True"
           "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
             {
-              "key" = "Environment"
-              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+              "key" = "OctopusTenantId"
+              "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
             },
             {
-              "key" = "DeploymentProject"
-              "value" = "Backend_Service"
+              "key" = "OctopusStepId"
+              "value" = "#{Octopus.Step.Id}"
             },
-          ])
+            {
+              "key" = "OctopusRunbookRunId"
+              "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusDeploymentId"
+              "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+            },
+            {
+              "key" = "OctopusProjectId"
+              "value" = "#{Octopus.Project.Id}"
+            },
+            {
+              "key" = "OctopusEnvironmentId"
+              "value" = "#{Octopus.Environment.Id}"
+            },
+            {
+              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+              "key" = "Environment"
+            },
+            {
+              "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+              "key" = "DeploymentProject"
+            },
+          ])        
           "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
           # This template updates the stage with the deployment created in the previous step.
           # It is here that the new Lambda versions are exposed to the end user.

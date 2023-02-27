@@ -100,12 +100,36 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_api_gate
       properties                         = {
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
           {
+            "key" = "OctopusTenantId"
+            "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
+          },
+          {
+            "key" = "OctopusStepId"
+            "value" = "#{Octopus.Step.Id}"
+          },
+          {
+            "key" = "OctopusRunbookRunId"
+            "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+          },
+          {
+            "key" = "OctopusDeploymentId"
+            "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+          },
+          {
+            "key" = "OctopusProjectId"
+            "value" = "#{Octopus.Project.Id}"
+          },
+          {
+            "key" = "OctopusEnvironmentId"
+            "value" = "#{Octopus.Environment.Id}"
+          },
+          {
             "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
             "key" = "Environment"
           },
           {
+            "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
             "key" = "DeploymentProject"
-            "value" = "API_Gateway"
           },
         ])
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])

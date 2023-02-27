@@ -1000,40 +1000,40 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
       properties                         = {
         "Octopus.Action.Aws.WaitForCompletion" = "True"
-          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
-            {
-              "key" = "OctopusTenantId"
-              "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
-            },
-            {
-              "key" = "OctopusStepId"
-              "value" = "#{Octopus.Step.Id}"
-            },
-            {
-              "key" = "OctopusRunbookRunId"
-              "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
-            },
-            {
-              "key" = "OctopusDeploymentId"
-              "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
-            },
-            {
-              "key" = "OctopusProjectId"
-              "value" = "#{Octopus.Project.Id}"
-            },
-            {
-              "key" = "OctopusEnvironmentId"
-              "value" = "#{Octopus.Environment.Id}"
-            },
-            {
-              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
-              "key" = "Environment"
-            },
-            {
-              "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
-              "key" = "DeploymentProject"
-            },
-          ])        
+        "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+          {
+            "key" = "OctopusTenantId"
+            "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
+          },
+          {
+            "key" = "OctopusStepId"
+            "value" = "#{Octopus.Step.Id}"
+          },
+          {
+            "key" = "OctopusRunbookRunId"
+            "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+          },
+          {
+            "key" = "OctopusDeploymentId"
+            "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+          },
+          {
+            "key" = "OctopusProjectId"
+            "value" = "#{Octopus.Project.Id}"
+          },
+          {
+            "key" = "OctopusEnvironmentId"
+            "value" = "#{Octopus.Environment.Id}"
+          },
+          {
+            "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            "key" = "Environment"
+          },
+          {
+            "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+            "key" = "DeploymentProject"
+          },
+        ])        
         "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
         # This template updates the stage with the deployment created in the previous step.
         # It is here that the new Lambda versions are exposed to the end user.

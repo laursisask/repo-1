@@ -3,7 +3,7 @@
     For those that just want to see the end result of the process documented in this book, the following commands will deploy all the Octopus resources.
 </p>
 <p>
-    A first optional step is to define the required Terraform variables as environment variables. This means Terraform will not prompt for any variables when applying the configuration.
+    A first optional step is to define the required Terraform variables as environment variables. Doing so means Terraform will not prompt for any variables when applying the configuration.
 </p>
 <p>
     The following commands define the environment variables in Bash:
@@ -20,7 +20,7 @@ export TF_VAR_account_aws_account=YOUR_AWS_SECRET_KEY_GOES_HERE</pre>
 $env:TF_VAR_octopus_apikey = "API-YOURAPIKEY"
 $env:TF_VAR_octopus_space_id = "Spaces-1"
 $env:TF_VAR_account_aws_account_access = "YOUR_AWS_ACCESS_KEY_GOES_HERE"
-$env:TF_VAR_account_aws_account "YOUR_AWS_SECRET_KEY_GOES_HERE"</pre>
+$env:TF_VAR_account_aws_account = "YOUR_AWS_SECRET_KEY_GOES_HERE"</pre>
 <p>
     The Terraform configuration is then applied with the following commands:
 </p>    

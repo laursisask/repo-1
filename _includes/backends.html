@@ -66,37 +66,58 @@ git clone https://github.com/mcasperson/SalesEngineeringAwsLambda.git
 cd SalesEngineeringAwsLambda
 
 pushd terraform/feeds/s3backend
-terraform init -backend-config="key=feeds" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform init \
+    -backend-config="key=feeds" \
+    -backend-config="bucket=$BUCKET_NAME" \
+    -backend-config="region=$BUCKET_REGION"
 terraform apply -auto-approve
 popd
 
 pushd terraform/accounts/s3backend
-terraform init -backend-config="key=account" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform init \
+    -backend-config="key=account" \
+    -backend-config="bucket=$BUCKET_NAME" \
+    -backend-config="region=$BUCKET_REGION"
 terraform apply -auto-approve
 popd
 
 pushd terraform/environments/s3backend
-terraform init -backend-config="key=environment" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform init \
+    -backend-config="key=environment" \
+    -backend-config="bucket=$BUCKET_NAME" \
+    -backend-config="region=$BUCKET_REGION"
 terraform apply -auto-approve
 popd
 
 pushd terraform/libraryvariablesets/s3backend
-terraform init -backend-config="key=libraryvariablesets" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform init \
+    -backend-config="key=libraryvariablesets" \
+    -backend-config="bucket=$BUCKET_NAME" \
+    -backend-config="region=$BUCKET_REGION"
 terraform apply -auto-approve
 popd
 
 pushd terraform/apigateway/s3backend
-terraform init -backend-config="key=apigateway" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform init \
+    -backend-config="key=apigateway" \
+    -backend-config="bucket=$BUCKET_NAME" \
+    -backend-config="region=$BUCKET_REGION"
 terraform apply -auto-approve
 popd
 
 pushd terraform/products/s3backend
-terraform init -backend-config="key=products" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform init \
+    -backend-config="key=products" \
+    -backend-config="bucket=$BUCKET_NAME" \
+    -backend-config="region=$BUCKET_REGION"
 terraform apply -auto-approve
 popd
 
 pushd terraform/frontend/s3backend
-terraform init -backend-config="key=frontend" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform init \
+    -backend-config="key=frontend" \
+    -backend-config="bucket=$BUCKET_NAME" \
+    -backend-config="region=$BUCKET_REGION"
 terraform apply -auto-approve
 popd</pre>
 <p>

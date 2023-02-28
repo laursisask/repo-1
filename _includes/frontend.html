@@ -6,17 +6,17 @@
     Unlike the products service, which is deployed as a Lambda, the frontend web app is a static web site with no server side processing. This allows us to host the frontend web app in an S3 bucket. API Gateway is then configured to direct requests to S3, providing end users with a single hostname and shared URL structure for accessing both the static frontend website and Lambda based backend APIs.
 </p>
 <p>
-    To create the AWS account in Octopus, apply the Terraform configuration in the <strong>terraform/frontend/octopus</strong> directory using the following commands:
+    To create the frontend web application deployment project in Octopus, apply the Terraform configuration in the <strong>terraform/frontend/octopus</strong> directory using the following commands:
 </p>
 <pre>cd terraform/frontend/octopus
 terraform init
 terraform apply</pre>
 <p>
-    You are prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied a new project called <strong>Frontend WebApp</strong> is created:
+    You are prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied a new project called <strong>Frontend WebApp</strong> is created. This deployment project includes a number of steps required to upload, deploy, and expose the static web app files:
 </p>
 <div><img alt="Frontend WebApp process page" src="images/octopus/frontendproject.png"/></div>
 <p>
-    This deployment project includes a number of steps required to upload, deploy, and expose the static web app files. Once deployed, a new S3 bucket is created in AWS:
+    Once deployed, a new S3 bucket is created in AWS:
 </p>
 <div><img alt="Frontend Web App S3 Bucket" src="images/octopus/frontends3bucket.png"/></div>
 <p>
@@ -24,7 +24,7 @@ terraform apply</pre>
 </p>
 <div><img alt="Web App Api Gateway" src="images/octopus/frontendapigateway.png"/></div>
 <p>
-    With the frontend deployed we now have everything in place to view Octopub in a web browser. The deployment process shows the API Gateway stage URL in the task summary:
+    With the frontend web application deployed we now have everything in place to view Octopub in a web browser. The deployment process shows the API Gateway stage URL in the task summary:
 </p>
 <div><img alt="Web App Deployment Results" src="images/octopus/frontenddeployment.png"/></div>
 <p>
@@ -33,7 +33,7 @@ terraform apply</pre>
 <div><img alt="Octopub" src="images/octopus/octopub.png"/></div>
 <h2>Breaking down the HCL</h2>
 <p>
-    Again we see that we need to reference a number of existing resources with data lookups:
+    Again we need to reference a number of existing resources with data lookups:
 </p>
 <pre>data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
   ids          = null
@@ -97,7 +97,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
     The project makes use of structured configuration variables, which is a feature of Octopus that allows specially configured variables to be injected into files such as JSON, YAML, XML, and Java properties files.
 </p>
 <p>
-    Here we create a variable that will overwrite the property called <strong>productHealthEndpoint</strong> in a JSON configuration file.
+    Here we create a variable that will overwrite the property called <strong>productHealthEndpoint</strong> in a JSON configuration file with the URL of the API Gateway stage exposing the backend API health check:
 </p>
 <pre>resource "octopusdeploy_variable" "frontend_webapp_producthealthendpoint" {
   owner_id     = "${octopusdeploy_project.project_frontend_webapp.id}"
@@ -118,7 +118,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
   depends_on = []
 }</pre>
 <p>
-    Here we create a second variable to overwrite the property called <strong>productEndpoint</strong> in a JSON configuration file:
+    Here we create a second variable to overwrite the property called <strong>productEndpoint</strong> in a JSON configuration file with the URL of the API Gateway stage exposing the backend API:
 </p>
 <pre>resource "octopusdeploy_variable" "frontend_webapp_productendpoint" {
   owner_id     = "${octopusdeploy_project.project_frontend_webapp.id}"
@@ -241,7 +241,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
     package_requirement = "LetOctopusDecide"
     start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    Here we create an S3 bucket that will host our static web application:
+    Here we create an S3 bucket to host our static web application:
 </p>
 <pre>    action {
       action_type                        = "Octopus.AwsRunCloudFormation"
@@ -426,7 +426,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
     package_requirement = "LetOctopusDecide"
     start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    The S3 bucket is exposed via the API Gateway:
+    The API Gateway is then configured to forward requests to the S3 bucket:
 </p>
 <pre>    action {
       action_type                        = "Octopus.AwsRunCloudFormation"
@@ -494,7 +494,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
                 RequestTemplates:
                   image/png: ''</pre>
 <p>
-  The response sent back to the web browser is updated to include a set of security related headers:
+  The response sent back to the web browser is modified to include a set of security related headers:
 </p>                  
 <pre>                IntegrationResponses:
                   - StatusCode: '200'
@@ -595,7 +595,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
               RestApiId:
                 Ref: RestApi</pre>
 <p>
-  Just as we did when deploying Lambda, each time this CloudFormation template is updated a new API Gateway deployment resource is created:
+  Just as we did when deploying a Lambda, each time this CloudFormation template is updated a new API Gateway deployment resource is created:
 </p>                
 <pre>          'Deployment#{Octopus.Deployment.Id | Replace -}':
             Type: 'AWS::ApiGateway::Deployment'
@@ -759,8 +759,6 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
               DeploymentId: !Sub '$${DeploymentId}'
               RestApiId: !Sub '$${ApiGatewayId}'
               StageName: !Sub '$${EnvironmentName}'
-              Variables:
-                indexPage: !Sub /index.html
         Outputs:
           DnsName:
             Value:
@@ -835,7 +833,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
     package_requirement = "LetOctopusDecide"
     start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    The final step builds up the URL that the frontend web application is accessed via and displays it in the deployment logs. Note here that we use the AWS Docker image to run the AWS CLI. Most large platforms provide supported Docker images for the CLI tooling, which allows us to treat Docker as a kind of universal application store:
+    The final step builds up the URL that the frontend web application is accessed via and displays it in the deployment logs:
 </p>
 <pre>    action {
       action_type                        = "Octopus.AwsRunScript"
@@ -900,5 +898,5 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
   }
 }</pre>
 <p>
-    And with that our Lambda based application deployment is complete.
+    And with that our frontend web application deployment is complete.
 </p>

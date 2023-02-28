@@ -711,8 +711,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
               DeploymentId: !Sub '$${DeploymentId}'
               RestApiId: !Sub '$${ApiGatewayId}'
               StageName: !Sub '$${EnvironmentName}'
-              Variables:
-                indexPage: !Sub /index.html
         Outputs:
           DnsName:
             Value:

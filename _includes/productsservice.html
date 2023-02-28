@@ -238,7 +238,10 @@ terraform apply</pre>
     The Lambda requires the ID of API Gateway resources. These IDs are exposed as CloudFormation output variables.
 </p>  
 <p>
-    Note that Octopus does not store values like this between deployments in the same way that Terraform maintains state or CloudFormation maintains a stack. Octopus queries the output variables of a CloudFormation stack during a deployment to gain access to these long lived values:
+    Note that Octopus does not store values like this between deployments in the same way that Terraform maintains state or CloudFormation maintains a stack. Octopus queries the output variables of a CloudFormation stack during a deployment to gain access to these long lived values.
+</p>
+<p>
+  Note here that we use the AWS Docker image to run the AWS CLI. Most large platforms provide supported Docker images for the CLI tooling, which allows us to treat Docker as a kind of universal application store:
 </p>
 <pre>      action {
         action_type                        = "Octopus.AwsRunScript"

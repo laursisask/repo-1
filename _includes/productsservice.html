@@ -1,6 +1,6 @@
 <h1><a id="productsservice">Deploying the Products REST API</a></h1>
 <p>
-    All the resources we have created in Octopus allowed us to deploy our application to AWS, and the AWS resources we created provide the infrastructure required to expose those applications to end users. With this foundation in place it is now time to deploy our microservice stack.
+    All the resources we have created in Octopus allowed us to deploy our shared infrastructure to AWS which we use to expose Lambdas and other web applications end users. With this foundation in place it is now time to deploy our microservice stack.
 </p>
 <p>
     The products microservice is the first to be deployed. This is a REST API exposing the books and articles that make up our online library. This service is written as a Lambda, and persists data in a serverless RDS database.
@@ -12,11 +12,11 @@
 terraform init
 terraform apply</pre>
 <p>
-    You are prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied a new project called <strong>Products Service</strong> is created:
+    You are prompted for the URL of your Octopus instance, the Octopus API key, the ID of the space to apply the configuration to, the AWS access key, and the AWS secret key. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied a new project called <strong>Products Service</strong> is created. This deployment project includes steps to upload, deploy, and expose the Lambda:
 </p>
 <div><img alt="Products Service process page" src="images/octopus/productsservice.png"/></div>
 <p>
-    This deployment project includes steps to upload, deploy, and expose the Lambda. Once deployed, the Lambda is created in AWS:
+    Once deployed, the Lambda is created in AWS:
 </p>
 <div><img alt="Products Lambda" src="images/octopus/productslambda.png"/></div>
 <p>
@@ -89,7 +89,7 @@ terraform apply</pre>
     Here we create the deployment process.
 </p>  
 <p>
-    This deployment process includes many individual steps to complete the deployment of a Lambda to AWS and then exposing the Lambda via an API Gateway:
+    This deployment process includes many individual steps to complete the deployment of a Lambda to AWS and then expose the Lambda via an API Gateway:
 </p>
 <pre>  resource "octopusdeploy_deployment_process" "deployment_process_project_products_service" {
     project_id = "${octopusdeploy_project.project_products_service.id}"
@@ -100,7 +100,7 @@ terraform apply</pre>
       package_requirement = "LetOctopusDecide"
       start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    The first step (or, more technically, the action assigned to the first step) creates a new S3 bucket. This bucket is used to hold the Lambda application archive:
+    The first step (or, more technically, the action assigned to the first step) creates a new S3 bucket. This bucket is used to hold the Lambda application artifact:
 </p>
 <pre>      action {
         action_type                        = "Octopus.AwsRunCloudFormation"
@@ -114,8 +114,11 @@ terraform apply</pre>
         worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
         properties                         = {
           "Octopus.Action.Aws.CloudFormationTemplate" = "Resources:\n  LambdaS3Bucket:\n    Type: 'AWS::S3::Bucket'\nOutputs:\n  LambdaS3Bucket:\n    Description: The S3 Bucket\n    Value:\n      Ref: LambdaS3Bucket\n"
-          "Octopus.Action.Aws.WaitForCompletion" = "True"
-          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubBackendS3Bucket-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          "Octopus.Action.Aws.WaitForCompletion" = "True"</pre>
+<p>
+  The name of the CloudFormation stack is unique for each Octopus environment. This allows us to promote the deployment from the development environment to the production environment while having each deployment create its own distinct AWS resources:
+</p>          
+<pre>          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubBackendS3Bucket-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
           "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
           "Octopus.Action.Aws.TemplateSource" = "Inline"
           "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])

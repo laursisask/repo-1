@@ -1,9 +1,9 @@
 <h1><a id="apigateway">Deploying the API Gateway</a></h1>
 <p>
-    The work done to this point creates the global Octopus resources required to support a deployment of applications and infrastructure to AWS. With this done we are now able to deploy the API Gateway instance that exposes our Lambda microservices.
+    The work done to this point creates the global Octopus resources required to support the deployment of applications and infrastructure to AWS. With this done we are now able to deploy the API Gateway instance that exposes our Lambda microservices.
 </p>
 <p>
-    The API Gateway provides a shared entry point for web clients interacting with the microservices that make up the Octopub sample application. Because it is a shared resource, it is deployed as a separate project in its own CloudFormation stack. We'll make use of CloudFormation output variables to allow subsequent AWS resources to attach themselves to the API Gateway.
+    The API Gateway provides a shared entry point for web clients interacting with the microservices making up the Octopub sample application. Because it is a shared resource, it is deployed as a separate project in its own CloudFormation stack. We'll make use of CloudFormation output variables to allow subsequent AWS resources to attach themselves to the API Gateway.
 </p>
 <p>
     To create the API Gateway deployment project in Octopus, apply the Terraform configuration in the <strong>terraform/apigateway/octopus</strong> directory using the following commands:
@@ -20,7 +20,7 @@ terraform apply</pre>
 </p>
 <div><img alt="Octopus environments" src="images/octopus/apigatewayaws.png"/></div>
 <p>
-    The CloudFormation stack responsible for creating the API Gateway exposes a number of output variables. Subsequent Lambda deployments will read these variables to attach the Lambda and front end web app to the API Gateway:
+    The CloudFormation stack responsible for creating the API Gateway exposes a number of output variables. Subsequent Lambda deployments read these variables to attach the Lambda and front end web app to the API Gateway:
 </p>
 <div><img alt="Octopus environments" src="images/octopus/apigatewaycfoutputs.png"/></div>
 <h2>Breaking down the HCL</h2>
@@ -30,10 +30,11 @@ terraform apply</pre>
 <p>
     This data lookup gets the ID of the library variable set. 
 </p>
-<p>Note the pattern shown here where we skip zero results and take one. This pattern allows us to convert an resource name to an ID.
+<p>
+  Note the pattern shown here where we skip zero results and take one. This pattern allows us to convert a resource name to an ID.
 </p>
 <p>
-  Also note that many data lookups only expose a partial name field rather than a complete name. This is a consequence of the Octopus API, which often allows resource collections to be filtered by a text field in the UI that that return all resources partially matching a name rather than matching the exact text typed in. Performing a lookup on a partial name match will work well most of the time so long as the resource names are unambiguous, but there are edge cases where partial name matching may produce unexpected results:
+  Also note that many data lookups only expose a partial name field rather than a complete name. This is a consequence of the Octopus API, which often allows resource collections to be filtered by a UI text field that return all resources partially matching a name rather than matching the exact text typed in. Performing a lookup on a partial name match works well most of the time so long as the resource names are unambiguous, but there are edge cases where partial name matching may produce unexpected results:
 </p>
 <pre>data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
     ids          = null
@@ -42,7 +43,7 @@ terraform apply</pre>
     take         = 1
   }</pre>
 <p>
-    This data lookup gets the ID of the default lifecycle that is present by default in a new space:
+    This data lookup returns the ID of the default lifecycle that is present by default in a new space:
 </p>
 <pre>data "octopusdeploy_lifecycles" "default" {
     ids          = []
@@ -51,7 +52,7 @@ terraform apply</pre>
     take         = 1
   }</pre>
 <p>
-    This data lookup gets the Linux dynamic worker that is present by default in a new space on a hosted Octopus instance.
+    This data lookup returns the Linux dynamic worker that is present by default in a new space on a hosted Octopus instance.
 </p>
 <p> 
   Note that on a self hosted instance of Octopus, this lookup needs to be modified to look up the default worker pool:
@@ -70,7 +71,7 @@ terraform apply</pre>
     description = "Builds the API Gateway."
   }</pre>
 <p>
-    Next we define the project group. Note how we use the results of the data lookups against the lifecycles and library variable sets to link them to the deployment project:
+    Next we define the project. Note how we use the results of the data lookups against the lifecycles and library variable sets to link them to the deployment project:
 </p>  
 <pre>resource "octopusdeploy_project" "project_api_gateway" {
     name                                 = "API Gateway"
@@ -93,7 +94,7 @@ terraform apply</pre>
     }
   }</pre>
 <p>
-    Finally we define the deployment process, which defines the steps inside the deployment project:
+    Finally, we define the deployment process, which defines the steps inside the deployment project:
 </p>
 <pre>resource "octopusdeploy_deployment_process" "deployment_process_project_api_gateway" {
     project_id = "${octopusdeploy_project.project_api_gateway.id}"</pre>
@@ -121,7 +122,7 @@ terraform apply</pre>
   Steps have a number of common properties, defined above, while the remaining properties are generic key/value pairs. This is referred to as the <strong>property bag</strong>.
 </p>
 <p>
-  There is no documentation describing all the properties that must be defined in the property bag. Typically you would define the step in the Octopus web UI, click the <strong>Download as JSON</strong> option, and then convert the step <strong>Properties</strong> object into the HCL <strong>properties</strong>:
+  There is no documentation describing all the properties that must be defined in the property bag. Typically you would define the step in the Octopus web UI, click the <strong>Download as JSON</strong> option, and then convert the step JSON <strong>Properties</strong> object into the HCL <strong>properties</strong>:
 </p>
 <div><img alt="Octopus accounts" src="images/octopus/downloadasjson.png"/></div>
 <pre>        properties                         = {</pre>
@@ -154,7 +155,7 @@ terraform apply</pre>
               "value" = "#{Octopus.Environment.Id}"
             },</pre>
     <p>
-      The template syntax used by Octopus is called <strong>Octostache</strong>. Octostache has a number of filters documented at <a href="https://octopus.com/docs/projects/variables/variable-filters">https://octopus.com/docs/projects/variables/variable-filters</a>. We use the <strong>Replace</strong> filter here to replace anything after a space in the environment name with an empty string. Given our environments are called <strong>Development</strong> and <strong>Production</strong>, this filter does nothing, because these names have no space. However, if we had an environment called <strong>Development (Security)</strong>, this filter would result in a string <strong>Development</strong>:
+      The template syntax used by Octopus is called <strong>Octostache</strong>. Octostache has a number of filters documented at <a href="https://octopus.com/docs/projects/variables/variable-filters">https://octopus.com/docs/projects/variables/variable-filters</a>. We use the <strong>Replace</strong> filter here to replace anything after a space in the environment name with an empty string. Given our environments are called <strong>Development</strong> and <strong>Production</strong>, this filter does nothing, because these names have no space. However, if we had an environment called <strong>Development (Security)</strong>, this filter would result in the string <strong>Development</strong>:
     </p>
 <pre>            {
               "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
@@ -223,7 +224,7 @@ terraform apply</pre>
                   - RootResourceId
                 PathPart: '{proxy+}'</pre>
 <p>
-  The IDs of the resources created by this CloudFormation template are exposed as outputs. These outputs are captured as Octopus output variables able to be consumed in subsequent steps. They are also able to be queried via the <strong>aws</strong> CLI in other Octopus deployment projects:
+  The IDs of the resources created by this CloudFormation template are exposed as outputs. These outputs are captured as Octopus output variables able to be consumed in subsequent steps. They are also able to be queried via the <strong>aws</strong> CLI in separate Octopus deployment projects:
 </p>
 <pre>          Outputs:
             RestApi:

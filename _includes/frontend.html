@@ -297,9 +297,6 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
         ])
         "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
         AWSTemplateFormatVersion: 2010-09-09
-        Parameters:
-          Hostname:
-            Type: String
         Resources:
           S3Bucket:
             Type: AWS::S3::Bucket

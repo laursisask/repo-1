@@ -276,9 +276,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
         ])
         "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
         AWSTemplateFormatVersion: 2010-09-09
-        Parameters:
-          Hostname:
-            Type: String
         Resources:
           S3Bucket:
             Type: AWS::S3::Bucket

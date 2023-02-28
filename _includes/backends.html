@@ -1,0 +1,107 @@
+<h1><a id="backends">Terraform Backends</a></h1>
+<p>
+    By default, Terraform stores the state of any resources it creates in local files. This is called the local backend, and it is convenient for quickly getting up and running with Terraform as it requires no additional configuration.
+</p>
+<p>
+    However, using the local backend means that you must run Terraform from the same machine every time. If you try to reapply Terraform configuration from a second machine, the second machine does not have access to the state of the created resources, and the process will fail saying that the resources defined in the Terraform configuration already exist.
+</p>
+<p>
+    It is highly recommended that Terraform be configured with a shared remote state. Doing so allows the Terraform configuration to be applied from any location.
+</p>
+<p>
+    Terraform supports storing state in S3 buckets. Each of the directories under the <strong>terraform</strong> directory has a child directory called <strong>s3backend</strong>. The <strong>s3backend</strong> module contains a file called <strong>backend.tf</strong> which configures a S3 backend:
+</p>
+<pre>terraform {
+  backend "s3" {    
+  }
+}</pre>
+<p>
+    The rest of the Terraform configuration file defines the common variables required by the sibling <strong>octopus</strong> module, and then calls the <strong>octopus</strong> module:
+</p>
+<pre>variable "octopus_server" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The URL of the Octopus server e.g. https://myinstance.octopus.app."
+}
+
+variable "octopus_apikey" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The API key used to access the Octopus server. See https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key for details on creating an API key."
+}
+
+variable "octopus_space_id" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The ID of the Octopus space to populate."
+}
+
+module "octopus" {
+  source = "../octopus"
+  octopus_server = var.octopus_server
+  octopus_apikey = var.octopus_apikey
+  octopus_space_id = var.octopus_space_id
+}</pre>
+<p>
+    To initialize the <strong>s3backend</strong> module, call <strong>terraform init</strong> with the backend configuration values for your own shared S3 state bucket.
+</p>
+<p>
+    The values for the <strong>bucket</strong> and <strong>region</strong> are the same for all the modules.
+</p>
+<p>
+    You then must make sure that each module has a unique value for the <strong>key</strong> setting. For example, this is the command you run to initialize the module found under <strong>terraform/accounts/s3backend</strong>:
+</p>
+<pre>terraform init -backend-config="key=accounts" -backend-config="bucket=your_s3_backet_name" -backend-config="region=your_aws_region"</pre>
+<p>
+    This the command you run to initialize the module found under <strong>terraform/feeds/s3backend</strong>
+</p>
+<pre>terraform init -backend-config="key=feeds" -backend-config="bucket=your_s3_backet_name" -backend-config="region=your_aws_region"</pre>
+<p>
+    And so on for each module. A Bash script to apply all the modules is shown below, Make sure to replace the values assigned to the <strong>BUCKET_NAME</strong> and <strong>BUCKET_REGION</strong> variables:
+</p>
+<pre>BUCKET_NAME=your_s3_backet_name
+BUCKET_REGION=your_aws_region
+
+git clone https://github.com/mcasperson/SalesEngineeringAwsLambda.git
+cd SalesEngineeringAwsLambda
+
+pushd terraform/feeds/s3backend
+terraform init -backend-config="key=feeds" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform apply -auto-approve
+popd
+
+pushd terraform/accounts/s3backend
+terraform init -backend-config="key=account" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform apply -auto-approve
+popd
+
+pushd terraform/environments/s3backend
+terraform init -backend-config="key=environment" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform apply -auto-approve
+popd
+
+pushd terraform/libraryvariablesets/s3backend
+terraform init -backend-config="key=libraryvariablesets" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform apply -auto-approve
+popd
+
+pushd terraform/apigateway/s3backend
+terraform init -backend-config="key=apigateway" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform apply -auto-approve
+popd
+
+pushd terraform/products/s3backend
+terraform init -backend-config="key=products" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform apply -auto-approve
+popd
+
+pushd terraform/frontend/s3backend
+terraform init -backend-config="key=frontend" -backend-config="bucket=$BUCKET_NAME" -backend-config="region=$BUCKET_REGION"
+terraform apply -auto-approve
+popd</pre>
+<p>
+    The remainder of this book assumes you are using the default local storage option. Just keep in mind that a shared remote backend is recommended when applying Terraform modules in a production context.
+</p>

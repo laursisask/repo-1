@@ -52,7 +52,7 @@ module "octopus" {
     The values for the <strong>bucket</strong> and <strong>region</strong> are the same for all the modules. You must then make sure that each module has a unique value for the <strong>key</strong> setting. 
 </p>
 <p>
-    A Bash script to apply all the modules is shown below, Make sure to replace the values assigned to the <strong>BUCKET_NAME</strong> and <strong>BUCKET_REGION</strong> variables, as well as the variables prefixed with <strong>TF_VAR</strong>:
+    A Bash script to apply all the modules is shown below. Make sure to replace the values assigned to the <strong>BUCKET_NAME</strong> and <strong>BUCKET_REGION</strong> variables, as well as the variables prefixed with <strong>TF_VAR</strong>:
 </p>
 <pre>BUCKET_NAME=your_s3_backet_name
 BUCKET_REGION=your_aws_region

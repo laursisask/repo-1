@@ -1,0 +1,42 @@
+<h1><a id="quickstart">Quick Start</a></h1>
+<p>
+    For those that just want to see the end result of the process documented in this book, the following commands will deploy all the Octopus resources:
+</p>
+<pre>git clone https://github.com/mcasperson/AWSLambdaOctopusDeployment.git
+cd AWSLambdaOctopusDeployment
+
+pushd terraform/feeds/octopus
+terraform init
+terraform apply
+popd
+
+pushd terraform/accounts/octopus
+terraform init
+terraform apply
+popd
+
+pushd terraform/environments/octopus
+terraform init
+terraform apply
+popd
+
+pushd terraform/libraryvariablesets/octopus
+terraform init
+terraform apply
+popd
+
+pushd terraform/apigateway/octopus
+terraform init
+terraform apply
+popd
+
+pushd terraform/products/octopus
+terraform init
+terraform apply
+popd
+
+pushd terraform/frontend/octopus
+terraform init
+terraform apply
+popd
+</pre>

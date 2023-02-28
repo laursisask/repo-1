@@ -238,7 +238,7 @@ terraform apply</pre>
     The Lambda requires the ID of API Gateway resources. These IDs are exposed as CloudFormation output variables.
 </p>  
 <p>
-    Note that Octopus does not store values like this between deployments in the same way that Terraform maintains state or CloudFormation maintains a stack. Octopus consumes the output variables of a CloudFormation stack during a deployment to gain access to these long lived values:
+    Note that Octopus does not store values like this between deployments in the same way that Terraform maintains state or CloudFormation maintains a stack. Octopus queries the output variables of a CloudFormation stack during a deployment to gain access to these long lived values:
 </p>
 <pre>      action {
         action_type                        = "Octopus.AwsRunScript"
@@ -321,7 +321,7 @@ terraform apply</pre>
     The next step is to deploy the Lambda and its associated infrastructure including a VPC, subnets, RDS database, RDS subnet groups, security groups, and CloudWatch log groups. 
 </p>  
 <p>
-    Our Lambda interacts with a database, and includes migration scripts that populate initial data and optionally migrate data with new schema and data changes. Because the serverless database deployed in this CloudFormation template has no public access, the only way to interact with it is to run code in the same VPC as the RDS database. The Lambda itself is a logic place to run these migrations, and so we actually deploy the Lambda twice: one instance with environment variables that allow it to run the database migrations, and one instance with environment variables that allow the Lambda to respond to HTTP traffic:
+    Our Lambda interacts with a database and includes migration scripts that populate initial data and optionally migrate data with new schema and data changes. Because the serverless database deployed in this CloudFormation template has no public access, the only way to interact with it is to run code in the same VPC as the RDS database. The Lambda itself is a logical place to run these migrations, and so we deploy the Lambda twice: one instance with environment variables that allow it to run the database migrations, and one instance with environment variables that allow the Lambda to respond to HTTP traffic:
 </p>
 <pre>      action {
         action_type                        = "Octopus.AwsRunCloudFormation"
@@ -647,7 +647,7 @@ terraform apply</pre>
       package_requirement = "LetOctopusDecide"
       start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    The next step is to manually execute the database migration Lambda. This ensures that the database is populated and migrated:
+    The next step is to manually execute the database migration Lambda. This ensures that the database is populated and updated:
 </p>  
 <pre>      action {
         action_type                        = "Octopus.AwsRunScript"
@@ -876,7 +876,7 @@ terraform apply</pre>
               Type: String
           Resources:</pre>
 <p>
-  Each Lambda is attached to the API Gateway via a new Lambda specific API Gateway resource. In this example we create creating a resource called <strong>products</strong> attached to the <strong>api</strong> resource created by the <strong>API Gateway</strong> project:
+  Each Lambda is attached to the API Gateway via a new Lambda specific API Gateway resource. In this example we create a resource called <strong>products</strong> attached to the <strong>api</strong> resource created by the <strong>API Gateway</strong> project:
 </p>
 <pre>            ApiProductsResource:
               Type: 'AWS::ApiGateway::Resource'
@@ -894,18 +894,18 @@ terraform apply</pre>
                 ParentId: !Ref ApiProductsResource
                 PathPart: '{proxy+}'</pre>
 <p>
-  API Gateway resources define the URL paths, but alone is not enough to define the requests that API Gateway responds to. API Gateway methods are attached to resources and define the HTTP method to respond to:
+  API Gateway resources define the URL paths, but this alone is not enough to define the requests that API Gateway responds to. API Gateway methods are attached to resources and define the HTTP method to respond to:
 </p>                
 <pre>            ApiProductsMethod:
               Type: 'AWS::ApiGateway::Method'
               Properties:
                 AuthorizationType: NONE</pre>
 <p>
-  For convenience, API Gateway methods can respond to any HTTP method. We implement this by setting the <strong>HttpMethod</strong> property to <strong>ANY</strong>:
+  For convenience, API Gateway methods can respond to all HTTP methods. We implement this by setting the <strong>HttpMethod</strong> property to <strong>ANY</strong>:
 </p>                
 <pre>                HttpMethod: ANY</pre>
 <p>
-  The integration defines where API Gateway directs the request to. Here we forward the request to the Lambda:
+  The integration property defines where API Gateway directs the request to. Here we forward the request to the Lambda:
 </p>
 <pre>                Integration:
                   IntegrationHttpMethod: POST
@@ -923,7 +923,7 @@ terraform apply</pre>
                 ResourceId: !Ref ApiProductsResource
                 RestApiId: !Ref RestApi</pre>
 <p>
-  The integration is defined on the proxy resource as well:
+  The Lambda is exposed on the proxy resource as well:
 </p>
 <pre>            ApiProxyProductsMethod:
               Type: 'AWS::ApiGateway::Method'
@@ -946,7 +946,7 @@ terraform apply</pre>
                 ResourceId: !Ref ApiProductsProxyResource
                 RestApiId: !Ref RestApi</pre>
 <p>
-  Changes to the API Gateway are only made public when they are deployed and when the deployment is exposed via a stage. Here we create a new deployment resource. Note that the name of the deployment resource is unique for each Octopus deployment due to the Octostache template defined in the resource name. This is required to forced CloudFormation to create a new deployment resource every time this CloudFormation template is updated:
+  Changes to the API Gateway are only made public when they are deployed and when the deployment is exposed via a stage. Here we create a new deployment resource. Note that the name of the deployment resource is unique for each Octopus deployment due to the Octostache template defined in the resource name. This is required to force CloudFormation to create a new deployment resource every time this CloudFormation template is updated:
 </p>                
 <pre>            'Deployment#{Octopus.Deployment.Id | Replace -}':
               Type: 'AWS::ApiGateway::Deployment'

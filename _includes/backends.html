@@ -60,10 +60,15 @@ module "octopus" {
 </p>
 <pre>terraform init -backend-config="key=feeds" -backend-config="bucket=your_s3_backet_name" -backend-config="region=your_aws_region"</pre>
 <p>
-    And so on for each module. A Bash script to apply all the modules is shown below, Make sure to replace the values assigned to the <strong>BUCKET_NAME</strong> and <strong>BUCKET_REGION</strong> variables:
+    And so on for each module. A Bash script to apply all the modules is shown below, Make sure to replace the values assigned to the <strong>BUCKET_NAME</strong> and <strong>BUCKET_REGION</strong> variables, as well as the variables prefixed with <strong>TF_VAR</strong>:
 </p>
 <pre>BUCKET_NAME=your_s3_backet_name
 BUCKET_REGION=your_aws_region
+TF_VAR_octopus_server=https://yourinstance.octopus.app
+TF_VAR_octopus_apikey=API-YOURAPIKEY
+TF_VAR_octopus_space_id=Spaces-1
+TF_VAR_account_aws_account_access=YOUR_AWS_ACCESS_KEY_GOES_HERE
+TF_VAR_account_aws_account=YOUR_AWS_SECRET_KEY_GOES_HERE
 
 git clone https://github.com/mcasperson/SalesEngineeringAwsLambda.git
 cd SalesEngineeringAwsLambda

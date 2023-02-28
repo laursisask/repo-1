@@ -3,13 +3,13 @@
     By default, Terraform stores the state of any resources it creates in local files. This is called the local backend, and it is convenient for quickly getting up and running with Terraform as it requires no additional configuration.
 </p>
 <p>
-    However, using the local backend means that you must run Terraform from the same machine every time. If you try to reapply Terraform configuration from a second machine, the second machine does not have access to the state of the created resources, and the process will fail saying that the resources defined in the Terraform configuration already exist.
+    However, using the local backend means that you must run Terraform from the same machine every time. If you try to reapply Terraform modules from a second machine, the second machine does not have access to the state of the created resources, and the process will fail saying that the resources defined in the Terraform configuration already exist.
 </p>
 <p>
-    It is highly recommended that Terraform be configured with a shared remote state. Doing so allows the Terraform configuration to be applied from any location.
+    It is highly recommended that Terraform be configured with a shared remote state. Doing so allows the Terraform module to be applied from any location.
 </p>
 <p>
-    Terraform supports storing state in S3 buckets. Each of the directories under the <strong>terraform</strong> directory has a child directory called <strong>s3backend</strong>. The <strong>s3backend</strong> module contains a file called <strong>backend.tf</strong> which configures a S3 backend:
+    Terraform supports storing state in S3 buckets. Each of the directories under the <strong>terraform</strong> directory has a child directory called <strong>s3backend</strong>. The <strong>s3backend</strong> module contains a file called <strong>backend.tf</strong> which configures an S3 backend:
 </p>
 <pre>terraform {
   backend "s3" {    
@@ -49,18 +49,10 @@ module "octopus" {
     To initialize the <strong>s3backend</strong> module, call <strong>terraform init</strong> with the backend configuration values for your own shared S3 state bucket.
 </p>
 <p>
-    The values for the <strong>bucket</strong> and <strong>region</strong> are the same for all the modules.
+    The values for the <strong>bucket</strong> and <strong>region</strong> are the same for all the modules. You must then make sure that each module has a unique value for the <strong>key</strong> setting. 
 </p>
 <p>
-    You then must make sure that each module has a unique value for the <strong>key</strong> setting. For example, this is the command you run to initialize the module found under <strong>terraform/accounts/s3backend</strong>:
-</p>
-<pre>terraform init -backend-config="key=accounts" -backend-config="bucket=your_s3_backet_name" -backend-config="region=your_aws_region"</pre>
-<p>
-    This the command you run to initialize the module found under <strong>terraform/feeds/s3backend</strong>
-</p>
-<pre>terraform init -backend-config="key=feeds" -backend-config="bucket=your_s3_backet_name" -backend-config="region=your_aws_region"</pre>
-<p>
-    And so on for each module. A Bash script to apply all the modules is shown below, Make sure to replace the values assigned to the <strong>BUCKET_NAME</strong> and <strong>BUCKET_REGION</strong> variables, as well as the variables prefixed with <strong>TF_VAR</strong>:
+    A Bash script to apply all the modules is shown below, Make sure to replace the values assigned to the <strong>BUCKET_NAME</strong> and <strong>BUCKET_REGION</strong> variables, as well as the variables prefixed with <strong>TF_VAR</strong>:
 </p>
 <pre>BUCKET_NAME=your_s3_backet_name
 BUCKET_REGION=your_aws_region

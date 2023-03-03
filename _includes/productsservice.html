@@ -216,8 +216,11 @@ terraform apply</pre>
         channels                           = []
         tenant_tags                        = []
   
-        primary_package {
-          package_id           = "com.octopus:products-microservice-lambda"
+        primary_package {</pre>
+<p>
+  The package ID used here reflects the format of Maven artifacts where the group and artifact IDs are separated by a colon. These is the first two elements of the Group, Artifact, and Version (GAV) formation frequently used when referencing Maven artifacts:
+</p>        
+<pre>          package_id           = "com.octopus:products-microservice-lambda"
           acquisition_location = "Server"
           feed_id              = "${data.octopusdeploy_feeds.sales_maven_feed.feeds[0].id}"
           properties           = { SelectionMode = "immediate" }
@@ -274,9 +277,11 @@ terraform apply</pre>
               describe-stacks \
               --stack-name #{AWS.CloudFormation.ApiGatewayStack} \
               --query "Stacks[0].Outputs[?OutputKey=='Api'].OutputValue" \
-              --output text)
-  
-          set_octopusvariable "Api" $${API_RESOURCE}
+              --output text)</pre>
+<p>
+  Dollar signs followed by an opening curly bracket must be escaped when included in HCL strings:
+</p>                 
+<pre>          set_octopusvariable "Api" $${API_RESOURCE}
   
           echo "API Resource ID: $${API_RESOURCE}"
   
@@ -290,7 +295,6 @@ terraform apply</pre>
               --stack-name #{AWS.CloudFormation.ApiGatewayStack} \
               --query "Stacks[0].Outputs[?OutputKey=='RestApi'].OutputValue" \
               --output text)
-  
           set_octopusvariable "RestApi" $${REST_API}
   
           echo "Rest Api ID: $${REST_API}"
@@ -407,15 +411,21 @@ terraform apply</pre>
               Type: String
             DBPassword:
               Type: String
-          Resources:
-            VPC:
+          Resources:</pre>
+<p>
+  The Lambda and database will both be placed in a VPC:
+</p>
+<pre>            VPC:
               Type: "AWS::EC2::VPC"
               Properties:
                 CidrBlock: "#{Vpc.Cidr}"
                 Tags:
                 - Key: "Name"
-                  Value: !Ref LambdaName
-            SubnetA:
+                  Value: !Ref LambdaName</pre>
+<p>
+  The VPC has two subnets in different regions:
+</p>
+<pre>            SubnetA:
               Type: "AWS::EC2::Subnet"
               Properties:
                 AvailabilityZone: !Select
@@ -432,20 +442,29 @@ terraform apply</pre>
                   - !GetAZs
                     Ref: 'AWS::Region'
                 VpcId: !Ref "VPC"
-                CidrBlock: "10.0.1.0/24"
-            RouteTable:
+                CidrBlock: "10.0.1.0/24"</pre>
+<p>
+  The VPC requires a route table to define how network traffic is routed:
+</p>
+<pre>            RouteTable:
               Type: "AWS::EC2::RouteTable"
               Properties:
-                VpcId: !Ref "VPC"
-            SubnetGroup:
+                VpcId: !Ref "VPC"</pre>
+<p>
+  RDS requires the subnets that a database are placed in to be grouped in a subnet group:
+</p>                
+<pre>            SubnetGroup:
               Type: "AWS::RDS::DBSubnetGroup"
               Properties:
                 DBSubnetGroupName: !Ref SubnetGroupName
                 DBSubnetGroupDescription: "Subnet Group"
                 SubnetIds:
                 - !Ref "SubnetA"
-                - !Ref "SubnetB"
-            InstanceSecurityGroup:
+                - !Ref "SubnetB"</pre>
+<p>
+  The security group allows all outbound traffic:
+</p>                
+<pre>            InstanceSecurityGroup:
               Type: "AWS::EC2::SecurityGroup"
               Properties:
                 GroupName: "Example Security Group"
@@ -453,8 +472,11 @@ terraform apply</pre>
                 VpcId: !Ref "VPC"
                 SecurityGroupEgress:
                 - IpProtocol: "-1"
-                  CidrIp: "0.0.0.0/0"
-            InstanceSecurityGroupIngress:
+                  CidrIp: "0.0.0.0/0"</pre>
+<p>
+  We then allow all internal traffic between resources attached to the security group:
+</p>
+<pre>            InstanceSecurityGroupIngress:
               Type: "AWS::EC2::SecurityGroupIngress"
               DependsOn: "InstanceSecurityGroup"
               Properties:
@@ -462,8 +484,11 @@ terraform apply</pre>
                 IpProtocol: "tcp"
                 FromPort: "0"
                 ToPort: "65535"
-                SourceSecurityGroupId: !Ref "InstanceSecurityGroup"
-            RDSCluster:
+                SourceSecurityGroupId: !Ref "InstanceSecurityGroup"</pre>
+<p>
+  The Aurora serverless database is created emulating a MySQL database:
+</p>
+<pre>            RDSCluster:
               Type: "AWS::RDS::DBCluster"
               Properties:
                 DBSubnetGroupName: !Ref "SubnetGroup"
@@ -480,13 +505,19 @@ terraform apply</pre>
                   MinCapacity: 1
                   SecondsUntilAutoPause: 300
               DependsOn:
-                - SubnetGroup
-            AppLogGroup:
+                - SubnetGroup</pre>
+<p>
+  A Cloud Watch log group is created to hold the Lambda logs, with logs being cleaned up after 14 days:
+</p>
+<pre>            AppLogGroup:
               Type: 'AWS::Logs::LogGroup'
               Properties:
                 LogGroupName: !Sub '/aws/lambda/$${LambdaName}'
-                RetentionInDays: 14
-            IamRoleLambdaExecution:
+                RetentionInDays: 14</pre>
+<p>
+  An IAM role is created that grants the Lambda the required permissions to write to the Cloud Watch log group as well as manipulate the network interfaces required to expose the Lambda in the VPC:
+</p>
+<pre>            IamRoleLambdaExecution:
               Type: 'AWS::IAM::Role'
               Properties:
                 AssumeRolePolicyDocument:
@@ -520,8 +551,11 @@ terraform apply</pre>
                             - 'ec2:DescribeNetworkInterfaces'
                           Resource: "*"
                 Path: /
-                RoleName: !Sub '$${LambdaName}-role'
-            MigrationLambda:
+                RoleName: !Sub '$${LambdaName}-role'</pre>
+<p>
+  This is the first of two Lambdas is created. This Lambda is configured to run the database migration scripts, and is expected to be triggered by the Octopus deployment process and then remain unused:
+</p>
+<pre>            MigrationLambda:
               Type: 'AWS::Lambda::Function'
               Properties:
                 Description: !Ref LambdaDescription
@@ -552,8 +586,11 @@ terraform apply</pre>
                     - !Ref "InstanceSecurityGroup"
                   SubnetIds:
                     - !Ref "SubnetA"
-                    - !Ref "SubnetB"
-            ApplicationLambda:
+                    - !Ref "SubnetB"</pre>
+<p>
+  This is the second Lambda. It is configured to respond to HTTP requests against the REST API endpoint:
+</p>
+<pre>            ApplicationLambda:
               Type: 'AWS::Lambda::Function'
               Properties:
                 Description: !Ref LambdaDescription
@@ -625,8 +662,11 @@ terraform apply</pre>
             {
               "ParameterKey" = "DBUsername"
               "ParameterValue" = "productadmin"
-            },
-            {
+            },</pre>
+<p>
+  You would not typically hard code a password like this in a production environment, but for convenience this is the database password as a plain string value:
+</p>
+<pre>            {
               "ParameterKey" = "DBPassword"
               "ParameterValue" = "Password01!"
             },
@@ -650,7 +690,7 @@ terraform apply</pre>
       package_requirement = "LetOctopusDecide"
       start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    The next step is to manually execute the database migration Lambda. This ensures that the database is populated and updated:
+    The next step is to manually execute the database migration Lambda, defined as the <strong>MigrationLambda</strong> resource in the Cloud Formation template deployed by the previous step. This ensures that the database is populated and updated:
 </p>  
 <pre>      action {
         action_type                        = "Octopus.AwsRunScript"
@@ -721,8 +761,11 @@ terraform apply</pre>
             "CAPABILITY_AUTO_EXPAND",
             "CAPABILITY_IAM",
             "CAPABILITY_NAMED_IAM",
-          ])
-          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambdaVersion-#{Octopus.Environment.Name | Replace \" .*\" \"\"}-#{Octopus.Deployment.Id | Replace -}"
+          ])</pre>
+<p>
+  We want to create a new Lambda version without removing the previous version. This is because the previous version is attached to the API Gateway until we deploy a new API Gateway stage, and removing the previous version would introduce some downtime. By creating a Cloud Formation stack with a unique name each time this deployment is run, we ensure the old version is not removed:
+</p>
+<pre>          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambdaVersion-#{Octopus.Environment.Name | Replace \" .*\" \"\"}-#{Octopus.Deployment.Id | Replace -}"
           "Octopus.Action.Aws.AssumeRole" = "False"
           "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
           "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
@@ -1104,8 +1147,11 @@ terraform apply</pre>
               Default: 'Deployment#{DeploymentId}'
             ApiGatewayId:
               Type: String
-          Resources:
-            Stage:
+          Resources:</pre>
+<p>
+  A stage with the same name as the Octopus environment is created:
+</p>          
+<pre>            Stage:
               Type: 'AWS::ApiGateway::Stage'
               Properties:
                 DeploymentId:
@@ -1114,16 +1160,22 @@ terraform apply</pre>
                   'Fn::Sub': '$${ApiGatewayId}'
                 StageName:
                   'Fn::Sub': '$${EnvironmentName}'
-          Outputs:
-            DnsName:
+          Outputs:</pre>
+<p>
+  The hostname of the stage can be constructed from the API Gateway ID and region:
+</p>
+<pre>            DnsName:
               Value:
                 'Fn::Join':
                   - ''
                   - - Ref: ApiGatewayId
                     - .execute-api.
                     - Ref: 'AWS::Region'
-                    - .amazonaws.com
-            StageURL:
+                    - .amazonaws.com</pre>
+<p>
+  Likewise the full URL to the stage can be constructed from the API Gateway ID, region, and stage name:
+</p>                    
+<pre>            StageURL:
               Description: The url of the stage
               Value:
                 'Fn::Join':

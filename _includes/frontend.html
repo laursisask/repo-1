@@ -105,7 +105,27 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
   }
 }</pre>
 <p>
-    The project makes use of structured configuration variables, which is a feature of Octopus that allows specially configured variables to be injected into files such as JSON, YAML, XML, and Java properties files.
+    The project makes use of structured configuration variables, which is a feature of Octopus that allows specially named variables to be injected into files such as JSON, YAML, XML, and Java properties files.
+</p>
+<p>
+  This is the default JSON used to configured the frontend web app:
+</p>
+<pre>{
+  "basename": "",
+  "branch": "main",
+  "title": "Octopub",
+  "productEndpoint": "/api/products",
+  "productHealthEndpoint": "/health/products",
+  "auditEndpoint": "/api/audits",
+  "auditHealthEndpoint": "/health/audits",
+  "overrideTheme": "",
+  "frontendVersion": "v0.1.0"
+}</pre>
+<p>
+  Normally, relative paths like <strong>/api/products</strong> would work, but because API Gateway stages append the name of the stage to the path (for example <strong>Development</strong> in the URL https://apigatewayid.execute-api.ap-southeast-2.amazonaws.com/Development). However, these relative paths do not work, because the relative path <strong>/api/products</strong> would result in requests to paths like <strong>https://apigatewayid.execute-api.ap-southeast-2.amazonaws.com/api/products</strong>, which doesn't work.
+</p>
+<p>
+  This means we must replace the JSON property called <strong>productEndpoint</strong> with a new value reflecting the URL exposed by API Gateway.
 </p>
 <p>
     Here we create a variable that will overwrite the property called <strong>productHealthEndpoint</strong> in a JSON configuration file with the URL of the API Gateway stage exposing the backend API health check:

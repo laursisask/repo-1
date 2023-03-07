@@ -33,6 +33,17 @@ terraform apply</pre>
 <div><img alt="Octopub" src="images/octopus/octopub.png"/></div>
 <h2>Breaking down the HCL</h2>
 <p>
+  The process of deploying a Lambda and exposing it via API Gateway is:
+</p>
+<ul>
+  <li>Query the CloudFormation stack that deployed the API Gateway instance for outputs like the API Gateway ID and the ID of the shared resources attached to the gateway.</li>
+  <li>Create an S3 bucket to host the static web application.</li>
+  <li>Upload the web application to the S3 bucket.</li>
+  <li>Proxy web requests from the API Gateway to the static web endpoint exposed by S3.</li>
+  <li>Update the API Gateway stage.</li>
+  <li>Log the URL used to access the frontend web application.</li>
+</ul>
+<p>
     Again we need to reference a number of existing resources with data lookups:
 </p>
 <pre>data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {

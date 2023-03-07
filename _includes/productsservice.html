@@ -25,6 +25,19 @@ terraform apply</pre>
 <div><img alt="Products Lambda" src="images/octopus/productsapigateway.png"/></div>
 <h2>Breaking down the HCL</h2>
 <p>
+  The process of deploying a Lambda and exposing it via API Gateway is:
+</p>
+<ul>
+  <li>Create a new S3 bucket to hold the Lambda archive.</li>
+  <li>Upload the Lambda archive to the S3 bucket.</li>
+  <li>Query the CloudFormation stack that deployed the API Gateway instance for outputs like the API Gateway ID and the ID of the shared resources attached to the gateway.</li>
+  <li>Deploy the Lambda and associated resources like VPC, subnets, RDS database, IAM roles, and Cloud Watch log groups via CloudFormation.</li>
+  <li>Manually execute the database migrations.</li>
+  <li>Create a new Lambda version.</li>
+  <li>Attach the Lambda version to the API Gateway.</li>
+  <li>Update the API Gateway stage.</li>
+</ul>
+<p>
     As with the API Gateway deployment project, the Lambda deployment project needs access to many existing resources such as the library variable set, default lifecycle, worker pool, and feed. These are all exposed via data lookups:
 </p>
 <pre>data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {

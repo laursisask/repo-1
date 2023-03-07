@@ -122,7 +122,7 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
   "frontendVersion": "v0.1.0"
 }</pre>
 <p>
-  Normally, relative paths like <strong>/api/products</strong> would work, but because API Gateway stages append the name of the stage to the path (for example <strong>Development</strong> in the URL https://apigatewayid.execute-api.ap-southeast-2.amazonaws.com/Development). However, these relative paths do not work, because the relative path <strong>/api/products</strong> would result in requests to paths like <strong>https://apigatewayid.execute-api.ap-southeast-2.amazonaws.com/api/products</strong>, which doesn't work.
+  Normally, relative paths like <strong>/api/products</strong> would work, but because API Gateway stages append the name of the stage to the path (for example <strong>Development</strong> in the URL https://apigatewayid.execute-api.ap-southeast-2.amazonaws.com/Development). This means the default relative paths do not work, because the relative path <strong>/api/products</strong> would result in requests to paths like <strong>https://apigatewayid.execute-api.ap-southeast-2.amazonaws.com/api/products</strong>, which doesn't work.
 </p>
 <p>
   This means we must replace the JSON property called <strong>productEndpoint</strong> with a new value reflecting the URL exposed by API Gateway.

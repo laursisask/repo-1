@@ -99,11 +99,8 @@ terraform apply</pre>
     }
   }</pre>
 <p>
-    Here we create the deployment process.
+    Here we create the deployment process. Unlike the deployment process for the API Gateway, which involved a single step, this project is far more complex capturing all of the steps mentioned previously: 
 </p>  
-<p>
-    This deployment process includes many individual steps to complete the deployment of a Lambda to AWS and then expose the Lambda via an API Gateway:
-</p>
 <pre>  resource "octopusdeploy_deployment_process" "deployment_process_project_products_service" {
     project_id = "${octopusdeploy_project.project_products_service.id}"
   
@@ -436,7 +433,7 @@ terraform apply</pre>
                 - Key: "Name"
                   Value: !Ref LambdaName</pre>
 <p>
-  The VPC has two subnets in different regions:
+  The VPC has two subnets in different regions to achieve high availability:
 </p>
 <pre>            SubnetA:
               Type: "AWS::EC2::Subnet"

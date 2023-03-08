@@ -127,7 +127,10 @@ terraform apply</pre>
 <div><img alt="Octopus accounts" src="images/octopus/downloadasjson.png"/></div>
 <pre>        properties                         = {</pre>
 <p>
-    A common pattern in step definitions is to assign a JSON blob to a property. It is more readable to represent JSON as a HCL map and encode it with the <strong>jsonenode</strong> function:
+  A common pattern in step definitions is to assign a JSON blob to a property. It is more readable to represent JSON as a HCL map and encode it with the <strong>jsonenode</strong> function.
+</p>
+<p>
+  Here we define a common set of tags to be applied to the CloudFormation stack. This allows anyone browsing the stacks through the AWS console to quickly identify the Octopus process responsible for creating it:
 </p>
 <pre>          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
             {

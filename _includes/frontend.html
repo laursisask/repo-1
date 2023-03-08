@@ -33,6 +33,17 @@ terraform apply</pre>
 <div><img alt="Octopub" src="images/octopus/octopub.png"/></div>
 <h2>Breaking down the HCL</h2>
 <p>
+  The process of deploying a Lambda and exposing it via API Gateway is:
+</p>
+<ul>
+  <li>Query the CloudFormation stack that deployed the API Gateway instance for outputs like the API Gateway ID and the ID of the shared resources attached to the gateway.</li>
+  <li>Create an S3 bucket to host the static web application.</li>
+  <li>Upload the web application to the S3 bucket.</li>
+  <li>Proxy web requests from the API Gateway to the static web endpoint exposed by S3.</li>
+  <li>Update the API Gateway stage.</li>
+  <li>Log the URL used to access the frontend web application.</li>
+</ul>
+<p>
     Again we need to reference a number of existing resources with data lookups:
 </p>
 <pre>data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
@@ -94,7 +105,27 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
   }
 }</pre>
 <p>
-    The project makes use of structured configuration variables, which is a feature of Octopus that allows specially configured variables to be injected into files such as JSON, YAML, XML, and Java properties files.
+    The project makes use of structured configuration variables, which is a feature of Octopus that allows specially named variables to be injected into files such as JSON, YAML, XML, and Java properties files.
+</p>
+<p>
+  This is the default JSON used to configured the frontend web app:
+</p>
+<pre>{
+  "basename": "",
+  "branch": "main",
+  "title": "Octopub",
+  "productEndpoint": "/api/products",
+  "productHealthEndpoint": "/health/products",
+  "auditEndpoint": "/api/audits",
+  "auditHealthEndpoint": "/health/audits",
+  "overrideTheme": "",
+  "frontendVersion": "v0.1.0"
+}</pre>
+<p>
+  Normally, relative paths like <strong>/api/products</strong> would work, but because API Gateway stages append the name of the stage to the path (for example <strong>Development</strong> in the URL https://apigatewayid.execute-api.ap-southeast-2.amazonaws.com/Development). This means the default relative paths do not work, because the relative path <strong>/api/products</strong> would result in requests to paths like <strong>https://apigatewayid.execute-api.ap-southeast-2.amazonaws.com/api/products</strong>, which doesn't work.
+</p>
+<p>
+  This means we must replace the JSON properties called <strong>productHealthEndpoint</strong> and <strong>productEndpoint</strong> with a new value reflecting the URL exposed by API Gateway.
 </p>
 <p>
     Here we create a variable that will overwrite the property called <strong>productHealthEndpoint</strong> in a JSON configuration file with the URL of the API Gateway stage exposing the backend API health check:

@@ -5,7 +5,7 @@
 <p>
     However, you may wish to retain the ability to tweak things like deployment projects through the Octopus UI without having those changes overwritten by Terraform. In this scenario, Terraform is used to bootstrap projects, but then effectively hands ownership of the configuration to the end user, who is free to modify steps as they see fit.
 </p>
-<p>.
+<p>
     Terraform supports this scenario with the <strong>lifecycle</strong> meta-argument and its <strong>ignore_changes</strong> argument. The following snippet shows a <strong>octopusdeploy_deployment_process</strong> resource configured to ignore changes to the steps:
 </p>
 <pre>resource "octopusdeploy_deployment_process" "deployment_process_project_api_gateway" {

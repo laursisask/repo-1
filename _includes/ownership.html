@@ -9,8 +9,6 @@
     Terraform supports this scenario with the <strong>lifecycle</strong> meta-argument and its <strong>ignore_changes</strong> argument. The following snippet shows a <strong>octopusdeploy_deployment_process</strong> resource configured to ignore changes to the steps:
 </p>
 <pre>resource "octopusdeploy_deployment_process" "deployment_process_project_api_gateway" {
-    project_id = "${octopusdeploy_project.project_api_gateway.id}"
-  
     lifecycle {
       ignore_changes = [
         # Ignore changes to step, e.g. because updates were made via the UI

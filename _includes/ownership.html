@@ -1,6 +1,6 @@
 <h1><a id="ownership">Configuration Ownership</a></h1>
 <p>
-    The Terraform modules presented in this book make the assumption that they are the source of truth when it comes to the configuration of Octopus resources. This means changes made to resources through the Octopus UI are overwritten the next time the Terraform module is applied.
+    The Terraform modules presented in this book make the assumption that they are the source of truth regarding the configuration of Octopus resources. This means changes made to resources through the Octopus UI are overwritten the next time the Terraform module is applied.
 </p>
 <p>
     However, you may wish to retain the ability to tweak things like deployment projects through the Octopus UI without having those changes overwritten by Terraform. In this scenario, Terraform is used to bootstrap projects, but then effectively hands ownership of the configuration to the end user, who is free to modify steps as they see fit.

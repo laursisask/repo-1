@@ -65,6 +65,53 @@ resource "octopusdeploy_project_group" "project_group_frontend" {
   description = "The Octopub web frontend"
 }
 
+# The following octopusdeploy_git_credential resource and Terraform variables are used
+# to create a Config-as-Code enabled project.
+
+# resource "octopusdeploy_git_credential" "gitcredential" {
+#   name     = "Octopub"
+#   type     = "UsernamePassword"
+#   username = "${var.gitusername}"
+#   password = "${var.gitcredential}"
+# }
+
+# variable "gitusername" {
+#   type        = string
+#   nullable    = false
+#   sensitive   = true
+#   description = "The git username"
+# }
+
+# variable "gitcredential" {
+#   type        = string
+#   nullable    = false
+#   sensitive   = true
+#   description = "The git credentials"
+# }
+
+# variable "giturl" {
+#   type        = string
+#   nullable    = false
+#   sensitive   = true
+#   description = "The git url"
+# }
+
+# variable "git_base_path" {
+#   type        = string
+#   nullable    = false
+#   sensitive   = true
+#   description = "The path where Config-as-Code files are saved"
+#   default     = "products"
+# }
+
+# variable "cac_enabled" {
+#   type        = string
+#   nullable    = false
+#   sensitive   = false
+#   description = "Enables whether the project has Config-as-Code enabled"
+#   default     = "true"
+# }
+
 resource "octopusdeploy_project" "project_frontend_webapp" {
   name                                 = "Frontend WebApp"
   auto_create_release                  = false
@@ -73,7 +120,6 @@ resource "octopusdeploy_project" "project_frontend_webapp" {
   description                          = "Deploys the frontend webapp to Lambda."
   discrete_channel_release             = false
   is_disabled                          = false
-  is_version_controlled                = false
   lifecycle_id                         = "${data.octopusdeploy_lifecycles.default.lifecycles[0].id}"
   project_group_id                     = "${octopusdeploy_project_group.project_group_frontend.id}"
   included_library_variable_sets       = ["${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"]
@@ -84,6 +130,28 @@ resource "octopusdeploy_project" "project_frontend_webapp" {
     exclude_unhealthy_targets       = false
     skip_machine_behavior           = "SkipUnavailableMachines"
   }
+
+  is_version_controlled                = false
+
+  # This settings configure the project to use Config-as-Code
+  # To enable CaC, comment out the "is_version_controlled" setting above,
+  # and uncomment the following.
+
+  # is_version_controlled                = var.cac_enabled
+
+  # lifecycle {
+  #   ignore_changes = [
+  #     connectivity_policy,
+  #   ]
+  # }
+
+  # git_library_persistence_settings {
+  #   git_credential_id  = octopusdeploy_git_credential.gitcredential.id
+  #   url                = var.giturl
+  #   base_path          = ".octopus/${var.git_base_path}"
+  #   default_branch     = "main"
+  #   protected_branches = []
+  # }
 }
 
 resource "octopusdeploy_variable" "frontend_webapp_producthealthendpoint" {

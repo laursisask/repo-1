@@ -58,6 +58,53 @@ resource "octopusdeploy_project_group" "project_group_infrastructure" {
   description = "Builds the API Gateway."
 }
 
+# The following octopusdeploy_git_credential resource and Terraform variables are used
+# to create a Config-as-Code enabled project.
+
+# resource "octopusdeploy_git_credential" "gitcredential" {
+#   name     = "Octopub"
+#   type     = "UsernamePassword"
+#   username = "${var.gitusername}"
+#   password = "${var.gitcredential}"
+# }
+
+# variable "gitusername" {
+#   type        = string
+#   nullable    = false
+#   sensitive   = true
+#   description = "The git username"
+# }
+
+# variable "gitcredential" {
+#   type        = string
+#   nullable    = false
+#   sensitive   = true
+#   description = "The git credentials"
+# }
+
+# variable "giturl" {
+#   type        = string
+#   nullable    = false
+#   sensitive   = true
+#   description = "The git url"
+# }
+
+# variable "git_base_path" {
+#   type        = string
+#   nullable    = false
+#   sensitive   = true
+#   description = "The path where Config-as-Code files are saved"
+#   default     = "products"
+# }
+
+# variable "cac_enabled" {
+#   type        = string
+#   nullable    = false
+#   sensitive   = false
+#   description = "Enables whether the project has Config-as-Code enabled"
+#   default     = "true"
+# }
+
 resource "octopusdeploy_project" "project_api_gateway" {
   name                                 = "API Gateway"
   auto_create_release                  = false
@@ -66,7 +113,6 @@ resource "octopusdeploy_project" "project_api_gateway" {
   description                          = "Deploys a shared API Gateway. This project is created and managed by the [Octopus Terraform provider](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy/latest/docs). The Terraform files can be found in the [GitHub repo](https://github.com/mcasperson/SalesEngineeringAwsLambda)."
   discrete_channel_release             = false
   is_disabled                          = false
-  is_version_controlled                = false
   lifecycle_id                         = "${data.octopusdeploy_lifecycles.default.lifecycles[0].id}"
   project_group_id                     = "${octopusdeploy_project_group.project_group_infrastructure.id}"
   included_library_variable_sets       = ["${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"]
@@ -77,6 +123,28 @@ resource "octopusdeploy_project" "project_api_gateway" {
     exclude_unhealthy_targets       = false
     skip_machine_behavior           = "SkipUnavailableMachines"
   }
+
+  is_version_controlled                = false
+
+  # This settings configure the project to use Config-as-Code
+  # To enable CaC, comment out the "is_version_controlled" setting above,
+  # and uncomment the following.
+
+  # is_version_controlled                = var.cac_enabled
+
+  # lifecycle {
+  #   ignore_changes = [
+  #     connectivity_policy,
+  #   ]
+  # }
+
+  # git_library_persistence_settings {
+  #   git_credential_id  = octopusdeploy_git_credential.gitcredential.id
+  #   url                = var.giturl
+  #   base_path          = ".octopus/${var.git_base_path}"
+  #   default_branch     = "main"
+  #   protected_branches = []
+  # }
 }
 
 resource "octopusdeploy_deployment_process" "deployment_process_project_api_gateway" {

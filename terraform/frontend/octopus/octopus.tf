@@ -125,6 +125,16 @@ resource "octopusdeploy_variable" "frontend_webapp_productendpoint" {
 }
 
 resource "octopusdeploy_deployment_process" "deployment_process_project_frontend_webapp" {
+  # Ignoring the step field allows Terraform to create the project and steps, but
+  # then ignore any changes made via the UI. This is useful when Terraform is used
+  # to bootstrap the project but not "own" the configuration once it exists.
+  
+  # lifecycle {
+  #   ignore_changes = [
+  #     step,
+  #   ]
+  # }
+
   project_id = "${octopusdeploy_project.project_frontend_webapp.id}"
 
   step {

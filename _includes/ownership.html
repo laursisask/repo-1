@@ -1,0 +1,20 @@
+<h1><a id="ownership">Configuration Ownership</a></h1>
+<p>
+    The Terraform modules presented in this book make the assumption that they are the source of truth regarding the configuration of Octopus resources. This means changes made to resources through the Octopus UI are overwritten the next time the Terraform module is applied.
+</p>
+<p>
+    However, you may wish to retain the ability to tweak things like deployment projects through the Octopus UI without having those changes overwritten by Terraform. In this scenario, Terraform is used to bootstrap projects, but then effectively hands ownership of the configuration to the end user, who is free to modify steps as they see fit.
+</p>
+<p>
+    Terraform supports this scenario with the <strong>lifecycle</strong> meta-argument and its <strong>ignore_changes</strong> argument. The following snippet shows a <strong>octopusdeploy_deployment_process</strong> resource configured to ignore changes to the steps:
+</p>
+<pre>resource "octopusdeploy_deployment_process" "deployment_process_project_api_gateway" {
+    lifecycle {
+      ignore_changes = [
+        # Ignore changes to step, e.g. because updates were made via the UI
+        step,
+      ]
+    }</pre>
+<p>
+    If the project does not exist, Terraform will create it complete with all the deployment steps. However, if the steps are updated through the Octopus UI, Terraform will ignore those changes.
+</p>    

@@ -92,6 +92,14 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_api_gate
   
   project_id = "${octopusdeploy_project.project_api_gateway.id}"
 
+  lifecycle {
+    ignore_changes = [
+      # Ignore changes to tags, e.g. because a management agent
+      # updates these based on some ruleset managed elsewhere.
+      step,
+    ]
+  }
+
   step {
     condition           = "Success"
     name                = "Create API Gateway"

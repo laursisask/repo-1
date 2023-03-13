@@ -22,7 +22,7 @@ terraform apply</pre>
   A common requirement as we introduce new resources into existing spaces is to reference the ID of existing resources. This is done with <strong>data</strong> lookups.
 </p>
 <p>
-  Here we look up the ID of the AWS account created in a previous chapter:
+  Here we look up the ID of the AWS account created in a previous chapter. Note the pattern shown here where we skip zero results and take one. This pattern allows us to convert a resource name to an ID:
 </p>
 <pre>data "octopusdeploy_accounts" "aws_account" {
     account_type = "AmazonWebServicesAccount"

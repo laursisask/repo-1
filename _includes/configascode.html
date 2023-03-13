@@ -1,6 +1,6 @@
 <h1><a id="cac">Config-as-Code</a></h1>
 <p>
-    Config-as-Code (CaC) is a feature in Octopus that allows project deployment processes, non-secret variables, and a subset of project settings to be persisted in a git repository.
+    Config-as-Code (CaC) is a feature in Octopus that allows project deployment processes, non-secret variables, and a subset of project settings to be persisted in a Git repository.
 </p>
 <p>
     Both CaC and the Octopus Terraform provider allow deployment projects to be defined in plain-text configuration files. The question is then which system do you use to manage your deployment processes?
@@ -13,13 +13,13 @@
     As you can see, the Terraform provider is capable of managing far more resources than CaC, which makes the Terraform provider the only choice when managing resources other than deployment projects. As we have seen in this book, the Terraform provider is also perfectly capable of managing deployment processes as well.
 </p>
 <p>
-    However, CaC is deeply integrated in Octopus. CaC enabled projects can be edited in the web UI, and those changes are transparently persisted in a git repo. This is unlike the Terraform configuration files, which must be manually updated to reflect any changes. CaC enabled projects also expose git branches directly in the UI allowing deployment projects to be updated in feature branches.
+    However, CaC is deeply integrated in Octopus. CaC enabled projects can be edited in the web UI, and those changes are transparently persisted in a Git repo. This is unlike the Terraform configuration files, which must be manually updated to reflect any changes. CaC enabled projects also expose Git branches directly in the UI allowing deployment projects to be updated in feature branches.
 </p>
 <p>
-    CaC's deep integration in Octopus makes it a very attractive solution for persisting deployment processes in git. Meanwhile, the ability to manage resources outside of a deployment process makes Terraform the best solution for managing the rest of our Octopus instance. Fortunately, we are able to use the best of both worlds and have Terraform create CaC enabled projects.
+    CaC's deep integration in Octopus makes it a very attractive solution for persisting deployment processes in Git. Meanwhile, the ability to manage resources outside of a deployment process makes Terraform the best solution for managing the rest of our Octopus instance. Fortunately, we are able to use the best of both worlds and have Terraform create CaC enabled projects.
 </p>
 <p>
-    To do this we must first create a <strong>octopusdeploy_git_credential</strong> resource to hold the credentials Octopus uses to interact with a git repo:
+    To do this we must first create a <strong>octopusdeploy_git_credential</strong> resource to hold the credentials Octopus uses to interact with a Git repo:
 </p>
 <pre>resource "octopusdeploy_git_credential" "gitcredential" {
     name     = "Octopub"
@@ -32,23 +32,23 @@
     type        = string
     nullable    = false
     sensitive   = true
-    description = "The git username"
+    description = "The Git username"
   }
   
   variable "gitcredential" {
     type        = string
     nullable    = false
     sensitive   = true
-    description = "The git credentials, or access token when using GitHub"
+    description = "The Git credentials, or access token when using GitHub"
   }</pre>
 <p>
-    We then expose two more Terraform variables to capture the git repo URL and the path in the repo that will hold the CaC files:
+    We then expose two more Terraform variables to capture the Git repo URL and the path in the repo that will hold the CaC files:
 </p>
 <pre>variable "giturl" {
     type        = string
     nullable    = false
     sensitive   = true
-    description = "The git url e.g. https://github.com/username/repo.git"
+    description = "The Git url e.g. https://github.com/username/repo.git"
   }
   
   variable "git_base_path" {
@@ -59,7 +59,7 @@
     default     = "products"
   }</pre>
 <p>
-    The project is updated to enable CaC via the <strong>is_version_controlled</strong> property, changes to the <strong>connectivity_policy</strong> settings are ignored (as these settings are managed by CaC), and the <strong>git_library_persistence_settings</strong> block is defined with the details of the git repo we wish to configure CaC against. The sample below shows how the <strong>Products Service</strong> project is updated to enable CaC:
+    The project is updated to enable CaC via the <strong>is_version_controlled</strong> property, changes to the <strong>connectivity_policy</strong> settings are ignored (as these settings are managed by CaC), and the <strong>git_library_persistence_settings</strong> block is defined with the details of the Git repo we wish to configure CaC against. The sample below shows how the <strong>Products Service</strong> project is updated to enable CaC:
 </p>
 <pre>resource "octopusdeploy_project" "project_products_service" {
     is_version_controlled                = true

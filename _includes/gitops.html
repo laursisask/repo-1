@@ -1,6 +1,6 @@
 <h1><a id="gitops">GitOps</a></h1>
 <p>
-  GitOps is an emerging trend where DevOps teams rely on git based workflows, such as branching and pull requests, as the basis for all configuration change.
+  GitOps is an emerging trend where DevOps teams rely on Git based workflows, such as branching and pull requests, as the basis for all configuration change.
 </p>
 <p>
   Various people and groups have sought provide a rigorous definition for Gitops, each offering a slightly different take on the features and requirements.
@@ -53,7 +53,7 @@
   GitOps is the process of managing IT systems in an automated and repeatable manner using versioned and immutable files.
 </p>
 <p>
-  This is a deliberately open ended definition that does not dictate the use of any particular set of tools, platforms, or processes. But, for most teams, this simply means <i>let me configure all my systems from files in git</i>, and allows the required tools, platforms, and processes to evolve from that starting point.
+  This is a deliberately open ended definition that does not dictate the use of any particular set of tools, platforms, or processes. But, for most teams, this simply means <i>let me configure all my systems from files in Git</i>, and allows the required tools, platforms, and processes to evolve from that starting point.
 </p>
 <p>
   For teams looking to use Octopus with a GitOps model, the recommended solution is:
@@ -125,10 +125,10 @@ jobs:
   This example satisfies the GitOps automation requirement (because any commit to the <strong>main</strong> branch is applied with each commit) as well as the repeatability requirement (because we could update the Octopus URL and API key variables and reapply the Terraform module to a brand new Octopus instance).
 </p>
 <p>
-  We get more than just automated and repeatable configuration though. Thanks to the workflows enabled by git, we are also able to manage any changes with pull requests. This allows DevOps engineers to create a new git branch, update the Terraform files, and create a pull request. Once the pull request is reviewed and merged into the <strong>main</strong> branch, the workflow above automatically rebuilds the Octopus space.
+  We get more than just automated and repeatable configuration though. Thanks to the workflows enabled by Git, we are also able to manage any changes with pull requests. This allows DevOps engineers to create a new Git branch, update the Terraform files, and create a pull request. Once the pull request is reviewed and merged into the <strong>main</strong> branch, the workflow above automatically rebuilds the Octopus space.
 </p>
 <p>
-  Meanwhile, the CaC enabled project also saves its configuration in git, which enables the same pull request based workflow for changes to the deployment project. However, thanks to the deep integration of CaC in Octopus, Devops engineers can make their changes to a branch of the deployment process from within the Octopus web UI without having to edit text files manually.
+  Meanwhile, the CaC enabled project also saves its configuration in Git, which enables the same pull request based workflow for changes to the deployment project. However, thanks to the deep integration of CaC in Octopus, DevOps engineers can make their changes to a branch of the deployment process from within the Octopus web UI without having to edit text files manually.
 </p>
 <p>
   The end result is a GitOps based workflow that allows DevOps teams to define deployment processes for a mix traditional and cloud native infrastructure.

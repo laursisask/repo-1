@@ -72,21 +72,21 @@ resource "octopusdeploy_project_group" "project_group_infrastructure" {
 #   type        = string
 #   nullable    = false
 #   sensitive   = true
-#   description = "The git username"
+#   description = "The Git username"
 # }
 
 # variable "gitcredential" {
 #   type        = string
 #   nullable    = false
 #   sensitive   = true
-#   description = "The git credentials"
+#   description = "The Git credentials"
 # }
 
 # variable "giturl" {
 #   type        = string
 #   nullable    = false
 #   sensitive   = true
-#   description = "The git url"
+#   description = "The Git url"
 # }
 
 # variable "git_base_path" {

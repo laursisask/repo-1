@@ -43,7 +43,7 @@ terraform apply</pre>
     The second environment is the <strong>Production</strong> environment. This is typically where versions of the application are deployed for public access by end users or customers.
 </p>    
 <p>
-    Note the <strong>sort_order</strong> property, which specifies that the <strong>Production</strong> environment appears after the <strong>Development</strong> environment. This is because the order in which environments are sorted is directly reflected in the default lifecycle. We need the <strong>Development</strong> environment to have a lower sort value so it will appear first in the default lifecycle:
+    Note the <strong>sort_order</strong> property, which specifies that the <strong>Production</strong> environment appears after the <strong>Development</strong> environment. This is because the order in which environments are sorted is directly reflected in the <strong>Default Lifecycle</strong>. We need the <strong>Development</strong> environment to have a lower sort value so it will appear first in the default lifecycle:
 </p>
 <pre>resource "octopusdeploy_environment" "environment_production" {
       name                         = "Production"

@@ -19,7 +19,10 @@ terraform apply</pre>
 <div><img alt="Octopus environments" src="images/octopus/libraryvariableset.png"/></div>
 <h2>Breaking down the HCL</h2>
 <p>
-    A common requirement as we introduce new resources into existing spaces is to reference the ID of existing resources. This is done with <strong>data</strong> lookups. Here we look up the ID of the AWS account created in a previous chapter:
+  A common requirement as we introduce new resources into existing spaces is to reference the ID of existing resources. This is done with <strong>data</strong> lookups.
+</p>
+<p>
+  Here we look up the ID of the AWS account created in a previous chapter:
 </p>
 <pre>data "octopusdeploy_accounts" "aws_account" {
     account_type = "AmazonWebServicesAccount"
@@ -39,7 +42,7 @@ terraform apply</pre>
     Octopus variables can either belong to a project or a library variable set. Both are represented by the same resource in HCL. The difference is the resource that is set as the variable owner.
 </p>
 <p>
-    Here we create an Octopus variable that references the AWS account retrieved in the data lookup above and assigned to the library variable set:
+    Here we create an Octopus variable that references the AWS account retrieved in the data lookup above and assign it to the library variable set:
 </p>
 <pre>resource "octopusdeploy_variable" "library_variable_set_octopub_aws_account_0" {
     owner_id     = "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"

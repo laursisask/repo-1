@@ -116,7 +116,7 @@ terraform apply</pre>
         is_required                        = false
         worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"</pre>
 <p>
-  Steps have a number of common properties, defined above, while the remaining properties are generic key/value pairs. This is referred to as the <strong>property bag</strong>.
+  Steps have a number of common properties, defined above, while the remaining properties are generic key/value pairs. This is referred to as the <i>property bag</i>.
 </p>
 <p>
   There is no documentation describing all the properties that must be defined in the property bag. Typically you would define the step in the Octopus web UI, click the <strong>Download as JSON</strong> option, and then convert the step JSON <strong>Properties</strong> object into the HCL <strong>properties</strong>:
@@ -153,16 +153,13 @@ terraform apply</pre>
             {
               "key" = "OctopusEnvironmentId"
               "value" = "#{Octopus.Environment.Id}"
-            },</pre>
-    <p>
-      The template syntax used by Octopus is called <strong>Octostache</strong>. Octostache has a number of filters documented at <a href="https://octopus.com/docs/projects/variables/variable-filters">https://octopus.com/docs/projects/variables/variable-filters</a>. We use the <strong>Replace</strong> filter here to replace anything after a space in the environment name with an empty string. Given our environments are called <strong>Development</strong> and <strong>Production</strong>, this filter does nothing, because these names have no space. However, if we had an environment called <strong>Development (Security)</strong>, this filter would result in the string <strong>Development</strong>:
-    </p>
-<pre>            {
-              "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            },
+            {
+              "value" = "#{Octopus.Environment.Name}"
               "key" = "Environment"
             },
             {
-              "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+              "value" = "#{Octopus.Project.Name}"
               "key" = "DeploymentProject"
             },
           ])

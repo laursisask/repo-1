@@ -344,11 +344,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
             "value" = "#{Octopus.Environment.Id}"
           },
           {
-            "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            "value" = "#{Octopus.Environment.Name}"
             "key" = "Environment"
           },
           {
-            "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+            "value" = "#{Octopus.Project.Name}"
             "key" = "DeploymentProject"
           },
         ])
@@ -680,11 +680,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
             "value" = "#{Octopus.Environment.Id}"
           },
           {
-            "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            "value" = "#{Octopus.Environment.Name}"
             "key" = "Environment"
           },
           {
-            "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+            "value" = "#{Octopus.Project.Name}"
             "key" = "DeploymentProject"
           },
         ])
@@ -834,11 +834,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
             "value" = "#{Octopus.Environment.Id}"
           },
           {
-            "value" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            "value" = "#{Octopus.Environment.Name}"
             "key" = "Environment"
           },
           {
-            "value" = "#{Octopus.Project.Name | Replace \" \" \"_\"}"
+            "value" = "#{Octopus.Project.Name}"
             "key" = "DeploymentProject"
           },
         ])

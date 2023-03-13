@@ -10,13 +10,13 @@
 </p>
 <div><img alt="CaC and Terraform Provider Venn Diagram" src="images/architecture/tf-cac-ven.png"/></div>
 <p>
-    As you can see, the Terraform provider is capable of managing far more resources that CaC, which makes the Terraform provider the only choice when managing resources other than deployment projects. As we have seen in this book, the Terraform provider is also perfectly capable of managing deployment processes as well.
+    As you can see, the Terraform provider is capable of managing far more resources than CaC, which makes the Terraform provider the only choice when managing resources other than deployment projects. As we have seen in this book, the Terraform provider is also perfectly capable of managing deployment processes as well.
 </p>
 <p>
-    However, CaC is deeply integrated in Octopus. CaC enabled projects can be edited in the web based UI, and those changes are transparently persisted in a git repo. This is unlike the Terraform configuration files, which must be manually updated to reflect any changes. CaC enabled projects also expose git branches directly in the UI allowing deployment projects to be updated in feature branches.
+    However, CaC is deeply integrated in Octopus. CaC enabled projects can be edited in the web UI, and those changes are transparently persisted in a git repo. This is unlike the Terraform configuration files, which must be manually updated to reflect any changes. CaC enabled projects also expose git branches directly in the UI allowing deployment projects to be updated in feature branches.
 </p>
 <p>
-    CaC's deep integration in Octopus makes it a very attractive solution for persisting deployment processes in git. The ability to manage resources outside of a deployment process makes Terraform the best solution for managing the rest of our Octopus instance. Fortunately, we are able to use the best of both worlds and have Terraform create CaC enabled projects.
+    CaC's deep integration in Octopus makes it a very attractive solution for persisting deployment processes in git. Meanwhile, the ability to manage resources outside of a deployment process makes Terraform the best solution for managing the rest of our Octopus instance. Fortunately, we are able to use the best of both worlds and have Terraform create CaC enabled projects.
 </p>
 <p>
     To do this we must first create a <strong>octopusdeploy_git_credential</strong> resource to hold the credentials Octopus uses to interact with a git repo:
@@ -39,7 +39,7 @@
     type        = string
     nullable    = false
     sensitive   = true
-    description = "The git credentials"
+    description = "The git credentials, or access token when using GitHub"
   }</pre>
 <p>
     We then expose two more Terraform variables to capture the git repo URL and the path in the repo that will hold the CaC files:
@@ -48,14 +48,14 @@
     type        = string
     nullable    = false
     sensitive   = true
-    description = "The git url"
+    description = "The git url e.g. https://github.com/username/repo.git"
   }
   
   variable "git_base_path" {
     type        = string
     nullable    = false
     sensitive   = true
-    description = "The path where Config-as-Code files are saved"
+    description = "The path where Config-as-Code files are saved e.g. products_project"
     default     = "products"
   }</pre>
 <p>
@@ -78,7 +78,7 @@
       protected_branches = []
     }</pre>
 <p>
-    Because CaC now owns the ongoing configuration of our deployment process, we ignore any changes to the steps as discussed in the previous chapter. The snippet below shows the <strong>Products Service</strong> project updated to ignore changes to the steps:
+    Because CaC now owns the ongoing configuration of our deployment process, we ignore any changes to the steps, as discussed in the previous chapter. The snippet below shows the <strong>Products Service</strong> project updated to ignore changes to the steps:
 </p>
 <pre>resource "octopusdeploy_deployment_process" "deployment_process_project_products_service" {
     lifecycle {
@@ -87,8 +87,5 @@
       ]
     }</pre>
 <p>
-    With these changes in place our Terraform module will create the project (including the deployment process and all the steps), convert it to a CaC project, and then ignore any further changes to the steps or project settings. This means the Terraform modules owns the configuration of resources like project groups, environments, feeds, accounts etc, and creates the initial state of the project and the deployment process, but "hands off" ownership of the deployment process to CaC.
-</p>
-<p>
-    Combining CaC and Terraform like this gives you the best of both worlds.
+    With these changes in place, our Terraform module will create the project (including the deployment process and all the steps), convert it to a CaC project, and then ignore any further changes to the steps or project settings. This means the Terraform modules own the configuration of resources like project groups, environments, feeds, accounts etc, and creates the initial state of the project and the deployment process, but "hands off" ownership of the deployment process to CaC.
 </p>

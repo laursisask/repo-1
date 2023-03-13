@@ -16,7 +16,7 @@
   }
 }</pre>
 <p>
-    The rest of the Terraform configuration file defines the common variables required by the sibling <strong>octopus</strong> module, and then calls the <strong>octopus</strong> module:
+    The remaining Terraform configuration defines the common variables required by the sibling <strong>octopus</strong> module, and then calls the <strong>octopus</strong> module:
 </p>
 <pre>variable "octopus_server" {
   type        = string
@@ -121,5 +121,5 @@ terraform init \
 terraform apply -auto-approve
 popd</pre>
 <p>
-    The remainder of this book assumes you are using the default local storage option. Just keep in mind that a shared remote backend is recommended when applying Terraform modules in a production context.
+    The remainder of this book assumes you are using the default local storage option. Just keep in mind that a shared remote backend is recommended when applying Terraform modules in a production context, and required if executing Terraform in ephemeral environments like Continuous Integration (CI) build agents.
 </p>

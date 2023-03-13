@@ -16,7 +16,11 @@ jobs:
       # Install the latest version of Terraform.
       - uses: hashicorp/setup-terraform@v2
       # Init the Terraform module with a S3 bucket remote state
-      - run: terraform init -backend-config="key=frontend" -backend-config="bucket=${{ secrets.BUCKET_NAME }}" -backend-config="region=${{ secrets.AWS_REGION }}"
+      - run: >
+          terraform init 
+          -backend-config="key=frontend" 
+          -backend-config="bucket=${{ secrets.BUCKET_NAME }}" 
+          -backend-config="region=${{ secrets.AWS_REGION }}"
         working-directory: terraform/frontend/s3backend
         env:
           # The AWS credentials are used when accessing the S3 state bucket

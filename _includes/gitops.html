@@ -119,13 +119,13 @@ jobs:
 </pre>
 {% endraw %}
 <p>
-  With the YAML file above checked into a GitHub repo as <strong>.github/workflows/frontend.yaml</strong> along side the associated Terraform configuration files, and with the secrets defined, any commit to the <strong>main</strong> branch results in the Terraform module being applied, which in turn creates or updates the resources in the associated Octopus space.
+  With the YAML file above checked into a GitHub repo as <strong>.github/workflows/frontend.yaml</strong> along side the associated Terraform configuration files, and with the secrets defined, any commit to the <strong>main</strong> branch results in the Terraform module being applied. This in turn creates or updates the resources in the associated Octopus space.
 </p>
 <p>
   This example satisfies the GitOps automation requirement (because any commit to the <strong>main</strong> branch is applied with each commit) as well as the repeatability requirement (because we could update the Octopus URL and API key variables and reapply the Terraform module to a brand new Octopus instance).
 </p>
 <p>
-  We get more than just automated and repeatable configuration though. Thanks to the workflows enabled by git, we are also able to manage any changes with pull requests. This allows DevOps engineers to create a new branch of the repository, update the Terraform files, and create a pull request. Once the pull request is reviewed and merged into the <strong>main</strong> branch, the workflow above automatically rebuilds the Octopus space.
+  We get more than just automated and repeatable configuration though. Thanks to the workflows enabled by git, we are also able to manage any changes with pull requests. This allows DevOps engineers to create a new git branch, update the Terraform files, and create a pull request. Once the pull request is reviewed and merged into the <strong>main</strong> branch, the workflow above automatically rebuilds the Octopus space.
 </p>
 <p>
   Meanwhile, the CaC enabled project also saves its configuration in git, which enables the same pull request based workflow for changes to the deployment project. However, thanks to the deep integration of CaC in Octopus, Devops engineers can make their changes to a branch of the deployment process from within the Octopus web UI without having to edit text files manually.

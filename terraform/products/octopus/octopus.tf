@@ -60,6 +60,11 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
   take         = 1
 }
 
+resource "octopusdeploy_project_group" "project_group_products" {
+  name        = "Products API"
+  description = "The products REST API"
+}
+
 # The following octopusdeploy_git_credential resource and Terraform variables are used
 # to create a Config-as-Code enabled project.
 
@@ -106,11 +111,6 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
 #   description = "Enables whether the project has Config-as-Code enabled"
 #   default     = "true"
 # }
-
-resource "octopusdeploy_project_group" "project_group_products" {
-  name        = "Products API"
-  description = "The products REST API"
-}
 
 resource "octopusdeploy_project" "project_products_service" {
   name                                 = "Products Service"
@@ -160,11 +160,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
   # then ignore any changes made via the UI. This is useful when Terraform is used
   # to bootstrap the project but not "own" the configuration once it exists.
   
-  lifecycle {
-    ignore_changes = [
-      step,
-    ]
-  }
+  # lifecycle {
+  #   ignore_changes = [
+  #     step,
+  #   ]
+  # }
 
   project_id = "${octopusdeploy_project.project_products_service.id}"
 

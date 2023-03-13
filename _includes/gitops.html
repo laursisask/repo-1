@@ -131,5 +131,13 @@ jobs:
   Meanwhile, the CaC enabled project also saves its configuration in git, which enables the same pull request based workflow for changes to the deployment project. However, thanks to the deep integration of CaC in Octopus, Devops engineers can make their changes to a branch of the deployment process from within the Octopus web UI without having to edit text files manually.
 </p>
 <p>
-  The end result is a GitOps based workflow that allows DevOps teams to define deployment processes for a mix traditional and cloud native infrastructure.
+  Mixing Terraform and CaC in GitOps pipelines provides three key advantages that help DevOps teams looking to manage their systems with text files, as well as supporting platform engineering teams that need to create and manage dozens or hundreds of projects for their internal customers:
+</p>
+<ol>
+  <li>Octopus GitOps pipelines support traditional and cloud native platforms. Deployment processes for IIS applications are managed with the same pipelines that manage Lambda deployments, without the need for specialized agents.</li>
+  <li>CaC enabled projects are edited, executed, and visualized within Octopus, taking full advantage of the form based UI interface and validation rules to seamlessly write text files to git.</li>
+  <li>Terraform workspaces provides the ability to create multiple copies of Octopus resources from the same module, supporting platform engineering teams that need to create and manage many projects for their internal customers without copying and pasting files.</li>
+</ol>
+<p>
+  The end result of the process described in this chapter are GitOps pipelines that scale across many platforms and support many teams, while retaining the ability to edit projects like you always have if you need to.
 </p>

@@ -1,0 +1,129 @@
+<h1><a id="gitops">Gitops</a></h1>
+<p>
+  GitOps is an emerging trend where DevOps teams rely on git based workflows, such as branching and pull requests, as the basis for all configuration change.
+</p>
+<p>
+  Various people and groups have sought provide a rigorous definition for Gitops, each offering a slightly different take on the features and requirements.
+</p>
+<p>
+  OpenGitOps identify four principals of GitOps (<a href="https://opengitops.dev/">https://opengitops.dev/</a>): 
+</p>
+<ul>
+  <li>Declarative: A system managed by GitOps must have its desired state expressed declaratively.</li>
+  <li>Versioned and Immutable: Desired state is stored in a way that enforces immutability, versioning and retains a complete version history.</li>
+  <li>Pulled Automatically: Software agents automatically pull the desired state declarations from the source.</li>
+  <li>Continuously Reconciled: Software agents continuously observe actual system state and attempt to apply the desired state.</li>
+</ul>
+<p>
+  GitLab provides the following definition of GitOps (<a href="https://about.gitlab.com/topics/gitops/">https://about.gitlab.com/topics/gitops/</a>):
+</p>
+<p style="margin-left: 2em">
+  GitOps is used to automate the process of provisioning infrastructure, especially modern cloud infrastructure. Similar to how teams use application source code, operations teams that adopt GitOps use configuration files stored as code (infrastructure as code). GitOps configuration files generate the same infrastructure environment every time it's deployed, just as application source code generates the same application binaries every time it's built.
+</p>
+<p>
+  GitLab then goes on to identify three core components required to support GitOps:
+</p>
+<ul>
+  <li>Infrastructure as Code (IaC)</li>
+  <li>Pull or merge requests</li>
+  <li>CI/CD</li>
+</ul>
+<p>
+  Red Hat provides the following definition (<a href="https://www.redhat.com/en/topics/devops/what-is-gitops">https://www.redhat.com/en/topics/devops/what-is-gitops</a>):
+</p>
+<p style="margin-left: 2em">
+  GitOps uses Git repositories as a single source of truth to deliver infrastructure as code. Submitted code checks the CI process, while the CD process checks and applies requirements for things like security, infrastructure as code, or any other boundaries set for the application framework. All changes to code are tracked, making updates easy while also providing version control should a rollback be needed.
+</p>
+<p>
+  Atlassian describes GitOps like this (<a href="https://www.atlassian.com/git/tutorials/gitops">https://www.atlassian.com/git/tutorials/gitops</a>):
+</p>
+<p style="margin-left: 2em">
+  At its core, GitOps is code-based infrastructure and operational procedures that rely on Git as a source control system. It's an evolution of Infrastructure as Code (IaC) and a DevOps best practice that leverages Git as the single source of truth, and control mechanism for creating, updating, and deleting system architecture. More simply, it is the practice of using Git pull requests to verify and automatically deploy system infrastructure modifications.
+</p>
+<p>
+  And on it goes, with each technology provider offering their own unique perspective.
+</p>
+<p>
+  Octopus spans the gamut from traditional on-premises servers running IIS and Tomcat through to cloud native platforms like Kubernetes, ECS, and Lambdas. Some of this infrastructure lends itself nicely to declarative state described in text files, while others rely on an imperative sequence of steps to perform deployments or implement configuration changes. Often, these systems coexist within a company.
+</p>
+<p>
+  Unfortunately this means most existing definitions of GitOps don't quite reflect the variety of traditional and cutting edge infrastructure many teams are required to support. So the following definition distils GitOps down to its most basic requirements:
+</p>
+<p style="margin-left: 2em">
+  GitOps is the process of managing DevOps systems in an automated and repeatable manner using versioned and immutable files.
+</p>
+<p>
+  This is a deliberately open ended definition that does not dictate the use of any particular set of tools, platforms, or processes. But, for most teams, this simply means <i>let me configure all my systems from files in git</i>, and allows the required tooling, platform, and processes to evolve from that starting point.
+</p>
+<p>
+  For teams looking to use Octopus in a GitOps model, the recommended solution is:
+</p>
+<ol>
+  <li>Define your Octopus spaces as Terraform modules.</li>
+  <li>Enable CaC for your deployment processes.</li>
+  <li>Save your Terraform modules in a git repo.</li>
+  <li>Trigger a CI server on each commit to the mainline branch and apply the Terraform modules.</li>
+</ol>
+<p>
+  We have covered the first three points in previous chapters. To demonstrate the fourth point, we'll use GitHub Actions as our CI server and define a workflow that applies the Terraform module with each commit to the <strong>main</strong> branch.
+</p>
+<p>
+  The example workflow below applies the Terraform module defining the frontend web application deployment project:
+</p>
+<pre>name: Frontend Project
+on:
+  # Workflow dispatch is allows us to manually trigger a workflow via the GitHub web UI.
+  # This is useful when you want to rerun the workflow in response to updating a secret, or need to
+  # reconfigure a new system.
+  workflow_dispatch:
+  # Trigger this workflow on pushes to the main branch.
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      # Install the latest version of Terraform.
+      - uses: hashicorp/setup-terraform@v2
+      # Init the Terraform module with a S3 bucket remote state
+      - run: terraform init -backend-config="key=frontend" -backend-config="bucket=${{ secrets.BUCKET_NAME }}" -backend-config="region=${{ secrets.AWS_REGION }}"
+        working-directory: terraform/frontend/s3backend
+        env:
+          # The AWS credentials are used when accessing the S3 state bucket
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+      - run: terraform apply -auto-approve
+        working-directory: terraform/frontend/s3backend
+        env:
+          # The AWS credentials are used when accessing the S3 state bucket
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          # Environment variables starting with TF_VAR provide the value of a Terraform variable
+          TF_VAR_octopus_server: ${{ secrets.OCTOPUS_SERVER }}
+          TF_VAR_octopus_apikey: ${{ secrets.OCTOPUS_API_KEY }}
+          TF_VAR_octopus_space_id: ${{ secrets.OCTOPUS_SPACE_ID}}
+          # These are required for projects that define a deployment project configured with CaC
+          TF_VAR_gitusername: ${{ secrets.GH_USERNAME }}
+          TF_VAR_gitcredential: ${{ secrets.GH_TOKEN }}
+          TF_VAR_giturl: ${{ secrets.GH_REPO }}
+</pre>
+<p>
+  Note that this workflow references a number of GitHub Actions secrets that you will need to create in your GitHub repository.
+</p>
+<p>
+  With the file above checked into a GitHub repo as <strong>.github/workflows/frontend.yaml</strong>, and the secrets defined, any commit to the <strong>main</strong> branch results in the Terraform module being applied, which in turn creates or updates the resources in the associated Octopus space.
+</p>
+<p>
+  This example satisfies the automation requirement (because any commit to the <strong>main</strong> branch is applied with each commit) as well as the repeatability requirement (because we could update some variables and reapply the Terraform module to a brand new Octopus instance).
+</p>
+<p>
+  We get more than just automated and repeatable configuration though. Thanks to the workflows enabled by git, we are also able to manage any changes with pull requests. This allows DevOps engineers create a new branch of the repository, update the Terraform files, and create a pull request. Once the pull request is reviewed and merged into the <strong>main</strong> branch, the workflow above automatically rebuilds the Octopus space.
+</p>
+<p>
+  Meanwhile, the CaC enabled project also saves its configuration in git, which enables the same pull request based workflow for changes to the deployment project. However, thanks to the deep integration with Octopus and CaC, Devops engineers can make their changes to the a branch of the deployment process from within the Octopus web UI without having to exit text file manually.
+</p>
+<p>
+
+</p>

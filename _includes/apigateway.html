@@ -31,7 +31,7 @@ terraform apply</pre>
     This data lookup gets the ID of the library variable set. 
 </p>
 <p>
-  Note that many data lookups only expose a partial name field rather than a complete name. This is a consequence of the Octopus API, which often allows resource collections to be filtered by a UI text field that returns all resources partially matching a name rather than matching the exact text typed in. Performing a lookup on a partial name match works well most of the time so long as the resource names are unambiguous, but there are edge cases where partial name matching may produce unexpected results:
+  Note that many data lookups only expose a partial name field rather than a complete name. This is a consequence of the design of the Octopus API, which often allows resource collections to be filtered by a UI text field that returns all resources partially matching a name rather than matching the exact text typed in. Performing a lookup on a partial name match works well most of the time so long as the resource names are unambiguous, but there are edge cases where partial name matching may produce unexpected results:
 </p>
 <pre>data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
     ids          = null
@@ -52,7 +52,7 @@ terraform apply</pre>
     This data lookup returns the Linux dynamic worker that is present by default in a new space on a hosted Octopus instance.
 </p>
 <p> 
-  Note that on a self hosted instance of Octopus, this lookup needs to be modified to look up the default worker pool:
+  Note that on a self hosted instance of Octopus, this lookup needs to be modified to look up the <strong>Default Worker Pool</strong>:
 </p>
 <pre>data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
     name = "Hosted Ubuntu"

@@ -156,7 +156,7 @@ resource "octopusdeploy_project" "project_frontend_webapp" {
 
 resource "octopusdeploy_variable" "frontend_webapp_producthealthendpoint" {
   owner_id     = "${octopusdeploy_project.project_frontend_webapp.id}"
-  value        = "https://#{Octopus.Action[Get Stack Outputs].Output.RestApi}.execute-api.ap-southeast-2.amazonaws.com/#{Octopus.Environment.Name | Replace \" .*\" \"\"}/health/products"
+  value        = "https://#{Octopus.Action[Get Stack Outputs].Output.RestApi}.execute-api.ap-southeast-2.amazonaws.com/#{Octopus.Environment.Name}/health/products"
   name         = "productHealthEndpoint"
   type         = "String"
   description  = ""
@@ -175,7 +175,7 @@ resource "octopusdeploy_variable" "frontend_webapp_producthealthendpoint" {
 
 resource "octopusdeploy_variable" "frontend_webapp_productendpoint" {
   owner_id     = "${octopusdeploy_project.project_frontend_webapp.id}"
-  value        = "https://#{Octopus.Action[Get Stack Outputs].Output.RestApi}.execute-api.ap-southeast-2.amazonaws.com/#{Octopus.Environment.Name | Replace \" .*\" \"\"}/api/products"
+  value        = "https://#{Octopus.Action[Get Stack Outputs].Output.RestApi}.execute-api.ap-southeast-2.amazonaws.com/#{Octopus.Environment.Name}/api/products"
   name         = "productEndpoint"
   type         = "String"
   description  = ""
@@ -311,7 +311,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
       worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
       properties                         = {
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubFrontendS3Bucket-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubFrontendS3Bucket-#{Octopus.Environment.Name}"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.TemplateSource" = "Inline"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
@@ -652,7 +652,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
                   - Ref: PackageVersion
                   - '/{proxy}'
         EOF
-        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubFrontendApiGateway-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubFrontendApiGateway-#{Octopus.Environment.Name}"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
           {
@@ -691,7 +691,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
           {
             "ParameterKey" = "EnvironmentName"
-            "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            "ParameterValue" = "#{Octopus.Environment.Name}"
           },
           {
             "ParameterKey" = "RestApi"
@@ -758,7 +758,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
           {
             "ParameterKey" = "EnvironmentName"
-            "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+            "ParameterValue" = "#{Octopus.Environment.Name}"
           },
           {
             "ParameterKey" = "DeploymentId"
@@ -769,7 +769,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
             "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
           },
         ])
-        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubApiGatewayStage-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubApiGatewayStage-#{Octopus.Environment.Name}"
         "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
         Parameters:
           EnvironmentName:

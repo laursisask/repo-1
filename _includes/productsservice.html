@@ -1,6 +1,6 @@
 <h1><a id="productsservice">Deploying the Products REST API</a></h1>
 <p>
-    All the resources we have created in Octopus allowed us to deploy our shared infrastructure to AWS which we use to expose Lambdas and other web applications end users. With this foundation in place it is now time to deploy our microservice stack.
+    Now that we have the API Gateway deployed, we can start deploying the services that make up the sample Octopub application.
 </p>
 <p>
     The products microservice is the first to be deployed. This is a REST API exposing the books and articles that make up our online library. This service is written as a Lambda, and persists data in a serverless RDS database.
@@ -31,14 +31,14 @@ terraform apply</pre>
   <li>Create a new S3 bucket to hold the Lambda archive.</li>
   <li>Upload the Lambda archive to the S3 bucket.</li>
   <li>Query the CloudFormation stack that deployed the API Gateway instance for outputs like the API Gateway ID and the ID of the shared resources attached to the gateway.</li>
-  <li>Deploy the Lambda and associated resources like VPC, subnets, RDS database, IAM roles, and Cloud Watch log groups via CloudFormation.</li>
+  <li>Deploy the Lambda and associated resources like VPC, subnets, RDS database, IAM roles, and CloudWatch log groups via CloudFormation.</li>
   <li>Manually execute the database migrations.</li>
   <li>Create a new Lambda version.</li>
   <li>Attach the Lambda version to the API Gateway.</li>
   <li>Update the API Gateway stage.</li>
 </ul>
 <p>
-    As with the API Gateway deployment project, the Lambda deployment project needs access to many existing resources such as the library variable set, default lifecycle, worker pool, and feed. These are all exposed via data lookups:
+    As with the API Gateway deployment project, the Lambda deployment project needs access to many existing Octopus resources such as the library variable set, default lifecycle, worker pool, and feed. These are all exposed via data lookups:
 </p>
 <pre>data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
     ids          = null
@@ -99,7 +99,7 @@ terraform apply</pre>
     }
   }</pre>
 <p>
-    Here we create the deployment process. Unlike the deployment process for the API Gateway, which involved a single step, this project is far more complex capturing all of the steps mentioned previously: 
+    Here we create the deployment process. Unlike the deployment process for the API Gateway, which involved a single step, this project is far more complex requiring all of the previously mentioned steps: 
 </p>  
 <pre>  resource "octopusdeploy_deployment_process" "deployment_process_project_products_service" {
     project_id = "${octopusdeploy_project.project_products_service.id}"
@@ -128,7 +128,7 @@ terraform apply</pre>
 <p>
   The name of the CloudFormation stack is unique for each Octopus environment. This allows us to promote the deployment from the development environment to the production environment while having each deployment create its own distinct AWS resources:
 </p>          
-<pre>          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubBackendS3Bucket-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+<pre>          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubBackendS3Bucket-#{Octopus.Environment.Name}"
           "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
           "Octopus.Action.Aws.TemplateSource" = "Inline"
           "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
@@ -228,7 +228,7 @@ terraform apply</pre>
   
         primary_package {</pre>
 <p>
-  The package ID used here reflects the format of Maven artifacts where the group and artifact IDs are separated by a colon. These is the first two elements of the Group, Artifact, and Version (GAV) formation frequently used when referencing Maven artifacts:
+  The package ID used here reflects the format of Maven artifacts where the group and artifact IDs are separated by a colon. These are the first two elements of the Group, Artifact, and Version (GAV) formation frequently used when referencing Maven artifacts:
 </p>        
 <pre>          package_id           = "com.octopus:products-microservice-lambda"
           acquisition_location = "Server"
@@ -254,7 +254,7 @@ terraform apply</pre>
     Note that Octopus does not store values like this between deployments in the same way that Terraform maintains state or CloudFormation maintains a stack. Octopus queries the output variables of a CloudFormation stack during a deployment to gain access to these long lived values.
 </p>
 <p>
-  Note here that we use the AWS Docker image to run the AWS CLI. Most large platforms provide supported Docker images for the CLI tooling, which allows us to treat Docker as a kind of universal application store:
+  Note here that we use the AWS Docker image to run the AWS CLI. Most large platforms provide supported Docker images for their CLI tooling, which allows us to treat Docker as a kind of universal application store:
 </p>
 <pre>      action {
         action_type                        = "Octopus.AwsRunScript"
@@ -289,7 +289,7 @@ terraform apply</pre>
               --query "Stacks[0].Outputs[?OutputKey=='Api'].OutputValue" \
               --output text)</pre>
 <p>
-  Dollar signs followed by an opening curly bracket must be escaped when included in HCL strings:
+  Dollar signs followed by an opening curly bracket must be escaped when included in HCL strings with a second dollar sign:
 </p>                 
 <pre>          set_octopusvariable "Api" $${API_RESOURCE}
   
@@ -335,10 +335,10 @@ terraform apply</pre>
       package_requirement = "LetOctopusDecide"
       start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    The next step is to deploy the Lambda and its associated infrastructure including a VPC, subnets, RDS database, RDS subnet groups, security groups, and CloudWatch log groups. 
+    The next step is to deploy the Lambda and its associated infrastructure including a VPC, subnets, an RDS database, RDS subnet groups, security groups, and CloudWatch log groups. 
 </p>  
 <p>
-    Our Lambda interacts with a database and includes migration scripts that populate initial data and optionally migrate data with new schema and data changes. Because the serverless database deployed in this CloudFormation template has no public access, the only way to interact with it is to run code in the same VPC as the RDS database. The Lambda itself is a logical place to run these migrations, and so we deploy the Lambda twice: one instance with environment variables that allow it to run the database migrations, and one instance with environment variables that allow the Lambda to respond to HTTP traffic:
+    Our Lambda interacts with a database and includes migration scripts that populate initial data and optionally migrate data with new schema and data changes. Because the serverless database deployed in this CloudFormation template has no public access, the only way to interact with it is to run code in the same VPC as the RDS database. The Lambda itself is a logical place to run these migrations, and so we deploy the Lambda twice: one instance with environment variables that allow it to run the database migration scripts, and one instance with environment variables that allow the Lambda to respond to HTTP traffic:
 </p>
 <pre>      action {
         action_type                        = "Octopus.AwsRunCloudFormation"
@@ -361,7 +361,7 @@ terraform apply</pre>
           ])
           "Octopus.Action.Aws.TemplateSource" = "Inline"
           "Octopus.Action.Template.Version" = "1"
-          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambda-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambda-#{Octopus.Environment.Name}"
           "Vpc.Cidr" = "10.0.0.0/16"
           "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
             {
@@ -461,7 +461,7 @@ terraform apply</pre>
               Properties:
                 VpcId: !Ref "VPC"</pre>
 <p>
-  RDS requires the subnets that a database are placed in to be grouped in a subnet group:
+  RDS requires the subnets that a database is placed in to be grouped in a subnet group:
 </p>                
 <pre>            SubnetGroup:
               Type: "AWS::RDS::DBSubnetGroup"
@@ -517,7 +517,7 @@ terraform apply</pre>
               DependsOn:
                 - SubnetGroup</pre>
 <p>
-  A Cloud Watch log group is created to hold the Lambda logs, with logs being cleaned up after 14 days:
+  A CloudWatch log group is created to hold the Lambda logs, with logs being cleaned up after 14 days:
 </p>
 <pre>            AppLogGroup:
               Type: 'AWS::Logs::LogGroup'
@@ -525,7 +525,7 @@ terraform apply</pre>
                 LogGroupName: !Sub '/aws/lambda/$${LambdaName}'
                 RetentionInDays: 14</pre>
 <p>
-  An IAM role is created that grants the Lambda the required permissions to write to the Cloud Watch log group as well as manipulate the network interfaces required to expose the Lambda in the VPC:
+  An IAM role is created granting the Lambda the required permissions to write to the CloudWatch log group as well as to manipulate the network interfaces required to expose the Lambda in the VPC:
 </p>
 <pre>            IamRoleLambdaExecution:
               Type: 'AWS::IAM::Role'
@@ -563,7 +563,7 @@ terraform apply</pre>
                 Path: /
                 RoleName: !Sub '$${LambdaName}-role'</pre>
 <p>
-  This is the first of two Lambdas is created. This Lambda is configured to run the database migration scripts, and is expected to be triggered by the Octopus deployment process and then remain unused:
+  This is the first of the two Lambdas created. This Lambda is configured to run the database migration scripts, and is expected to be triggered by the Octopus deployment process, but otherwise remain unused:
 </p>
 <pre>            MigrationLambda:
               Type: 'AWS::Lambda::Function'
@@ -598,7 +598,7 @@ terraform apply</pre>
                     - !Ref "SubnetA"
                     - !Ref "SubnetB"</pre>
 <p>
-  This is the second Lambda. It is configured to respond to HTTP requests against the REST API endpoint:
+  This is the second Lambda. It is configured to respond to HTTP requests made to the REST API endpoint:
 </p>
 <pre>            ApplicationLambda:
               Type: 'AWS::Lambda::Function'
@@ -639,7 +639,7 @@ terraform apply</pre>
           "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
             {
               "ParameterKey" = "EnvironmentName"
-              "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+              "ParameterValue" = "#{Octopus.Environment.Name}"
             },
             {
               "ParameterKey" = "RestApi"
@@ -659,11 +659,11 @@ terraform apply</pre>
             },
             {
               "ParameterKey" = "LambdaName"
-              "ParameterValue" = "octopub-products-#{Octopus.Environment.Name | Replace \" .*\" \"\" | ToLower}"
+              "ParameterValue" = "octopub-products-#{Octopus.Environment.Name | ToLower}"
             },
             {
               "ParameterKey" = "SubnetGroupName"
-              "ParameterValue" = "octopub-products-#{Octopus.Environment.Name | Replace \" .*\" \"\" | ToLower}"
+              "ParameterValue" = "octopub-products-#{Octopus.Environment.Name | ToLower}"
             },
             {
               "ParameterKey" = "LambdaDescription"
@@ -700,7 +700,7 @@ terraform apply</pre>
       package_requirement = "LetOctopusDecide"
       start_trigger       = "StartAfterPrevious"</pre>
 <p>
-    The next step is to manually execute the database migration Lambda, defined as the <strong>MigrationLambda</strong> resource in the Cloud Formation template deployed by the previous step. This ensures that the database is populated and updated:
+    The next step is to manually execute the database migration Lambda, defined as the <strong>MigrationLambda</strong> resource in the CloudFormation template deployed by the previous step. This ensures that the database is populated and updated:
 </p>  
 <pre>      action {
         action_type                        = "Octopus.AwsRunScript"
@@ -773,9 +773,9 @@ terraform apply</pre>
             "CAPABILITY_NAMED_IAM",
           ])</pre>
 <p>
-  We want to create a new Lambda version without removing the previous version. This is because the previous version is attached to the API Gateway until we deploy a new API Gateway stage, and removing the previous version would introduce some downtime. By creating a Cloud Formation stack with a unique name each time this deployment is run, we ensure the old version is not removed:
+  We want to create a new Lambda version without removing the previous version. This is because the previous version is attached to the API Gateway until we deploy a new API Gateway stage, and removing the previous version would introduce some downtime. By creating a CloudFormation stack with a unique name each time this deployment is run, we ensure the old version is not removed:
 </p>
-<pre>          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambdaVersion-#{Octopus.Environment.Name | Replace \" .*\" \"\"}-#{Octopus.Deployment.Id | Replace -}"
+<pre>          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambdaVersion-#{Octopus.Environment.Name}-#{Octopus.Deployment.Id | Replace -}"
           "Octopus.Action.Aws.AssumeRole" = "False"
           "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
           "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
@@ -902,7 +902,7 @@ terraform apply</pre>
           "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
             {
               "ParameterKey" = "EnvironmentName"
-              "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+              "ParameterValue" = "#{Octopus.Environment.Name}"
             },
             {
               "ParameterKey" = "RestApi"
@@ -918,7 +918,7 @@ terraform apply</pre>
             },
           ])
           "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsApiGateway-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsApiGateway-#{Octopus.Environment.Name}"
           "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
           Parameters:
             EnvironmentName:
@@ -1199,12 +1199,12 @@ terraform apply</pre>
                     - /
           EOF
           "Octopus.Action.Aws.TemplateSource" = "Inline"
-          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubApiGatewayStage-#{Octopus.Environment.Name | Replace \" .*\" \"\"}"
+          "Octopus.Action.Aws.CloudFormationStackName" = "OctopubApiGatewayStage-#{Octopus.Environment.Name}"
           "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
           "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
             {
               "ParameterKey" = "EnvironmentName"
-              "ParameterValue" = "#{Octopus.Environment.Name | Replace \" .*\" \"\" }"
+              "ParameterValue" = "#{Octopus.Environment.Name }"
             },
             {
               "ParameterKey" = "DeploymentId"

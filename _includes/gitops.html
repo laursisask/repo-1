@@ -47,7 +47,7 @@
   Octopus spans the gamut of traditional on-premises servers running IIS and Tomcat through to cloud native platforms like Kubernetes, ECS, and Lambdas. Some of this infrastructure lends itself nicely to declarative state described in text files, while others rely on an imperative sequence of steps to perform deployments or implement configuration changes. Often, these systems coexist within a company.
 </p>
 <p>
-  Unfortunately, this means most existing definitions of GitOps don't quite reflect the variety of traditional and cloud native infrastructure many teams are required to support. So this book offers the following definition distils GitOps which down to its most basic requirements:
+  Unfortunately, this means most existing definitions of GitOps don't quite reflect the variety of traditional and cloud native infrastructure many teams are required to support. So this book offers the following definition which distils GitOps which down to its most basic requirements:
 </p>
 <p style="margin-left: 2em">
   GitOps is the process of managing IT systems in an automated and repeatable manner using versioned and immutable files.
@@ -73,9 +73,10 @@
 {% raw %}
 <pre>name: Frontend Project
 on:
-  # Workflow dispatch is allows us to manually trigger a workflow via the GitHub web UI.
-  # This is useful when you want to rerun the workflow in response to updating a secret, or need to
-  # reconfigure a new system.
+  # Workflow dispatch is allows us to manually trigger a workflow via the GitHub 
+  # web UI.
+  # This is useful when you want to rerun the workflow in response to updating 
+  # a secret, or need to reconfigure a new system.
   workflow_dispatch:
   # Trigger this workflow on pushes to the main branch.
   push:
@@ -105,11 +106,13 @@ jobs:
           # The AWS credentials are used when accessing the S3 state bucket
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
-          # Environment variables starting with TF_VAR provide the value of a Terraform variable
+          # Environment variables starting with TF_VAR provide the value of 
+          # a Terraform variable
           TF_VAR_octopus_server: ${{ secrets.OCTOPUS_SERVER }}
           TF_VAR_octopus_apikey: ${{ secrets.OCTOPUS_API_KEY }}
           TF_VAR_octopus_space_id: ${{ secrets.OCTOPUS_SPACE_ID}}
-          # These are required for projects that define a deployment project configured with CaC
+          # These are required for projects that define a deployment project 
+          # configured with CaC
           TF_VAR_gitusername: ${{ secrets.GH_USERNAME }}
           TF_VAR_gitcredential: ${{ secrets.GH_TOKEN }}
           TF_VAR_giturl: ${{ secrets.GH_REPO }}

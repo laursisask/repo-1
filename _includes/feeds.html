@@ -1,6 +1,6 @@
 <h1><a id="feeds">Configuring the sample application feed</a></h1>
 <p>
-    This book documents the process of deploying a sample application called Octopub. Octopub implements a sample online library and is implemented as a number of microservices.
+    This book documents the process of deploying a sample application called Octopub. Octopub implements a sample online library and is designed as a number of microservices.
 </p>
 <p>
     For convenience, the services that make up Octopub have been compiled, packaged, and exposed via a public Maven repository. In this chapter we'll configure an Octopus Maven feed which we'll use in later chapters to download and deploy Octopub.
@@ -15,11 +15,11 @@
 terraform init
 terraform apply</pre>
 <p>
-    You are prompted for the URL of your Octopus instance, the Octopus API key, and the ID of the space to apply the configuration to. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied you will see a new feed called <strong>Sales Maven Feed</strong>:
+    You are prompted for the URL of your Octopus instance, the Octopus API key, and the ID of the space to apply the configuration to. Terraform then displays a list of changes and prompts you to apply them. Once the configuration is applied new feed called <strong>Sales Maven Feed</strong> is created:
 </p>
 <div><img alt="Octopus environments" src="images/octopus/mavenfeed.png"/></div>
 <p>
-    To verify the feed is working as expected, click it, and then click the <strong>TEST</strong> button. Enter <strong>com.octopus:frontend-webapp-static</strong> as the package name and click the <strong>SEARCH</strong> button. A matching package is then displayed:
+    To verify the feed works as expected, click it, and then click the <strong>TEST</strong> button. Enter <strong>com.octopus:frontend-webapp-static</strong> as the package name and click the <strong>SEARCH</strong> button. A matching package is then displayed:
 </p>
 <div><img alt="Octopus environments" src="images/octopus/mavenfeedsearch.png"/></div>
 <h2>Breaking down the HCL</h2>
@@ -30,7 +30,7 @@ terraform apply</pre>
     Note that the version of the provider is fixed. The Octopus provider is a zero-version release indicating breaking changes may be introduced at any time. By fixing the version of the provider, we can update it at our own pace, and deal with any potential breaking changes in an organized manner.
 </p>
 <p>
-    Had we referenced the latest version of the provider, our Terraform configuration may have randomly stopped working, which is not an ideal outcome:
+    Had we referenced a floating version of the provider, our Terraform configuration may have randomly stopped working, which is not an ideal outcome:
 </p>
 <pre>terraform {
     required_providers {
@@ -69,13 +69,13 @@ The Octopus provider requires the Octopus server, API key, and space ID. Each of
     description = "The ID of the Octopus space to populate."
   }</pre>
 <p>
-  The terraform configuration block, provider initialization, and provider variables above are shared between all projects. We won't cover them again as they are identical every time.
+  The Terraform configuration block, provider initialization, and provider variables above are shared between all projects. We won't cover them again as they are identical every time.
 </p>
 <p>
     The final resource is the Octopus feed. We have used the Maven feed to access a public AWS S3 bucket, allowing Octopus to consume artifacts without supplying any credentials:
 </p>
 <pre>resource "octopusdeploy_maven_feed" "sales_maven_feed" {
-    download_attempts              = 10
+    download_attempts              = 3
     download_retry_backoff_seconds = 20
     feed_uri                       = "https://octopus-sales-public-maven-repo.s3.ap-southeast-2.amazonaws.com/snapshot"
     name                           = "Sales Maven Feed"

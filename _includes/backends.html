@@ -33,10 +33,10 @@
     Provider configurations, unlike most other concepts in Terraform, are global to an entire Terraform configuration and can be shared across module boundaries. Provider configurations can be defined only in a root Terraform module.
 </p>
 <p>
-    This means that when creating a module like <strong>s3backend</strong>, the provider must be defined in the top level module and removed from any child modules.
+    This means that when creating a module like <strong>s3backend</strong>, the <strong>provider</strong> must be defined in the top level module and removed from any child modules.
 </p>
 <p>
-    You will note that the modules under the directories called <strong>octopus</strong> also define a provider. This is because the <strong>octopus</strong> module is assumed to be used directly in the rest of this book. However, the <strong>provider</strong> must be removed from the <strong>octopus</strong> module when using the <strong>s3backend</strong> module.
+    You will note that the modules under the directories called <strong>octopus</strong> also define a <strong>provider</strong>. This is because the <strong>octopus</strong> module is assumed to be used directly in the rest of this book. However, the <strong>provider</strong> must be removed from the <strong>octopus</strong> module when using the <strong>s3backend</strong> module.
 </p>
 <pre>provider "octopusdeploy" {
     address  = "${var.octopus_server}"

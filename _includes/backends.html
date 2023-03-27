@@ -16,6 +16,34 @@
   }
 }</pre>
 <p>
+    The details of the provider must be defined in the top level module:
+</p>
+<pre>terraform {
+    required_providers {
+      octopusdeploy = { source = "OctopusDeployLabs/octopusdeploy", version = "0.11.1" }
+    }
+  }</pre>
+<p>
+    The provider itself must then be defined.
+</p>
+<p>
+    Note that Terraform has rules around where providers can be define. The documentation at <a href="https://developer.hashicorp.com/terraform/language/modules/develop/providers">https://developer.hashicorp.com/terraform/language/modules/develop/providers</a> notes that:
+</p>
+<p style="margin-left: 2em">
+    Provider configurations, unlike most other concepts in Terraform, are global to an entire Terraform configuration and can be shared across module boundaries. Provider configurations can be defined only in a root Terraform module.
+</p>
+<p>
+    This means that when creating a module like <strong>s3backend</strong>, the provider must be defined in the top level module and removed from any child modules.
+</p>
+<p>
+    You will note that the modules under the directories called <strong>octopus</strong> also define a provider. This is because the <strong>octopus</strong> module is assumed to be used directly in the rest of this book. However, the <strong>provider</strong> must be removed from the <strong>octopus</strong> module when using the <strong>s3backend</strong> module.
+</p>
+<pre>provider "octopusdeploy" {
+    address  = "${var.octopus_server}"
+    api_key  = "${var.octopus_apikey}"
+    space_id = "${var.octopus_space_id}"
+  }</pre>
+<p>
     The remaining Terraform configuration defines the common variables required by the sibling <strong>octopus</strong> module, and then calls the <strong>octopus</strong> module:
 </p>
 <pre>variable "octopus_server" {

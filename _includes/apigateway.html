@@ -34,20 +34,20 @@ terraform apply</pre>
   Note that many data lookups only expose a partial name field rather than a complete name. This is a consequence of the design of the Octopus API, which often allows resource collections to be filtered by a UI text field that returns all resources partially matching a name rather than matching the exact text typed in. Performing a lookup on a partial name match works well most of the time so long as the resource names are unambiguous, but there are edge cases where partial name matching may produce unexpected results:
 </p>
 <pre>data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
-    ids          = null
-    partial_name = "Octopub"
-    skip         = 0
-    take         = 1
-  }</pre>
+  ids          = null
+  partial_name = "Octopub"
+  skip         = 0
+  take         = 1
+}</pre>
 <p>
     This data lookup returns the ID of the default lifecycle that is present by default in a new space:
 </p>
 <pre>data "octopusdeploy_lifecycles" "default" {
-    ids          = []
-    partial_name = "Default Lifecycle"
-    skip         = 0
-    take         = 1
-  }</pre>
+  ids          = []
+  partial_name = "Default Lifecycle"
+  skip         = 0
+  take         = 1
+}</pre>
 <p>
     This data lookup returns the Linux dynamic worker that is present by default in a new space on a hosted Octopus instance.
 </p>
@@ -55,41 +55,41 @@ terraform apply</pre>
   Note that on a self hosted instance of Octopus, this lookup needs to be modified to look up the <strong>Default Worker Pool</strong>:
 </p>
 <pre>data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
-    name = "Hosted Ubuntu"
-    ids  = null
-    skip = 0
-    take = 1
-  }</pre>
+  name = "Hosted Ubuntu"
+  ids  = null
+  skip = 0
+  take = 1
+}</pre>
 <p>
     Here we create a project group to hold our deployment project:
 </p>
 <pre>resource "octopusdeploy_project_group" "project_group_infrastructure" {
-    name        = "Infrastructure"
-    description = "Builds the API Gateway."
-  }</pre>
+  name        = "Infrastructure"
+  description = "Builds the API Gateway."
+}</pre>
 <p>
     Next we define the project. Note how we use the results of the data lookups against the lifecycles and library variable sets to link them to the deployment project:
 </p>  
 <pre>resource "octopusdeploy_project" "project_api_gateway" {
-    name                                 = "API Gateway"
-    auto_create_release                  = false
-    default_guided_failure_mode          = "EnvironmentDefault"
-    default_to_skip_if_already_installed = false
-    description                          = "Deploys a shared API Gateway. This project is created and managed by the [Octopus Terraform provider](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy/latest/docs). The Terraform files can be found in the [GitHub repo](https://github.com/OctopusSolutionsEngineering/SalesEngineeringAwsLambda)."
-    discrete_channel_release             = false
-    is_disabled                          = false
-    is_version_controlled                = false
-    lifecycle_id                         = "${data.octopusdeploy_lifecycles.default.lifecycles[0].id}"
-    project_group_id                     = "${octopusdeploy_project_group.project_group_infrastructure.id}"
-    included_library_variable_sets       = ["${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"]
-    tenanted_deployment_participation    = "Untenanted"
-  
-    connectivity_policy {
-      allow_deployments_to_no_targets = false
-      exclude_unhealthy_targets       = false
-      skip_machine_behavior           = "SkipUnavailableMachines"
-    }
-  }</pre>
+  name                                 = "API Gateway"
+  auto_create_release                  = false
+  default_guided_failure_mode          = "EnvironmentDefault"
+  default_to_skip_if_already_installed = false
+  description                          = "Deploys a shared API Gateway. This project is created and managed by the [Octopus Terraform provider](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy/latest/docs). The Terraform files can be found in the [GitHub repo](https://github.com/OctopusSolutionsEngineering/SalesEngineeringAwsLambda)."
+  discrete_channel_release             = false
+  is_disabled                          = false
+  is_version_controlled                = false
+  lifecycle_id                         = "${data.octopusdeploy_lifecycles.default.lifecycles[0].id}"
+  project_group_id                     = "${octopusdeploy_project_group.project_group_infrastructure.id}"
+  included_library_variable_sets       = ["${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"]
+  tenanted_deployment_participation    = "Untenanted"
+
+  connectivity_policy {
+    allow_deployments_to_no_targets = false
+    exclude_unhealthy_targets       = false
+    skip_machine_behavior           = "SkipUnavailableMachines"
+  }
+}</pre>
 <p>
     Finally, we define the deployment process, which defines the steps inside the deployment project:
 </p>
@@ -99,22 +99,22 @@ terraform apply</pre>
     Steps contain one or more actions. Steps with more than one action appear as a parent step in the UI, allowing each action to be run in parallel or in a rolling update across targets. Steps with one action appear as regular steps in the UI:
 </p>  
 <pre>  step {
-      condition           = "Success"
-      name                = "Create API Gateway"
-      package_requirement = "LetOctopusDecide"
-      start_trigger       = "StartAfterPrevious"</pre>
+    condition           = "Success"
+    name                = "Create API Gateway"
+    package_requirement = "LetOctopusDecide"
+    start_trigger       = "StartAfterPrevious"</pre>
 <p>
     In this case we have a step with a single action deploying a CloudFormation template. This step is executed on a worker from the Ubuntu worker pool by referencing the results of the worker pool data lookup:
 </p>  
-<pre>    action {
-        action_type                        = "Octopus.AwsRunCloudFormation"
-        name                               = "Create API Gateway"
-        condition                          = "Success"
-        run_on_server                      = true
-        is_disabled                        = false
-        can_be_used_for_project_versioning = false
-        is_required                        = false
-        worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"</pre>
+<pre>  action {
+      action_type                        = "Octopus.AwsRunCloudFormation"
+      name                               = "Create API Gateway"
+      condition                          = "Success"
+      run_on_server                      = true
+      is_disabled                        = false
+      can_be_used_for_project_versioning = false
+      is_required                        = false
+      worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"</pre>
 <p>
   Steps have a number of common properties, defined above, while the remaining properties are generic key/value pairs. This is referred to as the <i>property bag</i>.
 </p>
@@ -129,43 +129,43 @@ terraform apply</pre>
 <p>
   Here we define a common set of tags to be applied to the CloudFormation stack. This allows anyone browsing the stacks through the AWS console to quickly identify the Octopus process responsible for creating it:
 </p>
-<pre>          "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
-            {
-              "key" = "OctopusTenantId"
-              "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
-            },
-            {
-              "key" = "OctopusStepId"
-              "value" = "#{Octopus.Step.Id}"
-            },
-            {
-              "key" = "OctopusRunbookRunId"
-              "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
-            },
-            {
-              "key" = "OctopusDeploymentId"
-              "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
-            },
-            {
-              "key" = "OctopusProjectId"
-              "value" = "#{Octopus.Project.Id}"
-            },
-            {
-              "key" = "OctopusEnvironmentId"
-              "value" = "#{Octopus.Environment.Id}"
-            },
-            {
-              "value" = "#{Octopus.Environment.Name}"
-              "key" = "Environment"
-            },
-            {
-              "value" = "#{Octopus.Project.Name}"
-              "key" = "DeploymentProject"
-            },
-          ])
-          "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
-          "Octopus.Action.Aws.Region" = "#{AWS.Region}"
-          "Octopus.Action.Aws.CloudFormationStackName" = "#{AWS.CloudFormation.ApiGatewayStack}"</pre>
+<pre>        "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+          {
+            "key" = "OctopusTenantId"
+            "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
+          },
+          {
+            "key" = "OctopusStepId"
+            "value" = "#{Octopus.Step.Id}"
+          },
+          {
+            "key" = "OctopusRunbookRunId"
+            "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+          },
+          {
+            "key" = "OctopusDeploymentId"
+            "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+          },
+          {
+            "key" = "OctopusProjectId"
+            "value" = "#{Octopus.Project.Id}"
+          },
+          {
+            "key" = "OctopusEnvironmentId"
+            "value" = "#{Octopus.Environment.Id}"
+          },
+          {
+            "value" = "#{Octopus.Environment.Name}"
+            "key" = "Environment"
+          },
+          {
+            "value" = "#{Octopus.Project.Name}"
+            "key" = "DeploymentProject"
+          },
+        ])
+        "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
+        "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+        "Octopus.Action.Aws.CloudFormationStackName" = "#{AWS.CloudFormation.ApiGatewayStack}"</pre>
 <p>
     Another common pattern is for step properties to have long text content assigned to them. Heredoc strings allow this text to be defined over multiple lines, improving the readability of the HCL. Here we have a CloudFormation YAML blob written as a heredoc string:
 </p>
@@ -174,16 +174,16 @@ terraform apply</pre>
 <p>
   The first CloudFormation resource is the API Gateway instance:
 </p>
-<pre>            RestApi:
-              Type: 'AWS::ApiGateway::RestApi'
-              Properties:
-                Description: My API Gateway
-                Name: Octopub
-                BinaryMediaTypes:
-                  - '*/*'
-                EndpointConfiguration:
-                  Types:
-                    - REGIONAL</pre>
+<pre>          RestApi:
+            Type: 'AWS::ApiGateway::RestApi'
+            Properties:
+              Description: My API Gateway
+              Name: Octopub
+              BinaryMediaTypes:
+                - '*/*'
+              EndpointConfiguration:
+                Types:
+                  - REGIONAL</pre>
 <p>
   API Gateway resources are the individual URL path elements to which Lambdas and other integrations can be attached. We define three resources:
 </p>
@@ -192,77 +192,77 @@ terraform apply</pre>
   <li>Api, which exposes the API endpoints.</li>
   <li>Web, which exposes the frontend web application.</li>
 </ul>
-<pre>            Health:
-              Type: 'AWS::ApiGateway::Resource'
-              Properties:
-                RestApiId:
-                  Ref: RestApi
-                ParentId:
-                  'Fn::GetAtt':
-                    - RestApi
-                    - RootResourceId
-                PathPart: health
-            Api:
-              Type: 'AWS::ApiGateway::Resource'
-              Properties:
-                RestApiId:
-                  Ref: RestApi
-                ParentId:
-                  'Fn::GetAtt':
-                    - RestApi
-                    - RootResourceId
-                PathPart: api
-            Web:
-              Type: 'AWS::ApiGateway::Resource'
-              Properties:
-                RestApiId: !Ref RestApi
-                ParentId: !GetAtt
-                  - RestApi
-                  - RootResourceId
-                PathPart: '{proxy+}'</pre>
-<p>
-  The IDs of the resources created by this CloudFormation template are exposed as outputs. These outputs are captured as Octopus output variables able to be consumed in subsequent steps. They are also able to be queried via the <strong>aws</strong> CLI in separate Octopus deployment projects:
-</p>
-<pre>          Outputs:
-            RestApi:
-              Description: The REST API
-              Value: !Ref RestApi
-            RootResourceId:
-              Description: ID of the resource exposing the root resource id
-              Value:
+<pre>          Health:
+            Type: 'AWS::ApiGateway::Resource'
+            Properties:
+              RestApiId:
+                Ref: RestApi
+              ParentId:
                 'Fn::GetAtt':
                   - RestApi
                   - RootResourceId
-            Health:
-              Description: ID of the resource exposing the health endpoints
-              Value: !Ref Health
-            Api:
-              Description: ID of the resource exposing the api endpoint
-              Value: !Ref Api
-            Web:
-              Description: ID of the resource exposing the web app frontend
-              Value: !Ref Web
-          EOT
-          "Octopus.Action.Aws.TemplateSource" = "Inline"
-          "Octopus.Action.Aws.WaitForCompletion" = "True"
-          "Octopus.Action.Aws.AssumeRole" = "False"</pre>
+              PathPart: health
+          Api:
+            Type: 'AWS::ApiGateway::Resource'
+            Properties:
+              RestApiId:
+                Ref: RestApi
+              ParentId:
+                'Fn::GetAtt':
+                  - RestApi
+                  - RootResourceId
+              PathPart: api
+          Web:
+            Type: 'AWS::ApiGateway::Resource'
+            Properties:
+              RestApiId: !Ref RestApi
+              ParentId: !GetAtt
+                - RestApi
+                - RootResourceId
+              PathPart: '{proxy+}'</pre>
+<p>
+  The IDs of the resources created by this CloudFormation template are exposed as outputs. These outputs are captured as Octopus output variables able to be consumed in subsequent steps. They are also able to be queried via the <strong>aws</strong> CLI in separate Octopus deployment projects:
+</p>
+<pre>        Outputs:
+          RestApi:
+            Description: The REST API
+            Value: !Ref RestApi
+          RootResourceId:
+            Description: ID of the resource exposing the root resource id
+            Value:
+              'Fn::GetAtt':
+                - RestApi
+                - RootResourceId
+          Health:
+            Description: ID of the resource exposing the health endpoints
+            Value: !Ref Health
+          Api:
+            Description: ID of the resource exposing the api endpoint
+            Value: !Ref Api
+          Web:
+            Description: ID of the resource exposing the web app frontend
+            Value: !Ref Web
+        EOT
+        "Octopus.Action.Aws.TemplateSource" = "Inline"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
+        "Octopus.Action.Aws.AssumeRole" = "False"</pre>
 <p>
   The variable referenced here is defined in the library variable set. Typically, referencing a variable requires the use of the Octostache syntax (i.e. <strong>#{Variable.Name}</strong>), but some fields, like account selection fields, reference the variable names directly:
 </p>
-<pre>          "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
-          "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        }
-        environments                       = []
-        excluded_environments              = []
-        channels                           = []
-        tenant_tags                        = []
-        features                           = []
+<pre>        "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
       }
-  
-      properties   = {}
-      target_roles = []
+      environments                       = []
+      excluded_environments              = []
+      channels                           = []
+      tenant_tags                        = []
+      features                           = []
     }
-  }</pre>
+
+    properties   = {}
+    target_roles = []
+  }
+}</pre>
 
 <p>
     With the API Gateway configured, the next step is to deploy the backend REST API microservice as a Lambda.

@@ -19,12 +19,12 @@
     The details of the provider must be defined in the top level module:
 </p>
 <pre>terraform {
-    required_providers {
-      octopusdeploy = { 
-        source = "OctopusDeployLabs/octopusdeploy", version = "0.12.0" 
-      }
+required_providers {
+    octopusdeploy = { 
+    source = "OctopusDeployLabs/octopusdeploy", version = "0.12.0" 
     }
-  }</pre>
+}
+}</pre>
 <p>
     The provider itself must then be defined.
 </p>
@@ -41,10 +41,10 @@
     You will note that the modules under the directories called <strong>octopus</strong> also define a <strong>provider</strong>. This is because the <strong>octopus</strong> module is assumed to be used directly in the rest of this book. However, the <strong>provider</strong> must be removed from the <strong>octopus</strong> module when using the <strong>s3backend</strong> module.
 </p>
 <pre>provider "octopusdeploy" {
-    address  = "${var.octopus_server}"
-    api_key  = "${var.octopus_apikey}"
-    space_id = "${var.octopus_space_id}"
-  }</pre>
+  address  = "${var.octopus_server}"
+  api_key  = "${var.octopus_apikey}"
+  space_id = "${var.octopus_space_id}"
+}</pre>
 <p>
     The remaining Terraform configuration defines the common variables required by the sibling <strong>octopus</strong> module, and then calls the <strong>octopus</strong> module:
 </p>

@@ -45,7 +45,8 @@ terraform apply</pre>
     Here we create an Octopus variable that references the AWS account retrieved in the data lookup above and assign it to the library variable set:
 </p>
 <pre>resource "octopusdeploy_variable" "library_variable_set_octopub_aws_account_0" {
-  owner_id     = "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
+  owner_id     = 
+    "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
   value        = "${data.octopusdeploy_accounts.aws_account.accounts[0].id}"
   name         = "AWS.Account"
   type         = "AmazonWebServicesAccount"
@@ -75,7 +76,8 @@ terraform apply</pre>
     The Terraform variable is then captured in an Octopus variable:
 </p>  
 <pre>resource "octopusdeploy_variable" "library_variable_set_octopub_aws_region_1" {
-  owner_id     = "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
+  owner_id     = 
+    "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
   value        = "${var.library_variable_set_octopub_aws_region_1}"
   name         = "AWS.Region"
   type         = "String"
@@ -104,8 +106,10 @@ terraform apply</pre>
 }
 
 resource "octopusdeploy_variable" "library_variable_set_octopub_aws_cloudformation_apigatewaystack_0" {
-  owner_id     = "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
-  value        = "${var.library_variable_set_octopub_aws_cloudformation_apigatewaystack_0}"
+  owner_id     = 
+    "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
+  value        = 
+    "${var.library_variable_set_octopub_aws_cloudformation_apigatewaystack_0}"
   name         = "AWS.CloudFormation.ApiGatewayStack"
   type         = "String"
   description  = ""

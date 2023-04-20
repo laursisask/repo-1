@@ -42,7 +42,7 @@ variable "account_aws_account" {
   type        = string
   nullable    = false
   sensitive   = true
-  description = "The AWS secret key associated with the account AWS Account"
+  description = "The AWS Account secret key"
 }
 
 variable "account_aws_account_access" {

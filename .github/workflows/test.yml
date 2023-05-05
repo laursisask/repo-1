@@ -19,11 +19,11 @@ jobs:
       fail-fast: false
       matrix:
         go-version: ${{fromJson(needs.go-versions.outputs.versions)}}
-        os: [ubuntu-20.04, ubuntu-18.04, windows-2019, macos-11]
+        os: [ubuntu-22.04, ubuntu-20.04, windows-2022, windows-2019, macos-11, macos-12]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code

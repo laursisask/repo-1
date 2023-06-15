@@ -1,7 +1,7 @@
 terraform {
   required_providers {
-    octopusdeploy = { 
-      source = "OctopusDeployLabs/octopusdeploy", version = "0.12.1" 
+    octopusdeploy = {
+      source = "OctopusDeployLabs/octopusdeploy", version = "0.12.1"
     }
   }
 }
@@ -33,6 +33,14 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
+variable "existing_project_group" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  default     = ""
+  description = "The name of an existing project group to place the project in, or a blank string to create a new project group."
+}
+
 data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
   ids          = null
   partial_name = "Octopub"
@@ -54,10 +62,16 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   take = 1
 }
 
-
 resource "octopusdeploy_project_group" "project_group_infrastructure" {
   name        = "Infrastructure"
   description = "Builds the API Gateway."
+  count       = length(var.existing_project_group) == 0 ? 1 : 0
+}
+
+data "octopusdeploy_project_groups" "existing_project_group" {
+  partial_name = var.existing_project_group
+  skip         = 0
+  take         = 1
 }
 
 # The following octopusdeploy_git_credential resource and Terraform variables are used
@@ -115,10 +129,12 @@ resource "octopusdeploy_project" "project_api_gateway" {
   description                          = "Deploys a shared API Gateway. This project is created and managed by the [Octopus Terraform provider](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy/latest/docs). The Terraform files can be found in the [GitHub repo](https://github.com/OctopusSolutionsEngineering/SalesEngineeringAwsLambda)."
   discrete_channel_release             = false
   is_disabled                          = false
-  lifecycle_id                         = "${data.octopusdeploy_lifecycles.default.lifecycles[0].id}"
-  project_group_id                     = "${octopusdeploy_project_group.project_group_infrastructure.id}"
-  included_library_variable_sets       = ["${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"]
-  tenanted_deployment_participation    = "Untenanted"
+  lifecycle_id                         = data.octopusdeploy_lifecycles.default.lifecycles[0].id
+  project_group_id                     = length(var.existing_project_group) == 0 ? octopusdeploy_project_group.project_group_infrastructure[0].id : data.octopusdeploy_project_groups.existing_project_group.project_groups[0].id
+  included_library_variable_sets       = [
+    "${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"
+  ]
+  tenanted_deployment_participation = "Untenanted"
 
   connectivity_policy {
     allow_deployments_to_no_targets = false
@@ -126,7 +142,7 @@ resource "octopusdeploy_project" "project_api_gateway" {
     skip_machine_behavior           = "SkipUnavailableMachines"
   }
 
-  is_version_controlled                = false
+  is_version_controlled = false
 
   # This settings configure the project to use Config-as-Code
   # To enable CaC, comment out the "is_version_controlled" setting above,
@@ -153,13 +169,13 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_api_gate
   # Ignoring the step field allows Terraform to create the project and steps, but
   # then ignore any changes made via the UI. This is useful when Terraform is used
   # to bootstrap the project but not "own" the configuration once it exists.
-  
+
   # lifecycle {
   #   ignore_changes = [
   #     step,
   #   ]
   # }
-  
+
   project_id = "${octopusdeploy_project.project_api_gateway.id}"
 
   step {
@@ -180,47 +196,47 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_api_gate
       properties                         = {
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
           {
-            "key" = "OctopusTenantId"
+            "key"   = "OctopusTenantId"
             "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
           },
           {
-            "key" = "OctopusStepId"
+            "key"   = "OctopusStepId"
             "value" = "#{Octopus.Step.Id}"
           },
           {
-            "key" = "OctopusRunbookRunId"
+            "key"   = "OctopusRunbookRunId"
             "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusDeploymentId"
+            "key"   = "OctopusDeploymentId"
             "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusProjectId"
+            "key"   = "OctopusProjectId"
             "value" = "#{Octopus.Project.Id}"
           },
           {
-            "key" = "OctopusEnvironmentId"
+            "key"   = "OctopusEnvironmentId"
             "value" = "#{Octopus.Environment.Id}"
           },
           {
             "value" = "#{Octopus.Environment.Name}"
-            "key" = "Environment"
+            "key"   = "Environment"
           },
           {
             "value" = "#{Octopus.Project.Name}"
-            "key" = "DeploymentProject"
+            "key"   = "DeploymentProject"
           },
         ])
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
-        "Octopus.Action.Aws.Region" = "#{AWS.Region}"
-        "Octopus.Action.Aws.CloudFormationStackName" = "#{AWS.CloudFormation.ApiGatewayStack}"
-        "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOT
+        "Octopus.Action.Aws.Region"                           = "#{AWS.Region}"
+        "Octopus.Action.Aws.CloudFormationStackName"          = "#{AWS.CloudFormation.ApiGatewayStack}"
+        "Octopus.Action.Aws.CloudFormationTemplate"           = <<-EOT
         Resources:
           RestApi:
             Type: 'AWS::ApiGateway::RestApi'
             Properties:
-              Description: My API Gateway
+              Description: Octopus Lambda Gateway
               Name: Octopub
               BinaryMediaTypes:
                 - '*/*'
@@ -275,17 +291,17 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_api_gate
             Description: ID of the resource exposing the web app frontend
             Value: !Ref Web
         EOT
-        "Octopus.Action.Aws.TemplateSource" = "Inline"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.TemplateSource"                   = "Inline"
+        "Octopus.Action.Aws.WaitForCompletion"                = "True"
+        "Octopus.Action.Aws.AssumeRole"                       = "False"
+        "Octopus.Action.AwsAccount.Variable"                  = "AWS.Account"
+        "Octopus.Action.AwsAccount.UseInstanceRole"           = "False"
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
+      features              = []
     }
 
     properties   = {}

@@ -56,7 +56,7 @@ data "octopusdeploy_lifecycles" "default" {
 }
 
 data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
-  npartial_nameame = "Hosted Ubuntu"
+  partial_nameame = "Hosted Ubuntu"
   ids              = null
   skip             = 0
   take             = 1

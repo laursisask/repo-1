@@ -7,9 +7,9 @@ terraform {
 }
 
 provider "octopusdeploy" {
-  address  = "${var.octopus_server}"
-  api_key  = "${var.octopus_apikey}"
-  space_id = "${var.octopus_space_id}"
+  address  = var.octopus_server
+  api_key  = var.octopus_apikey
+  space_id = var.octopus_space_id
 }
 
 variable "octopus_server" {
@@ -47,8 +47,8 @@ resource "octopusdeploy_library_variable_set" "library_variable_set_octopub" {
 }
 
 resource "octopusdeploy_variable" "library_variable_set_octopub_aws_account_0" {
-  owner_id     = "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
-  value        = "${data.octopusdeploy_accounts.aws_account.accounts[0].id}"
+  owner_id     = octopusdeploy_library_variable_set.library_variable_set_octopub.id
+  value        = data.octopusdeploy_accounts.aws_account.accounts[0].id
   name         = "AWS.Account"
   type         = "AmazonWebServicesAccount"
   is_sensitive = false
@@ -73,8 +73,8 @@ variable "library_variable_set_octopub_aws_region_1" {
 }
 
 resource "octopusdeploy_variable" "library_variable_set_octopub_aws_region_1" {
-  owner_id     = "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
-  value        = "${var.library_variable_set_octopub_aws_region_1}"
+  owner_id     = octopusdeploy_library_variable_set.library_variable_set_octopub.id
+  value        = var.library_variable_set_octopub_aws_region_1
   name         = "AWS.Region"
   type         = "String"
   description  = ""
@@ -100,8 +100,8 @@ variable "library_variable_set_octopub_aws_cloudformation_apigatewaystack_0" {
 }
 
 resource "octopusdeploy_variable" "library_variable_set_octopub_aws_cloudformation_apigatewaystack_0" {
-  owner_id     = "${octopusdeploy_library_variable_set.library_variable_set_octopub.id}"
-  value        = "${var.library_variable_set_octopub_aws_cloudformation_apigatewaystack_0}"
+  owner_id     = octopusdeploy_library_variable_set.library_variable_set_octopub.id
+  value        = var.library_variable_set_octopub_aws_cloudformation_apigatewaystack_0
   name         = "AWS.CloudFormation.ApiGatewayStack"
   type         = "String"
   description  = ""

@@ -7,9 +7,9 @@ terraform {
 }
 
 provider "octopusdeploy" {
-  address  = "${var.octopus_server}"
-  api_key  = "${var.octopus_apikey}"
-  space_id = "${var.octopus_space_id}"
+  address  = var.octopus_server
+  api_key  = var.octopus_apikey
+  space_id = var.octopus_space_id
 }
 
 variable "octopus_server" {
@@ -40,8 +40,8 @@ resource "octopusdeploy_aws_account" "account_aws_account" {
   tenant_tags                       = []
   tenants                           = null
   tenanted_deployment_participation = "Untenanted"
-  access_key                        = "${var.account_aws_account_access}"
-  secret_key                        = "${var.account_aws_account}"
+  access_key                        = var.account_aws_account_access
+  secret_key                        = var.account_aws_account
 }
 
 variable "account_aws_account" {

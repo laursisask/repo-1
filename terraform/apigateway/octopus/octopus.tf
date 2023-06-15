@@ -176,7 +176,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_api_gate
   #   ]
   # }
 
-  project_id = "${octopusdeploy_project.project_api_gateway.id}"
+  project_id = octopusdeploy_project.project_api_gateway.id
 
   step {
     condition           = "Success"
@@ -192,7 +192,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_api_gate
       is_disabled                        = false
       can_be_used_for_project_versioning = false
       is_required                        = false
-      worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+      worker_pool_id                     = data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id
       properties                         = {
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
           {

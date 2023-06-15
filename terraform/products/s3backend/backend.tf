@@ -5,8 +5,8 @@ terraform {
 
 terraform {
   required_providers {
-    octopusdeploy = { 
-      source = "OctopusDeployLabs/octopusdeploy", version = "0.12.1" 
+    octopusdeploy = {
+      source = "OctopusDeployLabs/octopusdeploy", version = "0.12.1"
     }
   }
 }
@@ -38,9 +38,18 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
+variable "existing_project_group" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  default     = ""
+  description = "The name of an existing project group to place the project in, or a blank string to create a new project group."
+}
+
 module "octopus" {
-  source = "../octopus"
-  octopus_server = var.octopus_server
-  octopus_apikey = var.octopus_apikey
-  octopus_space_id = var.octopus_space_id
+  source                 = "../octopus"
+  octopus_server         = var.octopus_server
+  octopus_apikey         = var.octopus_apikey
+  octopus_space_id       = var.octopus_space_id
+  existing_project_group = var.existing_project_group
 }

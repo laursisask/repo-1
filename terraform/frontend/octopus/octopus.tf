@@ -33,6 +33,14 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
+variable "existing_project_group" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  default     = ""
+  description = "The name of an existing project group to place the project in, or a blank string to create a new project group."
+}
+
 data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
   ids          = null
   partial_name = "Octopub"
@@ -65,6 +73,13 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
 resource "octopusdeploy_project_group" "project_group_frontend" {
   name        = "Octopub Frontend"
   description = "The Octopub web frontend"
+  count       = length(var.existing_project_group) == 0 ? 1 : 0
+}
+
+data "octopusdeploy_project_groups" "existing_project_group" {
+  partial_name = var.existing_project_group
+  skip         = 0
+  take         = 1
 }
 
 # The following octopusdeploy_git_credential resource and Terraform variables are used
@@ -123,7 +138,7 @@ resource "octopusdeploy_project" "project_frontend_webapp" {
   discrete_channel_release             = false
   is_disabled                          = false
   lifecycle_id                         = "${data.octopusdeploy_lifecycles.default.lifecycles[0].id}"
-  project_group_id                     = "${octopusdeploy_project_group.project_group_frontend.id}"
+  project_group_id                     = length(var.existing_project_group) == 0 ? octopusdeploy_project_group.project_group_frontend[0].id : data.octopusdeploy_project_groups.existing_project_group.project_groups[0].id
   included_library_variable_sets       = ["${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"]
   tenanted_deployment_participation    = "Untenanted"
 

@@ -1,7 +1,7 @@
 terraform {
   required_providers {
-    octopusdeploy = { 
-      source = "OctopusDeployLabs/octopusdeploy", version = "0.12.1" 
+    octopusdeploy = {
+      source = "OctopusDeployLabs/octopusdeploy", version = "0.12.1"
     }
   }
 }
@@ -31,6 +31,14 @@ variable "octopus_space_id" {
   nullable    = false
   sensitive   = false
   description = "The ID of the Octopus space to populate."
+}
+
+variable "existing_project_group" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  default     = ""
+  description = "The name of an existing project group to place the project in, or a blank string to create a new project group."
 }
 
 data "octopusdeploy_library_variable_sets" "library_variable_set_octopub" {
@@ -65,6 +73,13 @@ data "octopusdeploy_feeds" "sales_maven_feed" {
 resource "octopusdeploy_project_group" "project_group_products" {
   name        = "Products API"
   description = "The products REST API"
+  count       = length(var.existing_project_group) == 0 ? 1 : 0
+}
+
+data "octopusdeploy_project_groups" "existing_project_group" {
+  partial_name = var.existing_project_group
+  skip         = 0
+  take         = 1
 }
 
 # The following octopusdeploy_git_credential resource and Terraform variables are used
@@ -121,10 +136,12 @@ resource "octopusdeploy_project" "project_products_service" {
   default_to_skip_if_already_installed = false
   description                          = "Deploys the backend service to Lambda."
   discrete_channel_release             = false
-  is_disabled                          = false  
+  is_disabled                          = false
   lifecycle_id                         = "${data.octopusdeploy_lifecycles.default.lifecycles[0].id}"
-  project_group_id                     = "${octopusdeploy_project_group.project_group_products.id}"
-  included_library_variable_sets       = ["${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"]
+  project_group_id                     = length(var.existing_project_group) == 0 ? octopusdeploy_project_group.project_group_products[0].id : data.octopusdeploy_project_groups.existing_project_group.project_groups[0].id
+  included_library_variable_sets       = [
+    "${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"
+  ]
   tenanted_deployment_participation    = "Untenanted"
 
   connectivity_policy {
@@ -134,7 +151,7 @@ resource "octopusdeploy_project" "project_products_service" {
   }
 
 
-  is_version_controlled                = false
+  is_version_controlled = false
 
   # This settings configure the project to use Config-as-Code
   # To enable CaC, comment out the "is_version_controlled" setting above,
@@ -161,7 +178,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
   # Ignoring the step field allows Terraform to create the project and steps, but
   # then ignore any changes made via the UI. This is useful when Terraform is used
   # to bootstrap the project but not "own" the configuration once it exists.
-  
+
   # lifecycle {
   #   ignore_changes = [
   #     step,
@@ -187,44 +204,44 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       is_required                        = false
       worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Aws.CloudFormationTemplate" = "Resources:\n  LambdaS3Bucket:\n    Type: 'AWS::S3::Bucket'\nOutputs:\n  LambdaS3Bucket:\n    Description: The S3 Bucket\n    Value:\n      Ref: LambdaS3Bucket\n"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubBackendS3Bucket-#{Octopus.Environment.Name}"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.TemplateSource" = "Inline"
+        "Octopus.Action.Aws.CloudFormationTemplate"           = "Resources:\n  LambdaS3Bucket:\n    Type: 'AWS::S3::Bucket'\nOutputs:\n  LambdaS3Bucket:\n    Description: The S3 Bucket\n    Value:\n      Ref: LambdaS3Bucket\n"
+        "Octopus.Action.Aws.WaitForCompletion"                = "True"
+        "Octopus.Action.Aws.CloudFormationStackName"          = "OctopubBackendS3Bucket-#{Octopus.Environment.Name}"
+        "Octopus.Action.AwsAccount.UseInstanceRole"           = "False"
+        "Octopus.Action.Aws.TemplateSource"                   = "Inline"
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
-        "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+        "Octopus.Action.Aws.CloudFormation.Tags"              = jsonencode([
           {
-            "key" = "OctopusTenantId"
+            "key"   = "OctopusTenantId"
             "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
           },
           {
-            "key" = "OctopusStepId"
+            "key"   = "OctopusStepId"
             "value" = "#{Octopus.Step.Id}"
           },
           {
-            "key" = "OctopusRunbookRunId"
+            "key"   = "OctopusRunbookRunId"
             "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusDeploymentId"
+            "key"   = "OctopusDeploymentId"
             "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusProjectId"
+            "key"   = "OctopusProjectId"
             "value" = "#{Octopus.Project.Id}"
           },
           {
-            "key" = "OctopusEnvironmentId"
+            "key"   = "OctopusEnvironmentId"
             "value" = "#{Octopus.Environment.Id}"
           },
           {
             "value" = "#{Octopus.Environment.Name}"
-            "key" = "Environment"
+            "key"   = "Environment"
           },
           {
             "value" = "#{Octopus.Project.Name}"
-            "key" = "DeploymentProject"
+            "key"   = "DeploymentProject"
           },
         ])
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
@@ -233,14 +250,14 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
           "CAPABILITY_IAM",
           "CAPABILITY_NAMED_IAM",
         ])
-        "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+        "Octopus.Action.Aws.Region"     = "#{AWS.Region}"
         "Octopus.Action.Aws.AssumeRole" = "False"
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
+      features              = []
     }
 
     properties   = {}
@@ -263,27 +280,27 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       is_required                        = false
       worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Aws.S3.BucketName" = "#{Octopus.Action[Create S3 bucket].Output.AwsOutputs[LambdaS3Bucket]}"
+        "Octopus.Action.Aws.AssumeRole"             = "False"
+        "Octopus.Action.Aws.S3.BucketName"          = "#{Octopus.Action[Create S3 bucket].Output.AwsOutputs[LambdaS3Bucket]}"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
-        "Octopus.Action.Aws.Region" = "#{AWS.Region}"
-        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
+        "Octopus.Action.AwsAccount.Variable"        = "AWS.Account"
+        "Octopus.Action.Aws.Region"                 = "#{AWS.Region}"
+        "Octopus.Action.Aws.S3.TargetMode"          = "EntirePackage"
         "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
-          "storageClass" = "STANDARD"
-          "tags" = []
-          "bucketKey" = ""
+        "Octopus.Action.Aws.S3.PackageOptions"      = jsonencode({
+          "storageClass"       = "STANDARD"
+          "tags"               = []
+          "bucketKey"          = ""
           "bucketKeyBehaviour" = "Filename"
-          "bucketKeyPrefix" = ""
-          "cannedAcl" = "private"
-          "metadata" = []
+          "bucketKeyPrefix"    = ""
+          "cannedAcl"          = "private"
+          "metadata"           = []
         })
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
 
       primary_package {
         package_id           = "com.octopus:products-microservice-lambda"
@@ -315,10 +332,10 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       is_required                        = false
       worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
       properties                         = {
-        "OctopusUseBundledTooling" = "False"
+        "OctopusUseBundledTooling"                  = "False"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
-        "Octopus.Action.Script.ScriptBody" = <<-EOF
+        "Octopus.Action.AwsAccount.Variable"        = "AWS.Account"
+        "Octopus.Action.Script.ScriptBody"          = <<-EOF
         echo "Downloading Docker images"
 
         echo "##octopus[stdout-verbose]"
@@ -361,16 +378,16 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
           exit 1
         fi
         EOF
-        "Octopus.Action.Aws.Region" = "#{AWS.Region}"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "Bash"
+        "Octopus.Action.Aws.Region"                 = "#{AWS.Region}"
+        "Octopus.Action.Aws.AssumeRole"             = "False"
+        "Octopus.Action.Script.ScriptSource"        = "Inline"
+        "Octopus.Action.Script.Syntax"              = "Bash"
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
+      features              = []
     }
 
     properties   = {}
@@ -393,53 +410,53 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       is_required                        = false
       worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
+        "Octopus.Action.AwsAccount.Variable"        = "AWS.Account"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.Region" = "#{AWS.Region}"
-        "Octopus.Action.Aws.IamCapabilities" = jsonencode([
+        "Octopus.Action.Aws.Region"                 = "#{AWS.Region}"
+        "Octopus.Action.Aws.IamCapabilities"        = jsonencode([
           "CAPABILITY_AUTO_EXPAND",
           "CAPABILITY_IAM",
           "CAPABILITY_NAMED_IAM",
         ])
-        "Octopus.Action.Aws.TemplateSource" = "Inline"
-        "Octopus.Action.Template.Version" = "1"
+        "Octopus.Action.Aws.TemplateSource"          = "Inline"
+        "Octopus.Action.Template.Version"            = "1"
         "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambda-#{Octopus.Environment.Name}"
-        "Vpc.Cidr" = "10.0.0.0/16"
-        "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+        "Vpc.Cidr"                                   = "10.0.0.0/16"
+        "Octopus.Action.Aws.CloudFormation.Tags"     = jsonencode([
           {
-            "key" = "OctopusTenantId"
+            "key"   = "OctopusTenantId"
             "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
           },
           {
-            "key" = "OctopusStepId"
+            "key"   = "OctopusStepId"
             "value" = "#{Octopus.Step.Id}"
           },
           {
-            "key" = "OctopusRunbookRunId"
+            "key"   = "OctopusRunbookRunId"
             "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusDeploymentId"
+            "key"   = "OctopusDeploymentId"
             "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusProjectId"
+            "key"   = "OctopusProjectId"
             "value" = "#{Octopus.Project.Id}"
           },
           {
-            "key" = "OctopusEnvironmentId"
+            "key"   = "OctopusEnvironmentId"
             "value" = "#{Octopus.Environment.Id}"
           },
           {
             "value" = "#{Octopus.Environment.Name}"
-            "key" = "Environment"
+            "key"   = "Environment"
           },
           {
             "value" = "#{Octopus.Project.Name}"
-            "key" = "DeploymentProject"
+            "key"   = "DeploymentProject"
           },
         ])
-        "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+        "Octopus.Action.Aws.CloudFormationTemplate"           = <<-EOF
         # This stack creates a new application lambda.
         Parameters:
           EnvironmentName:
@@ -647,54 +664,54 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         EOF
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
           {
-            "ParameterKey" = "EnvironmentName"
+            "ParameterKey"   = "EnvironmentName"
             "ParameterValue" = "#{Octopus.Environment.Name}"
           },
           {
-            "ParameterKey" = "RestApi"
+            "ParameterKey"   = "RestApi"
             "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
           },
           {
-            "ParameterKey" = "ResourceId"
+            "ParameterKey"   = "ResourceId"
             "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.Api}"
           },
           {
-            "ParameterKey" = "LambdaS3Key"
+            "ParameterKey"   = "LambdaS3Key"
             "ParameterValue" = "#{Octopus.Action[Upload Lambda].Package[].PackageId}.#{Octopus.Action[Upload Lambda].Package[].PackageVersion}.zip"
           },
           {
-            "ParameterKey" = "LambdaS3Bucket"
+            "ParameterKey"   = "LambdaS3Bucket"
             "ParameterValue" = "#{Octopus.Action[Create S3 bucket].Output.AwsOutputs[LambdaS3Bucket]}"
           },
           {
-            "ParameterKey" = "LambdaName"
+            "ParameterKey"   = "LambdaName"
             "ParameterValue" = "octopub-products-#{Octopus.Environment.Name | ToLower}"
           },
           {
-            "ParameterKey" = "SubnetGroupName"
+            "ParameterKey"   = "SubnetGroupName"
             "ParameterValue" = "octopub-products-#{Octopus.Environment.Name | ToLower}"
           },
           {
-            "ParameterKey" = "LambdaDescription"
+            "ParameterKey"   = "LambdaDescription"
             "ParameterValue" = "#{Octopus.Deployment.Id} v#{Octopus.Action[Upload Lambda].Package[].PackageVersion}"
           },
           {
-            "ParameterKey" = "DBUsername"
+            "ParameterKey"   = "DBUsername"
             "ParameterValue" = "productadmin"
           },
           {
-            "ParameterKey" = "DBPassword"
+            "ParameterKey"   = "DBPassword"
             "ParameterValue" = "Password01!"
           },
         ])
-        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.AssumeRole"        = "False"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
+      features              = []
     }
 
     properties   = {}
@@ -717,11 +734,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       is_required                        = false
       worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
       properties                         = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.Region" = "#{AWS.Region}"
-        "Octopus.Action.Aws.AssumeRole" = "False"
+        "OctopusUseBundledTooling"           = "False"
+        "Octopus.Action.Aws.Region"          = "#{AWS.Region}"
+        "Octopus.Action.Aws.AssumeRole"      = "False"
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
-        "Octopus.Action.Script.ScriptBody" = <<-EOF
+        "Octopus.Action.Script.ScriptBody"   = <<-EOF
         echo "Downloading Docker images"
 
         echo "##octopus[stdout-verbose]"
@@ -740,13 +757,13 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
           response.json
         EOF
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "Bash"
+        "Octopus.Action.Script.Syntax"       = "Bash"
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
+      features              = []
     }
 
     properties   = {}
@@ -775,47 +792,47 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
           "CAPABILITY_NAMED_IAM",
         ])
         "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsLambdaVersion-#{Octopus.Environment.Name}-#{Octopus.Deployment.Id | Replace -}"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
-        "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
+        "Octopus.Action.Aws.AssumeRole"              = "False"
+        "Octopus.Action.AwsAccount.Variable"         = "AWS.Account"
+        "Octopus.Action.Aws.CloudFormation.Tags"     = jsonencode([
           {
-            "key" = "OctopusTenantId"
+            "key"   = "OctopusTenantId"
             "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
           },
           {
-            "key" = "OctopusStepId"
+            "key"   = "OctopusStepId"
             "value" = "#{Octopus.Step.Id}"
           },
           {
-            "key" = "OctopusRunbookRunId"
+            "key"   = "OctopusRunbookRunId"
             "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusDeploymentId"
+            "key"   = "OctopusDeploymentId"
             "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusProjectId"
+            "key"   = "OctopusProjectId"
             "value" = "#{Octopus.Project.Id}"
           },
           {
-            "key" = "OctopusEnvironmentId"
+            "key"   = "OctopusEnvironmentId"
             "value" = "#{Octopus.Environment.Id}"
           },
           {
             "value" = "#{Octopus.Environment.Name}"
-            "key" = "Environment"
+            "key"   = "Environment"
           },
           {
             "value" = "#{Octopus.Project.Name}"
-            "key" = "DeploymentProject"
+            "key"   = "DeploymentProject"
           },
         ])
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.TemplateSource" = "Inline"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.Region" = "#{AWS.Region}"
-        "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+        "Octopus.Action.Aws.WaitForCompletion"                = "True"
+        "Octopus.Action.Aws.TemplateSource"                   = "Inline"
+        "Octopus.Action.AwsAccount.UseInstanceRole"           = "False"
+        "Octopus.Action.Aws.Region"                           = "#{AWS.Region}"
+        "Octopus.Action.Aws.CloudFormationTemplate"           = <<-EOF
         # This template creates a new lambda version for the application lambda created in the
         # previous step. This template is created in a unique stack each time, and is cleaned
         # up by Octopus once the API gateway no longer points to this version.
@@ -856,24 +873,24 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
         EOF
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
           {
-            "ParameterKey" = "RestApi"
+            "ParameterKey"   = "RestApi"
             "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
           },
           {
-            "ParameterKey" = "LambdaDescription"
+            "ParameterKey"   = "LambdaDescription"
             "ParameterValue" = "#{Octopus.Deployment.Id} v#{Octopus.Action[Upload Lambda].Package[].PackageVersion}"
           },
           {
-            "ParameterKey" = "ApplicationLambda"
+            "ParameterKey"   = "ApplicationLambda"
             "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda].Output.AwsOutputs[ApplicationLambda]}"
           },
         ])
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
+      features              = []
     }
 
     properties   = {}
@@ -898,25 +915,25 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       properties                         = {
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
           {
-            "ParameterKey" = "EnvironmentName"
+            "ParameterKey"   = "EnvironmentName"
             "ParameterValue" = "#{Octopus.Environment.Name}"
           },
           {
-            "ParameterKey" = "RestApi"
+            "ParameterKey"   = "RestApi"
             "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
           },
           {
-            "ParameterKey" = "ResourceId"
+            "ParameterKey"   = "ResourceId"
             "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.Api}"
           },
           {
-            "ParameterKey" = "LambdaVersion"
+            "ParameterKey"   = "LambdaVersion"
             "ParameterValue" = "#{Octopus.Action[Deploy Application Lambda Version].Output.AwsOutputs[LambdaVersion]}"
           },
         ])
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole"  = "False"
         "Octopus.Action.Aws.CloudFormationStackName" = "OctopubProductsApiGateway-#{Octopus.Environment.Name}"
-        "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+        "Octopus.Action.Aws.CloudFormationTemplate"  = <<-EOF
         Parameters:
           EnvironmentName:
             Type: String
@@ -1009,56 +1026,56 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
                 - !Ref LambdaVersion
                 - /invocations
         EOF
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.TemplateSource" = "Inline"
-        "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
-        "Octopus.Action.Aws.IamCapabilities" = jsonencode([
+        "Octopus.Action.Aws.AssumeRole"              = "False"
+        "Octopus.Action.Aws.WaitForCompletion"       = "True"
+        "Octopus.Action.Aws.TemplateSource"          = "Inline"
+        "Octopus.Action.AwsAccount.Variable"         = "AWS.Account"
+        "Octopus.Action.Aws.IamCapabilities"         = jsonencode([
           "CAPABILITY_AUTO_EXPAND",
           "CAPABILITY_IAM",
           "CAPABILITY_NAMED_IAM",
         ])
-        "Octopus.Action.Aws.Region" = "#{AWS.Region}"
+        "Octopus.Action.Aws.Region"              = "#{AWS.Region}"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
           {
-            "key" = "OctopusTenantId"
+            "key"   = "OctopusTenantId"
             "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
           },
           {
-            "key" = "OctopusStepId"
+            "key"   = "OctopusStepId"
             "value" = "#{Octopus.Step.Id}"
           },
           {
-            "key" = "OctopusRunbookRunId"
+            "key"   = "OctopusRunbookRunId"
             "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusDeploymentId"
+            "key"   = "OctopusDeploymentId"
             "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusProjectId"
+            "key"   = "OctopusProjectId"
             "value" = "#{Octopus.Project.Id}"
           },
           {
-            "key" = "OctopusEnvironmentId"
+            "key"   = "OctopusEnvironmentId"
             "value" = "#{Octopus.Environment.Id}"
           },
           {
             "value" = "#{Octopus.Environment.Name}"
-            "key" = "Environment"
+            "key"   = "Environment"
           },
           {
             "value" = "#{Octopus.Project.Name}"
-            "key" = "DeploymentProject"
+            "key"   = "DeploymentProject"
           },
         ])
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
+      features              = []
     }
 
     properties   = {}
@@ -1081,42 +1098,42 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
       is_required                        = false
       worker_pool_id                     = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
+        "Octopus.Action.Aws.WaitForCompletion"   = "True"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
           {
-            "key" = "OctopusTenantId"
+            "key"   = "OctopusTenantId"
             "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
           },
           {
-            "key" = "OctopusStepId"
+            "key"   = "OctopusStepId"
             "value" = "#{Octopus.Step.Id}"
           },
           {
-            "key" = "OctopusRunbookRunId"
+            "key"   = "OctopusRunbookRunId"
             "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusDeploymentId"
+            "key"   = "OctopusDeploymentId"
             "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
           },
           {
-            "key" = "OctopusProjectId"
+            "key"   = "OctopusProjectId"
             "value" = "#{Octopus.Project.Id}"
           },
           {
-            "key" = "OctopusEnvironmentId"
+            "key"   = "OctopusEnvironmentId"
             "value" = "#{Octopus.Environment.Id}"
           },
           {
             "value" = "#{Octopus.Environment.Name}"
-            "key" = "Environment"
+            "key"   = "Environment"
           },
           {
             "value" = "#{Octopus.Project.Name}"
-            "key" = "DeploymentProject"
+            "key"   = "DeploymentProject"
           },
-        ])        
-        "Octopus.Action.Aws.CloudFormationTemplate" = <<-EOF
+        ])
+        "Octopus.Action.Aws.CloudFormationTemplate"           = <<-EOF
         # This template updates the stage with the deployment created in the previous step.
         # It is here that the new Lambda versions are exposed to the end user.
         Parameters:
@@ -1160,32 +1177,32 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_products
                   - Ref: Stage
                   - /
         EOF
-        "Octopus.Action.Aws.TemplateSource" = "Inline"
-        "Octopus.Action.Aws.CloudFormationStackName" = "OctopubApiGatewayStage-#{Octopus.Environment.Name}"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.TemplateSource"                   = "Inline"
+        "Octopus.Action.Aws.CloudFormationStackName"          = "OctopubApiGatewayStage-#{Octopus.Environment.Name}"
+        "Octopus.Action.AwsAccount.UseInstanceRole"           = "False"
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([
           {
-            "ParameterKey" = "EnvironmentName"
+            "ParameterKey"   = "EnvironmentName"
             "ParameterValue" = "#{Octopus.Environment.Name }"
           },
           {
-            "ParameterKey" = "DeploymentId"
+            "ParameterKey"   = "DeploymentId"
             "ParameterValue" = "#{Octopus.Action[Update API Gateway].Output.AwsOutputs[DeploymentId]}"
           },
           {
-            "ParameterKey" = "ApiGatewayId"
+            "ParameterKey"   = "ApiGatewayId"
             "ParameterValue" = "#{Octopus.Action[Get Stack Outputs].Output.RestApi}"
           },
         ])
-        "Octopus.Action.Aws.Region" = "#{AWS.Region}"
-        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.Region"          = "#{AWS.Region}"
+        "Octopus.Action.Aws.AssumeRole"      = "False"
         "Octopus.Action.AwsAccount.Variable" = "AWS.Account"
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
+      features              = []
     }
 
     properties   = {}

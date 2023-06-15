@@ -56,10 +56,10 @@ data "octopusdeploy_lifecycles" "default" {
 }
 
 data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
-  name = "Hosted Ubuntu"
-  ids  = null
-  skip = 0
-  take = 1
+  partial_name = "Hosted Ubuntu"
+  ids          = null
+  skip         = 0
+  take         = 1
 }
 
 resource "octopusdeploy_project_group" "project_group_infrastructure" {

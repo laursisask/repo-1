@@ -56,10 +56,10 @@ data "octopusdeploy_lifecycles" "default" {
 }
 
 data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
-  name = "Hosted Ubuntu"
-  ids  = null
-  skip = 0
-  take = 1
+  partial_name = "Hosted Ubuntu"
+  ids          = null
+  skip         = 0
+  take         = 1
 }
 
 data "octopusdeploy_feeds" "sales_maven_feed" {
@@ -142,7 +142,7 @@ resource "octopusdeploy_project" "project_products_service" {
   included_library_variable_sets       = [
     "${data.octopusdeploy_library_variable_sets.library_variable_set_octopub.library_variable_sets[0].id}"
   ]
-  tenanted_deployment_participation    = "Untenanted"
+  tenanted_deployment_participation = "Untenanted"
 
   connectivity_policy {
     allow_deployments_to_no_targets = false

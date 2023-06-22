@@ -377,7 +377,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_project_frontend
           S3Bucket:
             Type: AWS::S3::Bucket
             Properties:
-              AccessControl: PublicRead
+              PublicAccessBlockConfiguration:
+                BlockPublicAcls: false
+              OwnershipControls:
+                Rules:
+                  - ObjectOwnership: ObjectWriter
               WebsiteConfiguration:
                 IndexDocument: index.html
                 ErrorDocument: error.html

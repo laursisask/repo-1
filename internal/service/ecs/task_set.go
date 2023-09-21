@@ -367,7 +367,7 @@ func ResourceTaskSetCreate(d *schema.ResourceData, meta interface{}) error {
 			Refresh: func() (interface{}, string, error) {
 				log.Printf("[DEBUG] Checking if ECS task set %s is set to %s", d.Id(), ecs.StabilityStatusSteadyState)
 				resp, err := conn.DescribeTaskSets(&ecs.DescribeTaskSetsInput{
-					TaskSets: []*string{aws.String(d.Id())},
+					TaskSets: []*string{aws.String(ParseTaskSetId(d.Id()))},
 					Cluster:  aws.String(d.Get("cluster").(string)),
 					Service:  aws.String(d.Get("service").(string)),
 				})
@@ -399,7 +399,7 @@ func ResourceTaskSetRead(d *schema.ResourceData, meta interface{}) error {
 	input := ecs.DescribeTaskSetsInput{
 		Cluster:  aws.String(cluster),
 		Service:  aws.String(service),
-		TaskSets: []*string{aws.String(d.Id())},
+		TaskSets: []*string{aws.String(ParseTaskSetId(d.Id()))},
 	}
 
 	var out *ecs.DescribeTaskSetsOutput
@@ -513,7 +513,7 @@ func ResourceTaskSetUpdate(d *schema.ResourceData, meta interface{}) error {
 	input := ecs.UpdateTaskSetInput{
 		Cluster: aws.String(d.Get("cluster").(string)),
 		Service: aws.String(d.Get("service").(string)),
-		TaskSet: aws.String(d.Id()),
+		TaskSet: aws.String(ParseTaskSetId(d.Id())),
 	}
 
 	if d.HasChange("scale") {
@@ -567,7 +567,7 @@ func ResourceTaskSetUpdate(d *schema.ResourceData, meta interface{}) error {
 				Refresh: func() (interface{}, string, error) {
 					log.Printf("[DEBUG] Checking if ECS task set %s is set to %s", d.Id(), ecs.StabilityStatusSteadyState)
 					resp, err := conn.DescribeTaskSets(&ecs.DescribeTaskSetsInput{
-						TaskSets: []*string{aws.String(d.Id())},
+						TaskSets: []*string{aws.String(ParseTaskSetId(d.Id()))},
 						Cluster:  aws.String(d.Get("cluster").(string)),
 						Service:  aws.String(d.Get("service").(string)),
 					})
@@ -596,7 +596,7 @@ func ResourceTaskSetDelete(d *schema.ResourceData, meta interface{}) error {
 
 	// Check if it's not already gone
 	resp, err := conn.DescribeTaskSets(&ecs.DescribeTaskSetsInput{
-		TaskSets: []*string{aws.String(d.Id())},
+		TaskSets: []*string{aws.String(ParseTaskSetId(d.Id()))},
 		Service:  aws.String(d.Get("service").(string)),
 		Cluster:  aws.String(d.Get("cluster").(string)),
 	})
@@ -619,7 +619,7 @@ func ResourceTaskSetDelete(d *schema.ResourceData, meta interface{}) error {
 	input := ecs.DeleteTaskSetInput{
 		Cluster: aws.String(d.Get("cluster").(string)),
 		Service: aws.String(d.Get("service").(string)),
-		TaskSet: aws.String(d.Id()),
+		TaskSet: aws.String(ParseTaskSetId(d.Id())),
 	}
 
 	if v, ok := d.GetOk("force_delete"); ok && v.(bool) {
@@ -661,7 +661,7 @@ func ResourceTaskSetDelete(d *schema.ResourceData, meta interface{}) error {
 		Refresh: func() (interface{}, string, error) {
 			log.Printf("[DEBUG] Checking if ECS task set %s is INACTIVE", d.Id())
 			resp, err := conn.DescribeTaskSets(&ecs.DescribeTaskSetsInput{
-				TaskSets: []*string{aws.String(d.Id())},
+				TaskSets: []*string{aws.String(ParseTaskSetId(d.Id()))},
 				Cluster:  aws.String(d.Get("cluster").(string)),
 				Service:  aws.String(d.Get("service").(string)),
 			})
@@ -687,6 +687,14 @@ func ResourceTaskSetDelete(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[DEBUG] ECS TaskSet %s deleted.", d.Id())
 	return nil
+}
+
+func ParseTaskSetId(id string) string {
+	parts := strings.Split(id, ",")
+	if len(parts) == 1 {
+		return id
+	}
+	return parts[0]
 }
 
 func expandAwsEcsServiceRegistries(d []interface{}) []*ecs.ServiceRegistry {

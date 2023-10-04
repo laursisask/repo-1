@@ -3,10 +3,8 @@ package figma
 // This is explained in figma/figma/config/terraform/modules/asserts/prevent-destroy/main.tf
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
-	"os"
 	"strconv"
 	"time"
 
@@ -54,15 +52,6 @@ func ResourcePreventDestroyRead(d *schema.ResourceData, meta interface{}) error 
 }
 
 func ResourcePreventDestroyDelete(d *schema.ResourceData, meta interface{}) error {
-	if os.Getenv("TF_PREVENT_DESTROY") != "false" {
-		return fmt.Errorf(
-			"Destroy blocked on prevent-destroy module." +
-				" We create these to act as guard rails that protect against accidental destruction of important resources." +
-				" Please check your plan and make sure you are not destroying anything important." +
-				" If you really mean to destroy, please set env var TF_PREVENT_DESTROY=false and re-run.")
-	} else {
-		log.Printf("[INFO] TF_PREVENT_DESTROY=false passed, so allowing destroy")
-	}
-
+	log.Printf("Allowing delete. This resource does nothing. Use figma/figma figma_prevent_destroy instead.")
 	return nil
 }

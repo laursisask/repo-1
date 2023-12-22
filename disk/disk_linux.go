@@ -472,8 +472,6 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 			return ret, err
 		}
 		d := IOCountersStat{
-			Major:            major,
-			Minor:            minor,
 			ReadBytes:        rbytes * sectorSize,
 			WriteBytes:       wbytes * sectorSize,
 			ReadCount:        reads,
@@ -489,7 +487,10 @@ func IOCountersWithContext(ctx context.Context, names ...string) (map[string]IOC
 		if d == empty {
 			continue
 		}
+
 		d.Name = name
+		d.Major = major
+		d.Minor = minor
 
 		// Names passed in can be full paths (/dev/sda) or just device names (sda).
 		// Since `name` here is already a basename, re-add the /dev path.

@@ -1,4 +1,4 @@
-// Copyright 2023 Contrast Security, Inc.
+// Copyright 2024 Contrast Security, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,7 +38,10 @@ func TestLicense(t *testing.T) {
 	}
 
 	var sb strings.Builder
-	for _, ll := range licenseLines {
+
+	// license is 13 lines long and this won't change so hardcode it
+	for i := 0; i < 13; i++ {
+		ll := licenseLines[i]
 		sb.WriteString("//")
 		if ll != "" {
 			sb.WriteByte(' ')

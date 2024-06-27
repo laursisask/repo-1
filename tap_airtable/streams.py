@@ -36,9 +36,9 @@ class BaseAirtableStream(Stream):
                 value = '#ERROR!'
             elif 'specialValue' in value:
                 if value['specialValue'] == 'NaN':
-                    value = float('nan')
+                    value = str(float('nan'))
                 elif value['specialValue'] == 'Infinity':
-                    value = float('inf')
+                    value = str(float('inf'))
         return value
 
 def airtable_stream_factory(table_base_id: str, table: AirtableTable) -> type[BaseAirtableStream]:

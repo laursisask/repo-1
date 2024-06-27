@@ -58,7 +58,7 @@ def test_map_field_type_formula_with_result(airtable_client):
                 }
             },
     }
-    assert airtable_client.map_field_type(field) == "currency"
+    assert airtable_client.map_field_type(field) == ["currency", "formula"]
 
 def test_map_field_type_formula_without_result(airtable_client):
     field = {"type": "formula", "options": {}}

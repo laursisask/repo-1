@@ -69,7 +69,7 @@ class AirtableClient:
     def map_field_type(self, field: dict[str, Any]) -> Any:
         field_type = field["type"]
         if field_type == "formula" and "result" in field["options"]:
-            result_type = field["options"]["result"]["type"]
+            result_type = [field["options"]["result"]["type"], "formula"]
             return result_type
         return field_type
 

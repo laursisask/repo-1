@@ -35,7 +35,7 @@ AirtableCollaborator = th.ObjectType(
 )
 
 # Mapping of Airtable field types to Singer field types
-AIRTABLE_TO_SINGER_MAPPING: dict[str, Any] = {
+AIRTABLE_TO_SINGER_MAPPING: dict[str, th.JSONTypeHelper[Any]] = {
     "singleLineText": th.StringType,
     "email": th.StringType,
     "url": th.StringType,
@@ -55,7 +55,7 @@ AIRTABLE_TO_SINGER_MAPPING: dict[str, Any] = {
     "checkbox": th.BooleanType,
     "formula": th.StringType,  # Formulas can be of various types; simplified to StringType
     "createdTime": th.DateTimeType,
-    "rollup": th.StringType,  # Rollups can be various types; simplified to StringType
+    "rollup": th.CustomType({'type': ['number', 'string']}),  # Rollups can be either string or number
     "count": th.IntegerType,  # Counts are numeric
     "lookup": th.StringType,  # Lookups can be various types; simplified to StringType
     "multipleLookupValues": th.ArrayType(th.StringType),

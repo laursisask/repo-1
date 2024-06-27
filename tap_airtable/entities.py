@@ -12,6 +12,7 @@ class AirtableField:
     field_type: str
     id: str
     name: str
+    is_formula: bool = False
 
     @property
     def singer_type(self) -> type[th.JSONTypeHelper[Any]]:
@@ -33,6 +34,9 @@ class AirtableTable:
             th.Property("createdtime", th.DateTimeType, required=True),
             *(field.to_singer_property() for field in self.fields),
         )
+
+    def get_formula_fields(self) -> list[str]:
+        return [field.name for field in self.fields if field.is_formula]
 
 
 @dataclass

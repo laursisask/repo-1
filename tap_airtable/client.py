@@ -59,7 +59,8 @@ class AirtableClient:
                     AirtableTable(
                         table["id"],
                         table["name"],
-                        [AirtableField(self.map_field_type(field), field["id"], field["name"]) for field in table["fields"]])
+                        [AirtableField(self.map_field_type(field), field["id"], field["name"], field["type"] == "formula") for field in table["fields"]]
+                    )
                 )
             bases.append(AirtableBase(base["id"], base["name"], tables))
 

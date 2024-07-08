@@ -15,15 +15,31 @@ class BaseAirtableStream(Stream):
     original_airtable_table: AirtableTable
     base_id: str
     replication_key = None
-
+    
     def get_records(
         self, context: Optional[dict[str, Any]]
     ) -> Iterable[Union[dict[str, Any], tuple[dict[str, Any], dict[str, Any]]]]:
         client = AirtableClient(self.config["token"])
+        formula_fields = self.original_airtable_table.get_formula_fields()
+
         for record in client.get_records(self.base_id, self.original_airtable_table.id):
             fields = record.pop("fields", {})
+            for key, value in fields.items():
+                if key in formula_fields:
+                    value = self._handle_special_values(value)
+                fields[key] = value
             yield {slugify(key, separator="_"): value for key, value in {**record, **fields}.items()}
-
+    
+    def _handle_special_values(self, value: Any) -> Any:
+        if isinstance(value, dict):
+            if 'error' in value and value['error'] == '#ERROR!':
+                value = '#ERROR!'
+            elif 'specialValue' in value:
+                if value['specialValue'] == 'NaN':
+                    value = str(float('nan'))
+                elif value['specialValue'] == 'Infinity':
+                    value = str(float('inf'))
+        return value
 
 def airtable_stream_factory(table_base_id: str, table: AirtableTable) -> type[BaseAirtableStream]:
     class AirtableStream(BaseAirtableStream):

@@ -59,12 +59,19 @@ class AirtableClient:
                     AirtableTable(
                         table["id"],
                         table["name"],
-                        [AirtableField(field["type"], field["id"], field["name"]) for field in table["fields"]],
+                        [AirtableField(self.map_field_type(field), field["id"], field["name"], field["type"] == "formula") for field in table["fields"]]
                     )
                 )
             bases.append(AirtableBase(base["id"], base["name"], tables))
 
         return bases
+
+    def map_field_type(self, field: dict[str, Any]) -> Any:
+        field_type = field["type"]
+        if field_type == "formula" and "result" in field["options"]:
+            result_type = [field["options"]["result"]["type"], "formula"]
+            return result_type
+        return field_type
 
     def get_records(self, base_id: str, table_id: str, page_size: int = 100) -> Iterable[dict[str, Any]]:
         offset: dict[str, str] = {}

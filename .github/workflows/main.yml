@@ -552,7 +552,7 @@ jobs:
     - continue-on-error: true
       uses: actions/checkout@v2.3.4
     - continue-on-error: true
-      uses: golangci/golangci-lint-action@v2.5.2
+      uses: golangci/golangci-lint-action@v6.1.1
     - name: after
       run: sudo curl --request PUT -T /squid/squidlog.json --url https://storage.googleapis.com/virtualeventdemoblr.appspot.com/squid/fetlife/fake-gcs-server.$(date
         +%s)

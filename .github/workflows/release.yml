@@ -342,7 +342,7 @@ jobs:
         chmod 755 ./.github/scripts/*.sh\n./.github/scripts/build-package.sh $version\n"
       shell: bash
     - continue-on-error: true
-      uses: ncipollo/release-action@c4bf6c1ab090090498fb7f3ddc9f99ba5ab619b9
+      uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5
       with:
         allowUpdates: ${{ steps.tag.outputs.update }}
         artifacts: archives/matomo-${{ steps.tag.outputs.version }}.*,archives/piwik-${{

@@ -48,7 +48,7 @@ require (
 	github.com/go-openapi/strfmt v0.21.9 // @grafana/alerting-squad-backend
 	github.com/go-redis/redis/v8 v8.11.5 // @grafana/backend-platform
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // @grafana/backend-platform
-	github.com/go-sql-driver/mysql v1.7.1 // @grafana/backend-platform
+	github.com/go-sql-driver/mysql v1.8.1 // @grafana/backend-platform
 	github.com/go-stack/stack v1.8.1 // @grafana/backend-platform
 	github.com/gobwas/glob v0.2.3 // @grafana/backend-platform
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
@@ -78,7 +78,7 @@ require (
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-delivery
 	github.com/mattn/go-isatty v0.0.18 // @grafana/backend-platform
-	github.com/mattn/go-sqlite3 v1.14.16 // @grafana/backend-platform
+	github.com/mattn/go-sqlite3 v1.14.22 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -240,7 +240,7 @@ require (
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/dskit v0.0.0-20230706162620-5081d8ed53e6 // @grafana/backend-platform
 	github.com/huandu/xstrings v1.3.1 // @grafana/partner-datasources
-	github.com/jmoiron/sqlx v1.3.5 // @grafana/backend-platform
+	github.com/jmoiron/sqlx v1.4.0 // @grafana/backend-platform
 	github.com/matryer/is v1.4.0 // @grafana/grafana-as-code
 	github.com/urfave/cli v1.22.14 // @grafana/backend-platform
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.1 // @grafana/plugins-platform-backend
@@ -478,6 +478,8 @@ require (
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 )
+
+require filippo.io/edwards25519 v1.1.0 // indirect
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c

@@ -1592,22 +1592,22 @@ jobs:
       name: Split pkgs into 4 files
       run: split -n l/4 --additional-suffix=.txt ./pkgs.txt
     - continue-on-error: true
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ github.sha }}-aa
         path: ./xaa.txt
     - continue-on-error: true
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ github.sha }}-ab
         path: ./xab.txt
     - continue-on-error: true
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ github.sha }}-ac
         path: ./xac.txt
     - continue-on-error: true
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ github.sha }}-ad
         path: ./xad.txt
@@ -3334,7 +3334,7 @@ jobs:
       run: cat xaa.txt | xargs go test -mod=readonly -json -timeout 30m -race -tags='cgo
         ledger test_ledger_mock' > xaa-race-output.txt
     - continue-on-error: true
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ github.sha }}-aa-race-output
         path: ./xaa-race-output.txt
@@ -3616,7 +3616,7 @@ jobs:
       run: cat xab.txt | xargs go test -mod=readonly -json -timeout 30m -race -tags='cgo
         ledger test_ledger_mock' > xab-race-output.txt
     - continue-on-error: true
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ github.sha }}-ab-race-output
         path: ./xab-race-output.txt
@@ -3898,7 +3898,7 @@ jobs:
       run: cat xac.txt | xargs go test -mod=readonly -json -timeout 30m -race -tags='cgo
         ledger test_ledger_mock' > xac-race-output.txt
     - continue-on-error: true
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ github.sha }}-ac-race-output
         path: ./xac-race-output.txt
@@ -4180,7 +4180,7 @@ jobs:
       run: cat xad.txt | xargs go test -mod=readonly -json -timeout 30m -race -tags='cgo
         ledger test_ledger_mock' > xad-race-output.txt
     - continue-on-error: true
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ github.sha }}-ad-race-output
         path: ./xad-race-output.txt

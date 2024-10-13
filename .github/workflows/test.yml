@@ -2174,7 +2174,7 @@ jobs:
         /$(echo $filename | sed 's/\\//\\\\\\//g')/d\" coverage.txt\ndone\n"
     - continue-on-error: true
       if: env.GIT_DIFF != ''
-      uses: codecov/codecov-action@v1.0.13
+      uses: codecov/codecov-action@v4.6.0
       with:
         file: ./coverage.txt
     - name: after
@@ -2467,7 +2467,7 @@ jobs:
         /$(echo $filename | sed 's/\\//\\\\\\//g')/d\" coverage.txt\ndone\n"
     - continue-on-error: true
       if: env.GIT_DIFF != ''
-      uses: codecov/codecov-action@v1.0.13
+      uses: codecov/codecov-action@v4.6.0
       with:
         file: ./coverage.txt
     - name: after
@@ -2760,7 +2760,7 @@ jobs:
         /$(echo $filename | sed 's/\\//\\\\\\//g')/d\" coverage.txt\ndone\n"
     - continue-on-error: true
       if: env.GIT_DIFF != ''
-      uses: codecov/codecov-action@v1.0.13
+      uses: codecov/codecov-action@v4.6.0
       with:
         file: ./coverage.txt
     - name: after
@@ -3053,7 +3053,7 @@ jobs:
         /$(echo $filename | sed 's/\\//\\\\\\//g')/d\" coverage.txt\ndone\n"
     - continue-on-error: true
       if: env.GIT_DIFF != ''
-      uses: codecov/codecov-action@v1.0.13
+      uses: codecov/codecov-action@v4.6.0
       with:
         file: ./coverage.txt
     - name: after

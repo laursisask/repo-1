@@ -247,7 +247,7 @@ jobs:
     - continue-on-error: true
       uses: actions/checkout@master
     - continue-on-error: true
-      uses: gaurav-nelson/github-action-markdown-link-check@1.0.7
+      uses: gaurav-nelson/github-action-markdown-link-check@1.0.15
       with:
         folder-path: docs
     - name: after

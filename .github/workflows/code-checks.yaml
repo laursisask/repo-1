@@ -510,7 +510,7 @@ jobs:
       with:
         go-version: 1.15
     - continue-on-error: true
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: 3.8
     - continue-on-error: true

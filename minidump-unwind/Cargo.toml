@@ -21,7 +21,7 @@ swift = ["debuginfo", "symbolic-demangle/swift"]
 http = ["breakpad-symbols/http"]
 
 [dependencies]
-async-trait = "0.1.52"
+async-trait = "0.1.83"
 breakpad-symbols = { version = "0.20.0", path = "../breakpad-symbols" }
 cachemap2 = { version = "0.2.0", optional = true }
 futures-util = { version = "0.3.25", optional = true }

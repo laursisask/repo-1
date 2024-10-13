@@ -503,7 +503,7 @@ jobs:
     - continue-on-error: true
       id: prc
       name: Find Existing PR Comment
-      uses: peter-evans/find-comment@v1
+      uses: peter-evans/find-comment@v3
       with:
         body-includes: Please note that typically Go dependency changes
         comment-author: github-actions[bot]

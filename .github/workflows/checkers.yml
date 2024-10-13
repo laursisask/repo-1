@@ -247,7 +247,7 @@ jobs:
     - continue-on-error: true
       uses: actions/checkout@v4
     - continue-on-error: true
-      uses: JustinBeckwith/linkinator-action@v1.10.4
+      uses: JustinBeckwith/linkinator-action@v1.11.0
       with:
         paths: '*.md'
         timeout: 60000

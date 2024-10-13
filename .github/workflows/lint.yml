@@ -248,7 +248,7 @@ jobs:
     - continue-on-error: true
       uses: actions/checkout@v2
     - continue-on-error: true
-      uses: technote-space/get-diff-action@v3
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 

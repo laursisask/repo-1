@@ -1014,7 +1014,7 @@ jobs:
       uses: actions/checkout@v2
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v1
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 
@@ -1291,7 +1291,7 @@ jobs:
       uses: actions/checkout@v2
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v3
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 
@@ -1868,7 +1868,7 @@ jobs:
       run: go version
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v1
+      uses: technote-space/get-diff-action@v6
       with:
         PREFIX_FILTER: 'cosmovisor
 
@@ -2142,7 +2142,7 @@ jobs:
       run: go version
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v3
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 
@@ -2435,7 +2435,7 @@ jobs:
       run: go version
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v3
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 
@@ -2728,7 +2728,7 @@ jobs:
       run: go version
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v3
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 
@@ -3021,7 +3021,7 @@ jobs:
       run: go version
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v3
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 
@@ -3314,7 +3314,7 @@ jobs:
       run: go version
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v3
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 
@@ -3596,7 +3596,7 @@ jobs:
       run: go version
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v3
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 
@@ -3878,7 +3878,7 @@ jobs:
       run: go version
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v3
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 
@@ -4160,7 +4160,7 @@ jobs:
       run: go version
     - continue-on-error: true
       id: git_diff
-      uses: technote-space/get-diff-action@v3
+      uses: technote-space/get-diff-action@v6
       with:
         SUFFIX_FILTER: '.go
 

@@ -808,7 +808,7 @@ jobs:
 
         sudo sh -c ''echo 1 > /proc/sys/net/ipv4/ip_forward'''
     - continue-on-error: true
-      uses: actions/github-script@v4.0.2
+      uses: actions/github-script@v7.0.1
       with:
         github-token: ${{secrets.GITHUB_TOKEN}}
         script: "const eventLabelName = '${{github.event.label.name}}'\nconst response\

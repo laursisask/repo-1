@@ -7,7 +7,7 @@ require (
 	github.com/dominodatalab/os-release v0.0.0-20190522011736-bcdb4a3e3c2f
 	github.com/go-git/go-git/v5 v5.10.0
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-containerregistry v0.16.1
+	github.com/google/go-containerregistry v0.20.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/invopop/jsonschema v0.12.0
@@ -23,7 +23,7 @@ require (
 	go.opentelemetry.io/otel v1.20.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/sync v0.5.0
-	golang.org/x/sys v0.14.0
+	golang.org/x/sys v0.15.0
 	golang.org/x/term v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.28.3
@@ -45,7 +45,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/distribution/reference v0.5.0 // indirect
-	github.com/docker/cli v24.0.7+incompatible // indirect
+	github.com/docker/cli v27.1.1+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker v24.0.7+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.0 // indirect

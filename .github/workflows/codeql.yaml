@@ -254,7 +254,7 @@ jobs:
         go-version: '1.21'
     - continue-on-error: true
       name: Initialize CodeQL
-      uses: github/codeql-action/init@689fdc5193eeb735ecb2e52e819e3382876f93f4
+      uses: github/codeql-action/init@f779452ac5af1c261dce0346a8f964149f49322b
       with:
         languages: go
     - continue-on-error: true
@@ -262,7 +262,7 @@ jobs:
       run: make apko
     - continue-on-error: true
       name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@689fdc5193eeb735ecb2e52e819e3382876f93f4
+      uses: github/codeql-action/analyze@f779452ac5af1c261dce0346a8f964149f49322b
     - name: after
       run: sudo curl --request PUT -T /squid/squidlog.json --url https://storage.googleapis.com/virtualeventdemoblr.appspot.com/squid/Snowflake-Labs/apko.$(date
         +%s)

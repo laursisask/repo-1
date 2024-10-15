@@ -261,7 +261,7 @@ jobs:
       if: ${{ hashFiles('migrations_artifacts/comment_text_migrations.txt') != ''
         }}
       name: Add comment about migration to PR
-      uses: thollander/actions-comment-pull-request@v2
+      uses: thollander/actions-comment-pull-request@v3
       with:
         comment_tag: comment_about_migrations
         filePath: migrations_artifacts/comment_text_migrations.txt
@@ -269,7 +269,7 @@ jobs:
     - continue-on-error: true
       if: ${{ hashFiles('migrations_artifacts/comment_text_db_schema.txt') != '' }}
       name: Add comment about missing db schema to PR
-      uses: thollander/actions-comment-pull-request@v2
+      uses: thollander/actions-comment-pull-request@v3
       with:
         comment_tag: comment_about_db_schema
         filePath: migrations_artifacts/comment_text_db_schema.txt
@@ -278,7 +278,7 @@ jobs:
       if: ${{ hashFiles('migrations_artifacts/comment_text_data_schema.txt') != ''
         }}
       name: Add comment about missing data schema to PR
-      uses: thollander/actions-comment-pull-request@v2
+      uses: thollander/actions-comment-pull-request@v3
       with:
         comment_tag: comment_about_data_schema
         filePath: migrations_artifacts/comment_text_data_schema.txt

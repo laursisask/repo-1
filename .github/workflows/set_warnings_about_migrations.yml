@@ -251,7 +251,7 @@ jobs:
     - continue-on-error: true
       id: changed-files-yaml
       name: Group files that have changed
-      uses: tj-actions/changed-files@v44
+      uses: tj-actions/changed-files@v45
       with:
         files_yaml: "migrations:\n  - src/api/db/migrate/**\nnot_migrations:\n  -\
           \ '!src/api/db/migrate/**'\n  - '!src/api/db/data/**'\n  - '!src/api/db/schema.rb'\n\

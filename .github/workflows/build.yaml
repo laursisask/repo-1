@@ -263,7 +263,7 @@ jobs:
       uses: sigstore/cosign-installer@1fc5bd396d372bee37d608f955b336615edf79c8
     - continue-on-error: true
       name: Setup crane (needed in CI tests)
-      uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c
+      uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e
     - continue-on-error: true
       name: Run CI tests in hack/ci/
       run: 'make ci

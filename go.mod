@@ -1,8 +1,7 @@
 module github.com/burningalchemist/sql_exporter
 
 go 1.21
-
-toolchain go1.21.5
+toolchain go1.22.5
 
 require (
 	github.com/ClickHouse/clickhouse-go v1.5.4
@@ -21,7 +20,7 @@ require (
 	github.com/sethvargo/go-envconfig v1.0.0
 	github.com/snowflakedb/gosnowflake v1.8.0
 	github.com/vertica/vertica-sql-go v1.3.3
-	github.com/xo/dburl v0.21.1
+	github.com/xo/dburl v0.23.2
 	google.golang.org/protobuf v1.32.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.70.1

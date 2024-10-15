@@ -260,7 +260,7 @@ jobs:
         '
     - continue-on-error: true
       name: Setup cosign (needed in CI tests)
-      uses: sigstore/cosign-installer@1fc5bd396d372bee37d608f955b336615edf79c8
+      uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da
     - continue-on-error: true
       name: Setup crane (needed in CI tests)
       uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c

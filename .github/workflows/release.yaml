@@ -256,7 +256,7 @@ jobs:
       with:
         go-version-file: go.mod
     - continue-on-error: true
-      uses: sigstore/cosign-installer@1fc5bd396d372bee37d608f955b336615edf79c8
+      uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da
     - continue-on-error: true
       uses: goreleaser/goreleaser-action@7ec5c2b0c6cdda6e8bbb49444bc797dd33d74dd8
       with:

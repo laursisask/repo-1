@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e3c4b300a05678a3d516f23af5ec3457",
+    "content-hash": "048defe622c6a90c80d8215b9ae49103",
     "packages": [
         {
             "name": "amphp/amp",
@@ -494,29 +494,28 @@
         },
         {
             "name": "darsyn/ip",
-            "version": "4.1.0",
+            "version": "5.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/darsyn/ip.git",
-                "reference": "93b139036afc9c45f6a36b83480a7302161665fc"
+                "reference": "11c97b381b930a4506acdc37fd3914849d029fe9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/darsyn/ip/zipball/93b139036afc9c45f6a36b83480a7302161665fc",
-                "reference": "93b139036afc9c45f6a36b83480a7302161665fc",
+                "url": "https://api.github.com/repos/darsyn/ip/zipball/11c97b381b930a4506acdc37fd3914849d029fe9",
+                "reference": "11c97b381b930a4506acdc37fd3914849d029fe9",
                 "shasum": ""
             },
             "require": {
+                "ext-ctype": "*",
                 "php-64bit": ">=5.6",
                 "php-ipv6": ">=5.6"
             },
             "require-dev": {
-                "doctrine/dbal": "^2.3",
-                "ext-pdo": "*",
                 "phpunit/phpunit": "*"
             },
             "suggest": {
-                "doctrine/dbal": "to use IP as a column type"
+                "darsyn/ip-doctrine": "to use IP as a Doctrine column type"
             },
             "type": "library",
             "autoload": {
@@ -547,9 +546,9 @@
             ],
             "support": {
                 "issues": "https://github.com/darsyn/ip/issues",
-                "source": "https://github.com/darsyn/ip/tree/4.1.0"
+                "source": "https://github.com/darsyn/ip/tree/5.0.0"
             },
-            "time": "2022-05-19T09:01:05+00:00"
+            "time": "2024-06-07T10:26:53+00:00"
         },
         {
             "name": "league/flysystem",
@@ -5239,5 +5238,5 @@
     "platform-overrides": {
         "php": "7.4"
     },
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.6.0"
 }

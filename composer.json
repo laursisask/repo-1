@@ -5,7 +5,7 @@
     "require": {
         "amphp/amp": "^2.5",
         "amphp/parallel": "^1.4",
-        "darsyn/ip": "^4.0",
+        "darsyn/ip": "^4.0 || ^5.0",
         "rubix/ml": "^0.3.1 || ^0.4.0"
     },
     "license": "AGPLv3",

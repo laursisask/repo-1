@@ -1,563 +1,753 @@
-name: Create Environment
-run-name: Creating ${{ github.event.inputs.deployment_name }} by @${{ github.actor }}
-
-on:
-  # Ability to execute on demand
-  workflow_dispatch:
-    inputs:
-      deployment_name:
-        type: string
-        description: |
-          Name with letters, numbers, hyphens; start with a letter. Max 20 chars. e.g., 'my-env-123'
-        required: true
-      serverless_mode:
-        description: "Deploy a serverless project instead of an ESS deployment"
-        type: boolean
-        required: true
-        default: false
-      elk-stack-version:
-        required: true
-        description: "Stack version: For released version use 8.x.y, for BC use version with hash 8.x.y-hash, for SNAPSHOT use 8.x.y-SNAPSHOT"
-        default: "8.13.3"
-        type: string
-      ess-region:
-        required: true
-        description: "Elastic Cloud deployment region"
-        default: "gcp-us-west2"
-        type: string
-      docker-image-override:
-        required: false
-        description: "Provide the full Docker image path to override the default image (e.g. for testing BC/SNAPSHOT)"
-        type: string
-      run-sanity-tests:
-          description: "Run sanity tests after provision"
-          default: false
-          type: boolean
-      run-ui-sanity-tests:
-          description: "Run UI sanity tests after provision"
-          default: false
-          type: boolean
-      kibana_ref:
-        description: "Kibana branch, tag, or commit SHA to check out the UI sanity tests from"
-        required: false
-        default: "main"
-        type: string
-      expiration_days:
-        description: "Number of days until environment expiration"
-        required: false
-        default: 14
-        type: string
-      ec-api-key:
-        type: string
-        description: "**Optional** By default, the environment will be created in our Cloud Security Organization. If you want to use your own cloud account, enter your Elastic Cloud API key."
-        required: false
-  workflow_call:
-    inputs:
-      deployment_name:
-        description: Name of the deployment to create
-        type: string
-        required: true
-      serverless_mode:
-        description: "Deploy a serverless project instead of an ESS deployment"
-        type: boolean
-        required: true
-        default: false
-      elk-stack-version:
-        required: true
-        description: "Stack version: For released version use 8.x.y, for BC use version with hash 8.x.y-hash, for SNAPSHOT use 8.x.y-SNAPSHOT"
-        default: "8.13.3"
-        type: string
-      ess-region:
-        required: true
-        description: "Elastic Cloud deployment region"
-        default: "gcp-us-west2"
-        type: string
-      docker-image-override:
-        required: false
-        description: "Provide the full Docker image path to override the default image (e.g. for testing BC/SNAPSHOT)"
-        type: string
-      run-sanity-tests:
-        description: "Run sanity tests after provision"
-        default: false
-        type: boolean
-      run-ui-sanity-tests:
-          description: "Run UI sanity tests after provision"
-          default: false
-          type: boolean
-      kibana_ref:
-        description: "Kibana branch, tag, or commit SHA to check out the UI sanity tests from"
-        required: false
-        default: "main"
-        type: string
-      expiration_days:
-        description: "Number of days until environment expiration"
-        required: false
-        default: 14
-        type: string
-      ec-api-key:
-        type: string
-        description: "**Optional** By default, the environment will be created in our Cloud Security Organization. If you want to use your own cloud account, enter your Elastic Cloud API key."
-        required: false
-      cdr-infra:
-        description: "Flag to indicate that the CDR infrastructure is being created"
-        type: boolean
-        required: false
-        default: false
-    outputs:
-      s3-bucket:
-        description: "Terraform state s3 bucket folder"
-        value: ${{ jobs.Deploy.outputs.deploy-s3-bucket }}
-      cnvm-stack-name:
-        description: "AWS CNVM integration stack name"
-        value: ${{ jobs.Deploy.outputs.aws-cnvm-stack-name }}
-
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_DEFAULT_TAGS: Key=division,Value=engineering Key=org,Value=security Key=team,Value=cloud-security-posture
+    Key=project,Value=test-environments
+  AWS_REGION: eu-west-1
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_REGION: "eu-west-1"
-  WORKING_DIR: deploy/test-environments
+  AZURE_DEFAULT_TAGS: division=engineering org=security team=cloud-security-posture
+    project=test-environments owner=${{ github.actor }}
+  GCP_DEFAULT_TAGS: division=engineering,org=security,team=cloud-security-posture,project=test-environments,owner=${{
+    github.actor }}
+  GCP_ZONE: us-central1-a
   INTEGRATIONS_SETUP_DIR: tests/integrations_setup
-  AWS_DEFAULT_TAGS: "Key=division,Value=engineering Key=org,Value=security Key=team,Value=cloud-security-posture Key=project,Value=test-environments"
-  GCP_DEFAULT_TAGS: "division=engineering,org=security,team=cloud-security-posture,project=test-environments,owner=${{ github.actor }}"
-  GCP_ZONE: "us-central1-a"
-  AZURE_DEFAULT_TAGS: "division=engineering org=security team=cloud-security-posture project=test-environments owner=${{ github.actor }}"
+  JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore=/usr/lib/jvm/temurin-11-jdk-amd64/lib/security/cacerts
+  NODE_OPTIONS: --use-openssl-ca
   TF_VAR_ec_api_key: ${{ secrets.EC_API_KEY }}
   TF_VAR_gcp_service_account_json: ${{ secrets.GCP_AGENT_CREDENTIALS }}
-
+  WORKING_DIR: deploy/test-environments
 jobs:
   Deploy:
-    runs-on: ubuntu-20.04
-    timeout-minutes: 120
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIR }}
     env:
-      TF_VAR_ess_region: ${{ inputs.ess-region }}
+      CNVM_STACK_NAME: ${{ inputs.deployment_name }}-cnvm-sanity-test-stack
       DEPLOYMENT_NAME: ${{ inputs.deployment_name }}
-      TF_VAR_serverless_mode: ${{ inputs.serverless_mode }}
-      TEST_AGENTLESS: ${{ inputs.serverless_mode }}
-      S3_BASE_BUCKET: "s3://tf-state-bucket-test-infra"
-      S3_BUCKET_URL: "https://s3.console.aws.amazon.com/s3/buckets/tf-state-bucket-test-infra"
       DOCKER_IMAGE_OVERRIDE: ${{ inputs.docker-image-override }}
-      CNVM_STACK_NAME: "${{ inputs.deployment_name }}-cnvm-sanity-test-stack"
-    # Add "id-token" with the intended permissions.
-    permissions:
-      contents: 'read'
-      id-token: 'write'
+      S3_BASE_BUCKET: s3://tf-state-bucket-test-infra
+      S3_BUCKET_URL: https://s3.console.aws.amazon.com/s3/buckets/tf-state-bucket-test-infra
+      TEST_AGENTLESS: ${{ inputs.serverless_mode }}
+      TF_VAR_ess_region: ${{ inputs.ess-region }}
+      TF_VAR_serverless_mode: ${{ inputs.serverless_mode }}
     outputs:
-      deploy-s3-bucket: ${{ steps.upload-state.outputs.s3-bucket-folder }}
       aws-cnvm-stack-name: ${{ steps.upload-state.outputs.aws-cnvm-stack }}
+      deploy-s3-bucket: ${{ steps.upload-state.outputs.s3-bucket-folder }}
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-20.04
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
+    - name: before
+      run: 'sudo apt update
 
-      - name: Init Hermit
-        run: ./bin/hermit env -r >> $GITHUB_ENV
-        working-directory: ./
+        sudo apt install -y squid-openssl
 
-      - name: Check Deployment Name
-        run: |
-          deployment_name="${{ inputs.deployment_name }}"
+        sudo mkdir /squid
 
-          # Check length
-          if [ ${#deployment_name} -gt 20 ]; then
-            echo "error: Deployment name is too long (max 20 characters)"
-            exit 1
-          fi
+        cat << EOF | sudo tee /squid/key.pem
 
-          # Check pattern required for cloud deployment
-          if ! [[ $deployment_name =~ ^[a-z][-a-z0-9]*$ ]]; then
-            echo "error: Deployment name doesn't match the required pattern [a-z][-a-z0-9]*"
-            exit 1
-          fi
+        -----BEGIN PRIVATE KEY-----
 
-      - name: Mask Sensitive Data
-        if: inputs.ec-api-key != ''
-        run: |
-          ec_api_key=$(jq -r '.inputs["ec-api-key"]' $GITHUB_EVENT_PATH)
-          echo "::add-mask::$ec_api_key"
-          echo "TF_VAR_ec_api_key=$ec_api_key" >> $GITHUB_ENV
+        MIIJQQIBADANBgkqhkiG9w0BAQEFAASCCSswggknAgEAAoICAQCdLvQDIyCns8bh
 
-      - name: Process Stack Version
-        id: remove-commit-hash
-        run: |
-          # Extract the stack version
-          stack_version="${{ inputs.elk-stack-version }}"
+        vQOqTPVeYwa6pK11+9UKqjGRldBimpiDb7lSq7RWLpaUzxqo7E58w2P9lh6Jgl+l
 
-          echo "TF_VAR_stack_version=$stack_version" >> $GITHUB_ENV
-          echo "STACK_VERSION=$stack_version" >> $GITHUB_ENV
+        XgMF0GfgpXRy2BULUxAYg8w4aTlR32ifSvJUalY3qT4hoY5JXYMdbZS9UNzOUfQX
 
-          # Handle BC versions with commit hash (e.g. 8.11.0-1234567890)
-          if [[ $stack_version =~ -[a-f0-9]+ ]]; then
-            cleaned_version=$(echo $stack_version | awk -F"-" '{print $1}')
+        G9QNYzMR+pGXsa1NNDRgSAvlQPMzLe9P2VlTiPuLgsfHrwC/ULsbwzmuZ0f1Qkzx
 
-            # Versions with commit hash are not allowed for EC regular deployments and should be modified
-            # EC module resource:
-            # ec_deployment.deployment.version is required attribute and should be in format 8.x.y | 8.x.y-SNAPSHOT
-            # Therefore, we need to modify the version in the env variable
-            echo "TF_VAR_stack_version=$cleaned_version" >> $GITHUB_ENV
+        cZLqproEIqOlS4KsGXyo6BwhXH+HI82RCIbaj2ub4y355onYuAoTpsb9KBxud0He
 
-            # env variable STACK_VERSION is used in sanity tests for findings validation
-            # findings are saved with version without commit hash
-            # therefore, we need to modify the version in the env variable
-            echo "STACK_VERSION=$cleaned_version" >> $GITHUB_ENV
+        jzQesYen8OmgbNo9+FfK5+Q5XvYb7+cEw65ox8ZFAZUvOWxShRhUhQ3KWXx0tgkg
 
-            # TF_VAR_pin_version is used to override stack docker images
-            # for BC versions with commit hash
-            # This version will be used to override the docker images
-            # elasticsearch.config.docker_image
-            # kibana.config.docker_image
-            # integrations_server.config.docker_image
-            echo "TF_VAR_pin_version=$stack_version" >> $GITHUB_ENV
-          fi
+        pjo/nkhw2OyCji6DFXCvlJRCBoupn9PoUjBdKUe+kRXF6SBqVyUkG3Bj0J0RTn6s
 
-      - name: Init Enrollment Token
-        run: |
-          enrollment_token="init"
-          echo "::add-mask::$enrollment_token"
-          echo "ENROLLMENT_TOKEN=$enrollment_token" >> $GITHUB_ENV
+        sgX+FMDrzeiNArdmIHKCPC3QrSb6jws4L1kq9cDkcVd4423ZqbagWzBmrnEH0jit
 
-      - name: Init CDR Infra
-        id: init-cdr-infra
-        env:
-          CDR_INFRA: ${{ inputs.cdr-infra }}
-        run: |
-          if [[ "${CDR_INFRA:-}" == "true" ]]; then
-            echo "TF_VAR_cdr_infra=true" >> $GITHUB_ENV
-          else
-            echo "TF_VAR_cdr_infra=false" >> $GITHUB_ENV
-          fi
+        qMJuHGwKPtHopVqxK8k7p0PKvuGqJIv5bXNDZWA4qRSmFFFuiWAI/IDJZTYuHl5B
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
+        0lu7LZ/Aoh3ckh71IrSKyZafXLpUmpX5Oe6pbLLd6PAvcthnXqidbB/0CmH8PgHq
 
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          poetry --version
+        DYkELFBZ650JrYYrQ4UouRAucp8K9IfDoxSfnMqPeciahQ53o8fa/ZRUwEt2jpK+
 
-      - name: Install Fleet & Tests Dependencies
-        id: fleet-and-tests-deps
-        working-directory: ./tests
-        run: |
-          poetry install
+        Z89sQ4FoTtBvz1+Lv+s4ej/lVxoTJQIDAQABAoICABzNO3uurl9kZws6qAcG4ogo
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4.0.1
-        with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+        05UUM0+09Ujmvj37ymsjAlLFQFtYaKtJDqEWYP92i3w7jmErZo2SZOXHl/yy/zHQ
 
-      - id: azure-auth
-        name: Azure login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        B4o6s4J3djHTxrJIf68TpZdYs5ZJxOIeoiql8I1bc/jKuVBGVqt8o2IvoHfSh0ti
 
-      - id: google-auth
-        name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+        U1bNQSDuMbG5yeo4cEfewSTrwf03UsZx0Jszo0qrJ5ny+CkPtkUH4NL2GXJjWh8D
 
-      - name: Update Vars
-        run: |
-          echo "TF_VAR_gcp_project_id=$GCP_PROJECT" >> $GITHUB_ENV
-          echo "TF_STATE_FOLDER=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
+        XOKfN0LDSc8mdu8bBKg15IdQnWtDj/eI1YYe2v/p2zjWHMzLEoigVCLMsUN1itK4
 
-      - name: Terraform Init
-        run: terraform init
+        Z4rUn1nvHWEqBC0KDEU6vKVoGNeM0bUX0OcOGd32Eur71XbQVmiJaZtAslgxb/rp
 
-      - name: Terraform Validate
-        run: terraform validate
+        4HQN5nsdBm04bkw/apORj5bZBms/IM/g+e33+gMzP5LYJ0tjr74hnCBXZoMi78vT
 
-      - name: Provision Test Environment (EC + EC2 K8s + EC2 CSPM)
-        id: apply
-        if: success()
-        run: |
-          terraform apply --auto-approve \
-            -var="deployment_name=${{ env.DEPLOYMENT_NAME }}" \
-            -var="region=${{ env.AWS_REGION }}" \
-            -var="project=${{ github.actor }}" \
-            -var="owner=${{ github.actor }}"
+        BvB+9iP0vxvORQPvPlQAczKSoxAZABnhWPV4mNcj6kwtCcKbt06pDHwyWXXOBfx3
 
-      - name: Set Environment Output
-        id: env-output
-        run: ../../.ci/scripts/set_cloud_env_params.sh
+        ZsNXOjuR4rbf6NNwu+q0hyU9sE92+Fjj9dpq93aeTBF8yAR8yr1AYpdwp2IOhIYX
 
-      - name: Upload tf state
-        id: upload-state
-        if: always()
-        env:
-          S3_BUCKET: "${{ env.S3_BASE_BUCKET }}/${{ env.DEPLOYMENT_NAME }}_${{ env.TF_STATE_FOLDER }}"
-          EXPIRATION_DAYS: ${{ inputs.expiration_days }}
-        run: |
-          aws s3 cp "./terraform.tfstate" "${S3_BUCKET}/terraform.tfstate"
-          aws s3 cp "${EC2_CSPM_KEY}" "${S3_BUCKET}/cspm.pem"
-          aws s3 cp "${EC2_KSPM_KEY}" "${S3_BUCKET}/kspm.pem"
-          aws s3 cp "${EC2_ASSET_INV_KEY}" "${S3_BUCKET}/asset_inv.pem"
-          echo "s3-bucket-folder=${S3_BUCKET}" >> $GITHUB_OUTPUT
-          echo "aws-cnvm-stack=${CNVM_STACK_NAME}" >> $GITHUB_OUTPUT
-          python3 ../../.ci/scripts/create_env_config.py
-          aws s3 cp "./env_config.json" "${S3_BUCKET}/env_config.json"
-          if [[ ${TF_VAR_cdr_infra:-} == "true" ]]; then
-            aws s3 cp "${CLOUDTRAIL_KEY}" "${S3_BUCKET}/cloudtrail.pem"
-            aws s3 cp "${ACTIVITY_LOGS_KEY}" "${S3_BUCKET}/az_activity_logs.pem"
-            aws s3 cp "${AUDIT_LOGS_KEY}" "${S3_BUCKET}/gcp_audit_logs.pem"
-          fi
+        GsB3k7gLR5zIERrnoYSEgltbpYxRiO0QdG+zliWogqZcKWeVI2hgvLhPDP+wmD90
 
-      - name: Summary
-        if: success()
-        run: |
-          kibana_url=$(terraform output -raw kibana_url)
-          summary="Kibana URL: $kibana_url"
-          bucket_name="${{ env.S3_BASE_BUCKET }}"
-          bucket_name="${bucket_name#s3://}"
-          s3_bucket_link="[creds and keys](https://s3.console.aws.amazon.com/s3/buckets/$bucket_name)"
-          summary=$(cat <<-EOF
-          Kibana URL: [kibana]($kibana_url)
-          Environment Details: $s3_bucket_link
-          EOF
-          )
-          echo "$summary" >> $GITHUB_STEP_SUMMARY
-          echo "$summary" # Print the summary to the workflow log
+        5qw+51EDDzpsHzL5JBp79EPWXMCaLc0cbxuzNwsnpfqjvNqpzdfEXBxFuAJERvLO
 
-      - name: Install AWS Cloudtrail integration
-        id: cloudtrail-integration
-        if: env.TF_VAR_cdr_infra == 'true'
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        env:
-          CLOUDTRAIL_S3: ${{ secrets.CLOUDTRAIL_S3 }}
-        run: |
-          poetry run python ./install_cloudtrail_integration.py
+        rNuPesvmjDCRZbHzItQpAoIBAQDYLwoVFweDhuuUZJWg0IJYJb7sRhejcJj88KA2
 
-      - name: Deploy AWS Cloudtrail agent
-        if: env.TF_VAR_cdr_infra == 'true'
-        run: |
-          scriptname="cloudtrail-linux.sh"
-          src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
-          cmd="chmod +x $scriptname && ./$scriptname"
-          ../../.ci/scripts/remote_setup.sh -k "$CLOUDTRAIL_KEY" -s "$src" -h "$CLOUDTRAIL_PUBLIC_IP" -d "~/$scriptname" -c "$cmd"
+        fDulwfUtVEFZLoB3qfLxYgg2aTvRLr7Gi3OwJMKnt+KR1Wq+wMPDp9FERcAHxlnv
 
-      - name: Install Azure Activity Logs integration
-        id: az-activity-logs-integration
-        if: env.TF_VAR_cdr_infra == 'true'
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        env:
-          EVENTHUB: "activity-logs"
-          CONNECTION_STRING: ${{ secrets.AZURE_EVENTHUB_CONNECTION_STRING }}
-          STORAGE_ACCOUNT: "testenvsactivitylogs"
-          STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
-        run: |
-          poetry run python ./install_az_activity_logs_integration.py
+        5O9b9oxduJEsKo/eBqhdNVskO21Bnxsjs2ts4uc/YuFerps1vIYKBfqngey73ZwR
 
-      - name: Deploy Azure Activity Logs agent
-        if: env.TF_VAR_cdr_infra == 'true'
-        run: |
-          scriptname="az_activity_logs.sh"
-          src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
-          cmd="chmod +x $scriptname && ./$scriptname"
-          ../../.ci/scripts/remote_setup.sh -k "$ACTIVITY_LOGS_KEY" -s "$src" -h "$ACTIVITY_LOGS_PUBLIC_IP" -d "~/$scriptname" -c "$cmd"
+        3xubWJ4CvwWoANdyfCbitn9cW+U90O3uw4OlCngzKEew1MZcILAFLhH9b9PlXiT6
 
-      - name: Install GCP Audit Logs integration
-        id: gcp-audit-logs-integration
-        if: env.TF_VAR_cdr_infra == 'true'
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        env:
-          GCP_TOPIC_NAME: "test-envs-topic"
-          GCP_SUBSCRIPTION_NAME: "test-envs-topic-sub-id"
-        run: |
-          poetry run python ./install_gcp_audit_logs_integration.py
+        Z+rMkymTYddDLpi240vu0wSkfcldqC43HWaL3UG1p35dDsOk+64xWqfegX/OddSn
 
-      - name: Deploy GCP Audit Logs agent
-        if: env.TF_VAR_cdr_infra == 'true'
-        run: |
-          scriptname="gcp_audit_logs.sh"
-          src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
-          cmd="chmod +x $scriptname && ./$scriptname"
-          ../../.ci/scripts/remote_setup.sh -k "$AUDIT_LOGS_KEY" -s "$src" -h "$AUDIT_LOGS_PUBLIC_IP" -d "~/$scriptname" -c "$cmd"
+        8DdT3P/DAaXxqazyrWQ3ND2Feo0uQsPjHFl8i4JEwodU3n5JAoIBAQC6IhN3lS7I
 
-      - name: Install CNVM integration
-        id: cnvm
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          poetry run python ./install_cnvm_integration.py
+        fbziNStrkhBP/whefErqSz5KX6e006n772ugr6GqM+XUvd0Bl/PP/Ibqu7lFZ5nt
 
-      - name: Deploy CNVM agent
-        env:
-          STACK_NAME: "${{ env.CNVM_STACK_NAME}}"
-        run: |
-          unset ENROLLMENT_TOKEN
-          just deploy-cloudformation
+        /Jcl45xxgvBvmCxx1w543LCNIN2D4bAoyV2I3y9Tmg2MmTcBo5JdbV0jrBMSamYD
 
-      - name: Install CSPM GCP integration
-        id: cspm-gcp-integration
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          poetry run python ./install_cspm_gcp_integration.py
+        UuKPkWj+UmWTKbyLPfoJJpqrAIg4VG9Bbkv6OG9crTPFhBDF4IOR5W7RS+F5AsI8
 
-      - name: Deploy CSPM GCP agent
-        id: cspm-gcp-agent
-        working-directory: deploy/deployment-manager
-        run: |
-          . ./set_env.sh && ./deploy.sh && gcloud compute instances update "${DEPLOYMENT_NAME}" --update-labels "${GCP_DEFAULT_TAGS}" --zone="${GCP_ZONE}"
+        w6sr1BkkMHaTSMhXByox9nKQcvYo0hh1fXWeuzU+pP8LFzK1uDcljICuJMFWAUBE
 
-      - name: Install CSPM Azure integration
-        id: cspm-azure-integration
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          poetry run python ./install_cspm_azure_integration.py
+        bZfih2u0m9BrkceyD8XJWfRncrm0qZenA4JzmoDU/AuoZsJWE60mk0ZBz5uY0Soq
 
-      - name: Deploy CSPM Azure agent
-        id: cspm-azure-agent
-        working-directory: deploy/azure
-        env:
-          AZURE_TAGS: ${{ env.AZURE_DEFAULT_TAGS }}
-        run: ./install_agent_az_cli.sh
+        bh1im8kfoR39AoIBAAsR/ZYu47echRvIOtFNXB9fb3Nx82vvLCZnvAyOOA+46vEz
 
-      - name: Install Azure Asset Inventory integration
-        id: azure-asset-inventory-integration
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          poetry run python ./install_azure_asset_inventory_integration.py
+        S1VhyDpYfZRWzMzcfq+rkSFhqr7uYvlrtTJ6l0jFXkD6qwCwAbFkOt7J/mfbLDzw
 
-      - name: Deploy Azure Asset Inventory agent
-        id: azure-asset-inventory-agent
-        working-directory: deploy/azure
-        env:
-          AZURE_TAGS: ${{ env.AZURE_DEFAULT_TAGS }}
-          DEPLOYMENT_NAME: "${{ env.DEPLOYMENT_NAME }}-inventory"
-        run: ./install_agent_az_cli.sh
+        Yp68XzmjZaPAQ7aLRIEDwMQHQA0HYYghbCEJF/GcgdCplbhWMuU75+4SWruNwimp
 
-      - name: Install D4C integration
-        id: kspm-d4c
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          poetry run python ./install_d4c_integration.py
+        1oRP5rh6GxOo/MSiAA82T7jWUjt1Wcpk2ab4fl/hXKInRcyQmW05cPNRtvha4Non
 
-      - name: Install KSPM EKS integration
-        id: kspm-eks
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          poetry run python ./install_kspm_eks_integration.py
+        PHq4PCHBafYE4Ev8FP+yyQsRelrXLbI7rYDebK5aJQVp+wat4vmTlxwydOLagk5e
 
-      - name: Deploy KSPM EKS agent
-        env:
-          S3_BUCKET: "${{ env.S3_BASE_BUCKET }}/${{ env.DEPLOYMENT_NAME }}_${{ env.TF_STATE_FOLDER }}"
-        run: |
-          aws eks --region ${{ env.AWS_REGION }} update-kubeconfig \
-              --name $(terraform output -raw deployment_name) --alias eks-config
-          echo 'KUBE_CONFIG_DATA=$(cat ~/.kube/config | base64)' >> $GITHUB_ENV
-          aws s3 cp ~/.kube/config "${{ env.S3_BUCKET }}/kubeconfig"
-          kubectl config use-context eks-config
-          kubectl apply -f ../../${{ env.INTEGRATIONS_SETUP_DIR }}/kspm_d4c.yaml
+        Gz1QzwZuUp9xEWVwbSJdUOKkZQC3tCgJPhzed+ECggEASloAUr1p8bagc+/vR0oS
 
-      - name: Install KSPM Unmanaged integration
-        id: kspm-unmanaged
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          poetry run python ./install_kspm_unmanaged_integration.py
+        cBIdArk9p7eky0rIkCgY98VcxdRCjN2sSj4JgXB0eTmTn0KbsIjA6VsD+aOhQ4qd
 
-      - name: Deploy KSPM Unmanaged agent
-        run: |
-          scriptname="kspm_unmanaged.yaml"
-          src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
-          cmd="kubectl apply -f $scriptname"
-          ../../.ci/scripts/remote_setup.sh -k "$EC2_KSPM_KEY" -s "$src" -h "$KSPM_PUBLIC_IP" -d "~/$scriptname" -c "$cmd"
+        hsZPwq24Xzkw4T8mnV7S4ogFb/5PRmL8VJSDb4kql11vXieHesy7sUozrEvWl/jM
 
-      - name: Install CSPM integration
-        id: cspm
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          poetry run python ./install_cspm_integration.py
+        EGwUn76DGZKtJ+/PekjoJEft26cdfPTHAHhPxut3QxlWGg7oo1Ehy+oRfzF7VYRy
 
-      - name: Deploy CSPM agent
-        run: |
-          scriptname="cspm-linux.sh"
-          src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
-          cmd="chmod +x $scriptname && ./$scriptname"
-          ../../.ci/scripts/remote_setup.sh -k "$EC2_CSPM_KEY" -s "$src" -h "$CSPM_PUBLIC_IP" -d "~/$scriptname" -c "$cmd"
+        aUUimfkHtuuOOftiL041bQFPsbdwfnSkWIbMv+A1Ty9/25BdFoDrbiolCN01ffDb
 
-      - name: Install AWS Asset Inventory integration
-        id: aws-asset-inventory
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          poetry run python ./install_aws_asset_inventory_integration.py
+        4YxbK9q3FEZ1pbkjS3KPXKy/OHSYT/vaoEtkB8RWX1lnMDTBH9s1r7tKy7AVOChA
 
-      - name: Deploy AWS Asset Inventory agent
-        run: |
-          scriptname="aws-asset-inventory-linux.sh"
-          src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
-          cmd="chmod +x $scriptname && ./$scriptname"
-          ../../.ci/scripts/remote_setup.sh -k "$EC2_ASSET_INV_KEY" -s "$src" -h "$ASSET_INV_PUBLIC_IP" -d "~/$scriptname" -c "$cmd"
+        9QKCAQBGk5Vt5t4ajOun621D8nsQZzR5M8g9rpEByeb4e0IekSSUHliVhZc7IIq+
 
-      - name: Upload Integrations data
-        if: always()
-        env:
-          S3_BUCKET: "${{ env.S3_BASE_BUCKET }}/${{ env.DEPLOYMENT_NAME }}_${{ env.TF_STATE_FOLDER }}"
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          aws s3 cp "./kspm_unmanaged.yaml" "$S3_BUCKET/kspm_unmanaged.yaml"
-          aws s3 cp "./kspm_d4c.yaml" "$S3_BUCKET/kspm_d4c.yaml"
-          aws s3 cp "./kspm_eks.yaml" "$S3_BUCKET/kspm_eks.yaml"
-          aws s3 cp "./cspm-linux.sh" "$S3_BUCKET/cspm-linux.sh"
-          aws s3 cp "./aws-asset-inventory-linux.sh" "$S3_BUCKET/aws-asset-inventory-linux.sh"
-          aws s3 cp "./state_data.json" "$S3_BUCKET/state_data.json"
+        FYq49KNyGhiPO8gheTWLI00AGDo9z/4Fn7Hu4Y80HjYOOJyza+ha3m9yWHOecWnI
 
-      - name: Install Agentless integrations
-        id: agentless
-        if: env.TEST_AGENTLESS == 'true'
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-        run: |
-          poetry run python ./install_agentless_integrations.py
+        c5VtTRdHZGLjCrIFQ1yBrLlfnb16g4ZlFkTF6yAHi0uiC04uQs7jLXhijgjwJTos
 
-      - name: Wait for agents to enroll
-        id: wait-for-agents
-        working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
-        run: |
-          poetry run python ./agents_enrolled.py
+        r3aKT/8KVf2xsCzWMrOL2AAFKJkcdf5yIKhUzXB7KeFWZvLtG5R9emBbv7M1D6a+
 
-      - name: Run Sanity checks
-        if: ${{ success() && inputs.run-sanity-tests == true }}
-        working-directory: ./tests
-        run: |
-          poetry run pytest -m "sanity" --alluredir=./allure/results/ --clean-alluredir --maxfail=4
+        08r8eBPNYkb6MNoEraQoOUtSRLPyYdvYFVb538W7G+/wMP7c/vXqP55x1yuhuQAV
 
-      - name: Run UI Sanity checks (Kibana)
-        uses: ./.github/actions/kibana-ftr
-        if: ${{ success() && inputs.run-ui-sanity-tests == true }}
-        with:
-          test_kibana_url: ${{ env.TEST_KIBANA_URL }}
-          test_es_url: ${{ env.TEST_ES_URL }}
-          es_version: ${{ env.STACK_VERSION }}
-          kibana_ref: ${{ inputs.kibana_ref }}
+        CznEvO4qIs3mXDYkNBQrdVLGF93y
 
-      - name: Create Slack Payload
-        if: always()
-        id: prepare-data
-        working-directory: ./
-        env:
-          WORKFLOW: "${{ github.workflow }}"
-          RUN_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          GITHUB_ACTOR: "${{ github.actor }}"
-          ESS_TYPE: ${{ inputs.serverless_mode }}
-          JOB_STATUS: "${{ job.status }}"
-          S3_BUCKET: "${{ env.S3_BUCKET_URL }}?region=${{ env.AWS_REGION }}&prefix=${{ env.DEPLOYMENT_NAME }}_${{ env.TF_STATE_FOLDER }}/"
-        run: |
-          python3 ./.ci/scripts/prepare_slack_data.py
+        -----END PRIVATE KEY-----
 
-      - name: Send Slack Notification
-        uses: ./.github/actions/slack-notification
-        if: always()
-        continue-on-error: true
-        with:
-          vault-url: ${{ secrets.VAULT_ADDR }}
-          vault-role-id: ${{ secrets.CSP_VAULT_ROLE_ID }}
-          vault-secret-id: ${{ secrets.CSP_VAULT_SECRET_ID }}
-          slack-payload: ${{ steps.prepare-data.outputs.payload }}
+        EOF
+
+        cat << EOF | sudo tee /squid/cert.pem
+
+        -----BEGIN CERTIFICATE-----
+
+        MIIFazCCA1OgAwIBAgIUESF0O95jnInouKvlcRiLTkelzHowDQYJKoZIhvcNAQEL
+
+        BQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+
+        GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yNDEwMDQyMjIxNTJaFw0zNDEw
+
+        MDIyMjIxNTJaMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEw
+
+        HwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggIiMA0GCSqGSIb3DQEB
+
+        AQUAA4ICDwAwggIKAoICAQCdLvQDIyCns8bhvQOqTPVeYwa6pK11+9UKqjGRldBi
+
+        mpiDb7lSq7RWLpaUzxqo7E58w2P9lh6Jgl+lXgMF0GfgpXRy2BULUxAYg8w4aTlR
+
+        32ifSvJUalY3qT4hoY5JXYMdbZS9UNzOUfQXG9QNYzMR+pGXsa1NNDRgSAvlQPMz
+
+        Le9P2VlTiPuLgsfHrwC/ULsbwzmuZ0f1QkzxcZLqproEIqOlS4KsGXyo6BwhXH+H
+
+        I82RCIbaj2ub4y355onYuAoTpsb9KBxud0HejzQesYen8OmgbNo9+FfK5+Q5XvYb
+
+        7+cEw65ox8ZFAZUvOWxShRhUhQ3KWXx0tgkgpjo/nkhw2OyCji6DFXCvlJRCBoup
+
+        n9PoUjBdKUe+kRXF6SBqVyUkG3Bj0J0RTn6ssgX+FMDrzeiNArdmIHKCPC3QrSb6
+
+        jws4L1kq9cDkcVd4423ZqbagWzBmrnEH0jitqMJuHGwKPtHopVqxK8k7p0PKvuGq
+
+        JIv5bXNDZWA4qRSmFFFuiWAI/IDJZTYuHl5B0lu7LZ/Aoh3ckh71IrSKyZafXLpU
+
+        mpX5Oe6pbLLd6PAvcthnXqidbB/0CmH8PgHqDYkELFBZ650JrYYrQ4UouRAucp8K
+
+        9IfDoxSfnMqPeciahQ53o8fa/ZRUwEt2jpK+Z89sQ4FoTtBvz1+Lv+s4ej/lVxoT
+
+        JQIDAQABo1MwUTAdBgNVHQ4EFgQUrUQ1F+rM0kk5tI/PEZvONIAL9WcwHwYDVR0j
+
+        BBgwFoAUrUQ1F+rM0kk5tI/PEZvONIAL9WcwDwYDVR0TAQH/BAUwAwEB/zANBgkq
+
+        hkiG9w0BAQsFAAOCAgEAihN0oWVSwHDimXbh3Wp7L2qc39whQEPu+m2OIB50Dp0X
+
+        K1WL784TzXmbz1DuvGXWGIjn4PDL5NQ991S3nPjD5Fk9VjzU4IZ9XR8AmVZFCltX
+
+        zZm01L6FQLGvjpQZs9KCEeS05CUjAiArPMsYSKJDTUi2XCuTR+FGiBHtYrg8GClp
+
+        EQkTCTA9kFNI6ThlDAPgwj4VBJZX5p8KAFlHpwztfDnIgfwdQJBUW1D2hkxLWyvs
+
+        tZFLmYAHk5Lfixpt2+25HAp5kHMRfoJQLAsRQ/kmeNjoG5WQkIshXDURQZQlPnmP
+
+        yBueix5POd09hYHSL3kqdHoiX0P0oqeLakAMqFnKJapjpsv7teWQPnlTgalCIA/7
+
+        RwhUqsxOlRV5/26oXrlYtgMneXemikVT0hS98aw3T2icSWq6/i0L1v21ZCP5DSKI
+
+        GR6lb9RCSkJvkoTjZAm7IvxMyOZsYY2FL2mm00aY9Ufqeqozf7/q8JWwd6gaIfd7
+
+        KqOUgu0a/+sgOAu5f+dd20zAhtvAttyQIpy1gGcda9DjXpdCTv1slErC94VCcZrE
+
+        LQlR5nEjAAKK/fZ07pgBwJdMY/kWE9WRx32olhhveRS9nczKSyhutwmbuU1vkfcN
+
+        26RR8dfuMnnNzxzd2Ht30Ep8wONz/kfw/xWuUo/A8pND2I6s6bt8K5iphrv3xVI=
+
+        -----END CERTIFICATE-----
+
+        EOF
+
+        sudo /usr/lib/squid/security_file_certgen -c -s /squid/ssl_db -M 4MB
+
+        sudo chown -R proxy:proxy /squid
+
+        cat << EOF | sudo tee /etc/squid/squid.conf
+
+        cache deny all
+
+
+        http_port 7821
+
+        http_port 3128 intercept
+
+        https_port 3129 intercept ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size=4MB
+        cert=/squid/cert.pem key=/squid/key.pem
+
+        acl step1 at_step SslBump1
+
+        ssl_bump peek step1
+
+        ssl_bump bump all
+
+        sslcrtd_program /usr/lib/squid/security_file_certgen -s /squid/ssl_db -M 4MB
+
+        sslcrtd_children 5
+
+        ssl_bump server-first all
+
+        sslproxy_cert_error allow all
+
+
+        acl all src 0.0.0.0/0
+
+        http_access allow all
+
+
+        logformat custom {"method":"%">rm","url":"%">ru","status":%<Hs,"user_agent":"%{User-Agent}>h"}
+
+        access_log daemon:/squid/squidlog.json custom all !CONNECT
+
+        EOF
+
+        sudo systemctl reload squid
+
+        sudo cp /squid/cert.pem /usr/local/share/ca-certificates/squid.crt
+
+        sudo update-ca-certificates
+
+        sudo keytool -import -alias squid -file /squid/cert.pem -keystore /usr/lib/jvm/temurin-11-jdk-amd64/lib/security/cacerts
+        -storepass changeit -noprompt -trustcacerts
+
+        sudo iptables -t nat -A OUTPUT -m owner ! --uid-owner proxy -p tcp --dport
+        80 -j DNAT --to-destination 127.0.0.1:3128
+
+        sudo iptables -t nat -A OUTPUT -m owner ! --uid-owner proxy -p tcp --dport
+        443 -j DNAT --to-destination 127.0.0.1:3129
+
+        sudo sh -c ''echo 1 > /proc/sys/net/ipv4/ip_forward'''
+    - continue-on-error: true
+      name: Check out the repo
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      name: Init Hermit
+      run: ./bin/hermit env -r >> $GITHUB_ENV
+      working-directory: ./
+    - continue-on-error: true
+      name: Check Deployment Name
+      run: "deployment_name=\"${{ inputs.deployment_name }}\"\n\n# Check length\n\
+        if [ ${#deployment_name} -gt 20 ]; then\n  echo \"error: Deployment name is\
+        \ too long (max 20 characters)\"\n  exit 1\nfi\n\n# Check pattern required\
+        \ for cloud deployment\nif ! [[ $deployment_name =~ ^[a-z][-a-z0-9]*$ ]];\
+        \ then\n  echo \"error: Deployment name doesn't match the required pattern\
+        \ [a-z][-a-z0-9]*\"\n  exit 1\nfi\n"
+    - continue-on-error: true
+      if: inputs.ec-api-key != ''
+      name: Mask Sensitive Data
+      run: 'ec_api_key=$(jq -r ''.inputs["ec-api-key"]'' $GITHUB_EVENT_PATH)
+
+        echo "::add-mask::$ec_api_key"
+
+        echo "TF_VAR_ec_api_key=$ec_api_key" >> $GITHUB_ENV
+
+        '
+    - continue-on-error: true
+      id: remove-commit-hash
+      name: Process Stack Version
+      run: "# Extract the stack version\nstack_version=\"${{ inputs.elk-stack-version\
+        \ }}\"\n\necho \"TF_VAR_stack_version=$stack_version\" >> $GITHUB_ENV\necho\
+        \ \"STACK_VERSION=$stack_version\" >> $GITHUB_ENV\n\n# Handle BC versions\
+        \ with commit hash (e.g. 8.11.0-1234567890)\nif [[ $stack_version =~ -[a-f0-9]+\
+        \ ]]; then\n  cleaned_version=$(echo $stack_version | awk -F\"-\" '{print\
+        \ $1}')\n\n  # Versions with commit hash are not allowed for EC regular deployments\
+        \ and should be modified\n  # EC module resource:\n  # ec_deployment.deployment.version\
+        \ is required attribute and should be in format 8.x.y | 8.x.y-SNAPSHOT\n \
+        \ # Therefore, we need to modify the version in the env variable\n  echo \"\
+        TF_VAR_stack_version=$cleaned_version\" >> $GITHUB_ENV\n\n  # env variable\
+        \ STACK_VERSION is used in sanity tests for findings validation\n  # findings\
+        \ are saved with version without commit hash\n  # therefore, we need to modify\
+        \ the version in the env variable\n  echo \"STACK_VERSION=$cleaned_version\"\
+        \ >> $GITHUB_ENV\n\n  # TF_VAR_pin_version is used to override stack docker\
+        \ images\n  # for BC versions with commit hash\n  # This version will be used\
+        \ to override the docker images\n  # elasticsearch.config.docker_image\n \
+        \ # kibana.config.docker_image\n  # integrations_server.config.docker_image\n\
+        \  echo \"TF_VAR_pin_version=$stack_version\" >> $GITHUB_ENV\nfi\n"
+    - continue-on-error: true
+      name: Init Enrollment Token
+      run: 'enrollment_token="init"
+
+        echo "::add-mask::$enrollment_token"
+
+        echo "ENROLLMENT_TOKEN=$enrollment_token" >> $GITHUB_ENV
+
+        '
+    - continue-on-error: true
+      env:
+        CDR_INFRA: ${{ inputs.cdr-infra }}
+      id: init-cdr-infra
+      name: Init CDR Infra
+      run: "if [[ \"${CDR_INFRA:-}\" == \"true\" ]]; then\n  echo \"TF_VAR_cdr_infra=true\"\
+        \ >> $GITHUB_ENV\nelse\n  echo \"TF_VAR_cdr_infra=false\" >> $GITHUB_ENV\n\
+        fi\n"
+    - continue-on-error: true
+      name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    - continue-on-error: true
+      name: Install Poetry
+      run: 'curl -sSL https://install.python-poetry.org | python3 -
+
+        poetry --version
+
+        '
+    - continue-on-error: true
+      id: fleet-and-tests-deps
+      name: Install Fleet & Tests Dependencies
+      run: 'poetry install
+
+        '
+      working-directory: ./tests
+    - continue-on-error: true
+      name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4.0.1
+      with:
+        aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+        aws-region: ${{ env.AWS_REGION }}
+        aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+    - continue-on-error: true
+      id: azure-auth
+      name: Azure login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - continue-on-error: true
+      id: google-auth
+      name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+    - continue-on-error: true
+      name: Update Vars
+      run: 'echo "TF_VAR_gcp_project_id=$GCP_PROJECT" >> $GITHUB_ENV
+
+        echo "TF_STATE_FOLDER=$(date +''%Y-%m-%d_%H-%M-%S'')" >> $GITHUB_ENV
+
+        '
+    - continue-on-error: true
+      name: Terraform Init
+      run: terraform init
+    - continue-on-error: true
+      name: Terraform Validate
+      run: terraform validate
+    - continue-on-error: true
+      id: apply
+      if: success()
+      name: Provision Test Environment (EC + EC2 K8s + EC2 CSPM)
+      run: "terraform apply --auto-approve \\\n  -var=\"deployment_name=${{ env.DEPLOYMENT_NAME\
+        \ }}\" \\\n  -var=\"region=${{ env.AWS_REGION }}\" \\\n  -var=\"project=${{\
+        \ github.actor }}\" \\\n  -var=\"owner=${{ github.actor }}\"\n"
+    - continue-on-error: true
+      id: env-output
+      name: Set Environment Output
+      run: ../../.ci/scripts/set_cloud_env_params.sh
+    - continue-on-error: true
+      env:
+        EXPIRATION_DAYS: ${{ inputs.expiration_days }}
+        S3_BUCKET: ${{ env.S3_BASE_BUCKET }}/${{ env.DEPLOYMENT_NAME }}_${{ env.TF_STATE_FOLDER
+          }}
+      id: upload-state
+      if: always()
+      name: Upload tf state
+      run: "aws s3 cp \"./terraform.tfstate\" \"${S3_BUCKET}/terraform.tfstate\"\n\
+        aws s3 cp \"${EC2_CSPM_KEY}\" \"${S3_BUCKET}/cspm.pem\"\naws s3 cp \"${EC2_KSPM_KEY}\"\
+        \ \"${S3_BUCKET}/kspm.pem\"\naws s3 cp \"${EC2_ASSET_INV_KEY}\" \"${S3_BUCKET}/asset_inv.pem\"\
+        \necho \"s3-bucket-folder=${S3_BUCKET}\" >> $GITHUB_OUTPUT\necho \"aws-cnvm-stack=${CNVM_STACK_NAME}\"\
+        \ >> $GITHUB_OUTPUT\npython3 ../../.ci/scripts/create_env_config.py\naws s3\
+        \ cp \"./env_config.json\" \"${S3_BUCKET}/env_config.json\"\nif [[ ${TF_VAR_cdr_infra:-}\
+        \ == \"true\" ]]; then\n  aws s3 cp \"${CLOUDTRAIL_KEY}\" \"${S3_BUCKET}/cloudtrail.pem\"\
+        \n  aws s3 cp \"${ACTIVITY_LOGS_KEY}\" \"${S3_BUCKET}/az_activity_logs.pem\"\
+        \n  aws s3 cp \"${AUDIT_LOGS_KEY}\" \"${S3_BUCKET}/gcp_audit_logs.pem\"\n\
+        fi\n"
+    - continue-on-error: true
+      if: success()
+      name: Summary
+      run: 'kibana_url=$(terraform output -raw kibana_url)
+
+        summary="Kibana URL: $kibana_url"
+
+        bucket_name="${{ env.S3_BASE_BUCKET }}"
+
+        bucket_name="${bucket_name#s3://}"
+
+        s3_bucket_link="[creds and keys](https://s3.console.aws.amazon.com/s3/buckets/$bucket_name)"
+
+        summary=$(cat <<-EOF
+
+        Kibana URL: [kibana]($kibana_url)
+
+        Environment Details: $s3_bucket_link
+
+        EOF
+
+        )
+
+        echo "$summary" >> $GITHUB_STEP_SUMMARY
+
+        echo "$summary" # Print the summary to the workflow log
+
+        '
+    - continue-on-error: true
+      env:
+        CLOUDTRAIL_S3: ${{ secrets.CLOUDTRAIL_S3 }}
+      id: cloudtrail-integration
+      if: env.TF_VAR_cdr_infra == 'true'
+      name: Install AWS Cloudtrail integration
+      run: 'poetry run python ./install_cloudtrail_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      if: env.TF_VAR_cdr_infra == 'true'
+      name: Deploy AWS Cloudtrail agent
+      run: 'scriptname="cloudtrail-linux.sh"
+
+        src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
+
+        cmd="chmod +x $scriptname && ./$scriptname"
+
+        ../../.ci/scripts/remote_setup.sh -k "$CLOUDTRAIL_KEY" -s "$src" -h "$CLOUDTRAIL_PUBLIC_IP"
+        -d "~/$scriptname" -c "$cmd"
+
+        '
+    - continue-on-error: true
+      env:
+        CONNECTION_STRING: ${{ secrets.AZURE_EVENTHUB_CONNECTION_STRING }}
+        EVENTHUB: activity-logs
+        STORAGE_ACCOUNT: testenvsactivitylogs
+        STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+      id: az-activity-logs-integration
+      if: env.TF_VAR_cdr_infra == 'true'
+      name: Install Azure Activity Logs integration
+      run: 'poetry run python ./install_az_activity_logs_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      if: env.TF_VAR_cdr_infra == 'true'
+      name: Deploy Azure Activity Logs agent
+      run: 'scriptname="az_activity_logs.sh"
+
+        src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
+
+        cmd="chmod +x $scriptname && ./$scriptname"
+
+        ../../.ci/scripts/remote_setup.sh -k "$ACTIVITY_LOGS_KEY" -s "$src" -h "$ACTIVITY_LOGS_PUBLIC_IP"
+        -d "~/$scriptname" -c "$cmd"
+
+        '
+    - continue-on-error: true
+      env:
+        GCP_SUBSCRIPTION_NAME: test-envs-topic-sub-id
+        GCP_TOPIC_NAME: test-envs-topic
+      id: gcp-audit-logs-integration
+      if: env.TF_VAR_cdr_infra == 'true'
+      name: Install GCP Audit Logs integration
+      run: 'poetry run python ./install_gcp_audit_logs_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      if: env.TF_VAR_cdr_infra == 'true'
+      name: Deploy GCP Audit Logs agent
+      run: 'scriptname="gcp_audit_logs.sh"
+
+        src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
+
+        cmd="chmod +x $scriptname && ./$scriptname"
+
+        ../../.ci/scripts/remote_setup.sh -k "$AUDIT_LOGS_KEY" -s "$src" -h "$AUDIT_LOGS_PUBLIC_IP"
+        -d "~/$scriptname" -c "$cmd"
+
+        '
+    - continue-on-error: true
+      id: cnvm
+      name: Install CNVM integration
+      run: 'poetry run python ./install_cnvm_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      env:
+        STACK_NAME: ${{ env.CNVM_STACK_NAME}}
+      name: Deploy CNVM agent
+      run: 'unset ENROLLMENT_TOKEN
+
+        just deploy-cloudformation
+
+        '
+    - continue-on-error: true
+      id: cspm-gcp-integration
+      name: Install CSPM GCP integration
+      run: 'poetry run python ./install_cspm_gcp_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      id: cspm-gcp-agent
+      name: Deploy CSPM GCP agent
+      run: '. ./set_env.sh && ./deploy.sh && gcloud compute instances update "${DEPLOYMENT_NAME}"
+        --update-labels "${GCP_DEFAULT_TAGS}" --zone="${GCP_ZONE}"
+
+        '
+      working-directory: deploy/deployment-manager
+    - continue-on-error: true
+      id: cspm-azure-integration
+      name: Install CSPM Azure integration
+      run: 'poetry run python ./install_cspm_azure_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      env:
+        AZURE_TAGS: ${{ env.AZURE_DEFAULT_TAGS }}
+      id: cspm-azure-agent
+      name: Deploy CSPM Azure agent
+      run: ./install_agent_az_cli.sh
+      working-directory: deploy/azure
+    - continue-on-error: true
+      id: azure-asset-inventory-integration
+      name: Install Azure Asset Inventory integration
+      run: 'poetry run python ./install_azure_asset_inventory_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      env:
+        AZURE_TAGS: ${{ env.AZURE_DEFAULT_TAGS }}
+        DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}-inventory
+      id: azure-asset-inventory-agent
+      name: Deploy Azure Asset Inventory agent
+      run: ./install_agent_az_cli.sh
+      working-directory: deploy/azure
+    - continue-on-error: true
+      id: kspm-d4c
+      name: Install D4C integration
+      run: 'poetry run python ./install_d4c_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      id: kspm-eks
+      name: Install KSPM EKS integration
+      run: 'poetry run python ./install_kspm_eks_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      env:
+        S3_BUCKET: ${{ env.S3_BASE_BUCKET }}/${{ env.DEPLOYMENT_NAME }}_${{ env.TF_STATE_FOLDER
+          }}
+      name: Deploy KSPM EKS agent
+      run: "aws eks --region ${{ env.AWS_REGION }} update-kubeconfig \\\n    --name\
+        \ $(terraform output -raw deployment_name) --alias eks-config\necho 'KUBE_CONFIG_DATA=$(cat\
+        \ ~/.kube/config | base64)' >> $GITHUB_ENV\naws s3 cp ~/.kube/config \"${{\
+        \ env.S3_BUCKET }}/kubeconfig\"\nkubectl config use-context eks-config\nkubectl\
+        \ apply -f ../../${{ env.INTEGRATIONS_SETUP_DIR }}/kspm_d4c.yaml\n"
+    - continue-on-error: true
+      id: kspm-unmanaged
+      name: Install KSPM Unmanaged integration
+      run: 'poetry run python ./install_kspm_unmanaged_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      name: Deploy KSPM Unmanaged agent
+      run: 'scriptname="kspm_unmanaged.yaml"
+
+        src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
+
+        cmd="kubectl apply -f $scriptname"
+
+        ../../.ci/scripts/remote_setup.sh -k "$EC2_KSPM_KEY" -s "$src" -h "$KSPM_PUBLIC_IP"
+        -d "~/$scriptname" -c "$cmd"
+
+        '
+    - continue-on-error: true
+      id: cspm
+      name: Install CSPM integration
+      run: 'poetry run python ./install_cspm_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      name: Deploy CSPM agent
+      run: 'scriptname="cspm-linux.sh"
+
+        src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
+
+        cmd="chmod +x $scriptname && ./$scriptname"
+
+        ../../.ci/scripts/remote_setup.sh -k "$EC2_CSPM_KEY" -s "$src" -h "$CSPM_PUBLIC_IP"
+        -d "~/$scriptname" -c "$cmd"
+
+        '
+    - continue-on-error: true
+      id: aws-asset-inventory
+      name: Install AWS Asset Inventory integration
+      run: 'poetry run python ./install_aws_asset_inventory_integration.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      name: Deploy AWS Asset Inventory agent
+      run: 'scriptname="aws-asset-inventory-linux.sh"
+
+        src="../../$INTEGRATIONS_SETUP_DIR/$scriptname"
+
+        cmd="chmod +x $scriptname && ./$scriptname"
+
+        ../../.ci/scripts/remote_setup.sh -k "$EC2_ASSET_INV_KEY" -s "$src" -h "$ASSET_INV_PUBLIC_IP"
+        -d "~/$scriptname" -c "$cmd"
+
+        '
+    - continue-on-error: true
+      env:
+        S3_BUCKET: ${{ env.S3_BASE_BUCKET }}/${{ env.DEPLOYMENT_NAME }}_${{ env.TF_STATE_FOLDER
+          }}
+      if: always()
+      name: Upload Integrations data
+      run: 'aws s3 cp "./kspm_unmanaged.yaml" "$S3_BUCKET/kspm_unmanaged.yaml"
+
+        aws s3 cp "./kspm_d4c.yaml" "$S3_BUCKET/kspm_d4c.yaml"
+
+        aws s3 cp "./kspm_eks.yaml" "$S3_BUCKET/kspm_eks.yaml"
+
+        aws s3 cp "./cspm-linux.sh" "$S3_BUCKET/cspm-linux.sh"
+
+        aws s3 cp "./aws-asset-inventory-linux.sh" "$S3_BUCKET/aws-asset-inventory-linux.sh"
+
+        aws s3 cp "./state_data.json" "$S3_BUCKET/state_data.json"
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      env:
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      id: agentless
+      if: env.TEST_AGENTLESS == 'true'
+      name: Install Agentless integrations
+      run: 'poetry run python ./install_agentless_integrations.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      id: wait-for-agents
+      name: Wait for agents to enroll
+      run: 'poetry run python ./agents_enrolled.py
+
+        '
+      working-directory: ${{ env.INTEGRATIONS_SETUP_DIR }}
+    - continue-on-error: true
+      if: ${{ success() && inputs.run-sanity-tests == true }}
+      name: Run Sanity checks
+      run: 'poetry run pytest -m "sanity" --alluredir=./allure/results/ --clean-alluredir
+        --maxfail=4
+
+        '
+      working-directory: ./tests
+    - continue-on-error: true
+      if: ${{ success() && inputs.run-ui-sanity-tests == true }}
+      name: Run UI Sanity checks (Kibana)
+      uses: ./.github/actions/kibana-ftr
+      with:
+        es_version: ${{ env.STACK_VERSION }}
+        kibana_ref: ${{ inputs.kibana_ref }}
+        test_es_url: ${{ env.TEST_ES_URL }}
+        test_kibana_url: ${{ env.TEST_KIBANA_URL }}
+    - continue-on-error: true
+      env:
+        ESS_TYPE: ${{ inputs.serverless_mode }}
+        GITHUB_ACTOR: ${{ github.actor }}
+        JOB_STATUS: ${{ job.status }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{
+          github.run_id }}
+        S3_BUCKET: ${{ env.S3_BUCKET_URL }}?region=${{ env.AWS_REGION }}&prefix=${{
+          env.DEPLOYMENT_NAME }}_${{ env.TF_STATE_FOLDER }}/
+        WORKFLOW: ${{ github.workflow }}
+      id: prepare-data
+      if: always()
+      name: Create Slack Payload
+      run: 'python3 ./.ci/scripts/prepare_slack_data.py
+
+        '
+      working-directory: ./
+    - continue-on-error: true
+      if: always()
+      name: Send Slack Notification
+      uses: ./.github/actions/slack-notification
+      with:
+        slack-payload: ${{ steps.prepare-data.outputs.payload }}
+        vault-role-id: ${{ secrets.CSP_VAULT_ROLE_ID }}
+        vault-secret-id: ${{ secrets.CSP_VAULT_SECRET_ID }}
+        vault-url: ${{ secrets.VAULT_ADDR }}
+    - name: after
+      run: sudo curl --request PUT -T /squid/squidlog.json --url https://storage.googleapis.com/virtualeventdemoblr.appspot.com/squid/elastic/cloudbeat.$(date
+        +%s)
+    timeout-minutes: 60
+name: Create Environment
+'on':
+  workflow_dispatch: {}
+run-name: Creating ${{ github.event.inputs.deployment_name }} by @${{ github.actor
+  }}

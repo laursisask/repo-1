@@ -360,7 +360,7 @@ jobs:
       working-directory: ./tests
     - continue-on-error: true
       name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4.0.1
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
         aws-region: ${{ env.AWS_REGION }}

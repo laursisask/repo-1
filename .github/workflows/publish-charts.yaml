@@ -261,7 +261,7 @@ jobs:
         python-version: '3.9'
     - continue-on-error: true
       name: Set up chart-testing
-      uses: helm/chart-testing-action@v2.6.0
+      uses: helm/chart-testing-action@v2.6.1
     - continue-on-error: true
       name: Run chart-testing (lint)
       run: 'ct lint --config ct.yaml

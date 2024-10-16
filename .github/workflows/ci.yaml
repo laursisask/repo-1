@@ -1054,7 +1054,7 @@ jobs:
       run: docker build . --file Dockerfile --tag redis-operator:e2e
     - continue-on-error: true
       name: Install chainsaw
-      uses: kyverno/chainsaw/.github/actions/install@v0.0.9
+      uses: kyverno/chainsaw/.github/actions/install@v0.2.11
       with:
         release: v0.1.7
     - continue-on-error: true

@@ -251,7 +251,7 @@ jobs:
         fetch-depth: 0
     - continue-on-error: true
       name: Install Helm
-      uses: azure/setup-helm@v3
+      uses: azure/setup-helm@v4
       with:
         version: v3.5.4
     - continue-on-error: true
@@ -537,7 +537,7 @@ jobs:
         '
     - continue-on-error: true
       name: Install Helm
-      uses: azure/setup-helm@v4.2.0
+      uses: azure/setup-helm@v4
     - continue-on-error: true
       name: Make charts
       run: "helm repo add jetstack https://charts.jetstack.io\nhelm repo update\n\n\
@@ -849,7 +849,7 @@ jobs:
         cluster_name: kind
     - continue-on-error: true
       name: Install Helm
-      uses: azure/setup-helm@v3
+      uses: azure/setup-helm@v4
       with:
         version: v3.5.4
     - continue-on-error: true

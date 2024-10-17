@@ -286,14 +286,14 @@ jobs:
     - continue-on-error: true
       if: success() || failure()
       name: gofumpt
-      uses: golangci/golangci-lint-action@v5
+      uses: golangci/golangci-lint-action@v6
       with:
         args: --timeout=30m --no-config --disable-all --enable=gofumpt --out-format=colored-line-number
         skip-cache: true
         version: v1.56.2
     - continue-on-error: true
       name: golangci-lint
-      uses: golangci/golangci-lint-action@v5
+      uses: golangci/golangci-lint-action@v6
       with:
         args: --timeout=30m --out-format=colored-line-number
         skip-cache: true

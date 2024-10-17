@@ -248,7 +248,7 @@ jobs:
     - continue-on-error: true
       if: always()
       name: Commit Format Check
-      uses: taskmedia/action-conventional-commits@v1.1.16
+      uses: taskmedia/action-conventional-commits@v1.1.19
       with:
         types: build|ci|docs|feat|fix|perf|refactor|style|test|revert|gomod
     - continue-on-error: true
